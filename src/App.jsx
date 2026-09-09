@@ -1,0 +1,375 @@
+import { useState, useEffect, lazy, Suspense } from 'react';
+import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import './App.css';
+
+// ─── Lazy-loaded pages ──────────────────────────────────────────────────────
+const Dashboard                = lazy(() => import('./pages/Dashboard'));
+const BiltyCreate              = lazy(() => import('./pages/BiltyCreate'));
+const Warehouse                = lazy(() => import('./pages/Warehouse'));
+const ChallanCreate            = lazy(() => import('./pages/ChallanCreate'));
+const AllChallanRecord         = lazy(() => import('./pages/AllChallanRecord'));
+const BranchOffice             = lazy(() => import('./pages/BranchOffice'));
+const Claims                   = lazy(() => import('./pages/Claims'));
+const KarachiLedger            = lazy(() => import('./pages/KarachiLedger'));
+const FinanceDashboard         = lazy(() => import('./pages/FinanceDashboard'));
+const LocalFreightParties      = lazy(() => import('./pages/LocalFreightParties'));
+const WarehouseRentals         = lazy(() => import('./pages/WarehouseRentals/WarehouseRentals'));
+const BranchFinance            = lazy(() => import('./pages/BranchFinance'));
+const IslamabadAccountStatement= lazy(() => import('./pages/IslamabadAccountStatement'));
+const VehicleManagement        = lazy(() => import('./pages/VehicleManagement'));
+const ContainerTransportFTL    = lazy(() => import('./pages/ContainerTransportFTL'));
+const BrokerManagementFTL      = lazy(() => import('./pages/BrokerManagementFTL'));
+const TripsManagementFTL       = lazy(() => import('./pages/TripsManagementFTL'));
+const BrokerAccountsFTL        = lazy(() => import('./pages/BrokerAccountsFTL'));
+const BranchesAudit            = lazy(() => import('./pages/BranchesAudit'));
+const BookingReceipt           = lazy(() => import('./pages/BookingReceipt'));
+const AllBookingReceipts       = lazy(() => import('./pages/AllBookingReceipts'));
+const AllBookingRecord         = lazy(() => import('./pages/AllBookingRecord'));
+const CommissionReportIslamabad= lazy(() => import('./pages/CommissionReportIslamabad'));
+const ProfitReportIslamabad    = lazy(() => import('./pages/ProfitReportIslamabad'));
+const BrokerReceivable         = lazy(() => import('./pages/BrokerReceivable'));
+const ProfitReportLahore       = lazy(() => import('./pages/ProfitReportLahore'));
+const BrokerReceivableLahore   = lazy(() => import('./pages/BrokerReceivableLahore'));
+const ProfitReportRawalpindi   = lazy(() => import('./pages/ProfitReportRawalpindi'));
+const BrokerReceivableRawalpindi= lazy(() => import('./pages/BrokerReceivableRawalpindi'));
+const BrokerLedger             = lazy(() => import('./pages/BrokerLedger'));
+
+// ─── Page Loader ─────────────────────────────────────────────────────────────
+function PageLoader() {
+  return (
+    <div className="page-loader">
+      <div className="spinner" />
+    </div>
+  );
+}
+
+// ─── Sidebar nav definition ──────────────────────────────────────────────────
+const NAV_ITEMS = [
+  { path: '/',                    icon: '📊', label: 'Dashboard' },
+  { path: '/bilty',               icon: '📝', label: 'Bilty Booking' },
+  { path: '/bilty/all-records',   icon: '📋', label: 'All Booking Records' },
+  { path: '/warehouse',           icon: '🏬', label: 'Karachi Warehouse' },
+  { path: '/challan',             icon: '🚚', label: 'Challan Management' },
+  { path: '/challan/all-records', icon: '📜', label: 'Challan History' },
+  { divider: true },
+  { path: '/karachi-office',      icon: '💵', label: 'Income/Expense Ledger' },
+  { divider: true },
+  { section: 'Branches & Accounts' },
+  {
+    key: 'islamabad',
+    label: 'Islamabad Branch',
+    icon: '🏛️',
+    children: [
+      { path: '/branch/islamabad',                   icon: '📋', label: 'Branch Overview' },
+      { path: '/branch/islamabad/finance',           icon: '💵', label: 'Branch Finance' },
+      { path: '/branch/islamabad/account-statement', icon: '📄', label: 'Account Statement' },
+      { path: '/commission-report-islamabad',        icon: '💼', label: 'Delivery Report ISB' },
+      { path: '/profit-report-islamabad',            icon: '📈', label: 'A/C Receivable ISB' },
+      { path: '/broker-receivable',                  icon: '🤝', label: 'Broker A/C ISB' },
+    ]
+  },
+  {
+    key: 'lahore',
+    label: 'Lahore Branch',
+    icon: '🏙️',
+    children: [
+      { path: '/branch/lahore',                      icon: '📋', label: 'Branch Overview' },
+      { path: '/branch/lahore/finance',              icon: '💵', label: 'Branch Finance' },
+      { path: '/profit-report-lahore',               icon: '📈', label: 'A/C Receivable LHR' },
+      { path: '/broker-receivable-lahore',           icon: '🤝', label: 'Broker A/C LHR' },
+    ]
+  },
+  {
+    key: 'rawalpindi',
+    label: 'Rawalpindi Branch',
+    icon: '🏗️',
+    children: [
+      { path: '/branch/rawalpindi',                  icon: '📋', label: 'Branch Overview' },
+      { path: '/branch/rawalpindi/finance',          icon: '💵', label: 'Branch Finance' },
+      { path: '/profit-report-rawalpindi',           icon: '📈', label: 'A/C Receivable RWP' },
+      { path: '/broker-receivable-rawalpindi',       icon: '🤝', label: 'Broker A/C RWP' },
+    ]
+  },
+  { divider: true },
+  { section: 'Operations' },
+  { path: '/warehouse-rentals',          icon: '📦', label: 'Warehouse Rentals' },
+  { path: '/local-freight-parties',      icon: '🚛', label: 'Local Freight Parties' },
+  { path: '/container-transport-ftl',    icon: '🏗️', label: 'Container Transport (FTL)' },
+  { path: '/claims',                     icon: '⚠️', label: 'Short Claims' },
+  { path: '/branches-audit',            icon: '🔍', label: 'Branches Audit' },
+  { divider: true },
+  { section: 'Admin' },
+  { path: '/vehicle-management',         icon: '🚗', label: 'Vehicle Management' },
+  { path: '/finance',                    icon: '💾', label: 'Finance Overview' },
+];
+
+// ─── Page title map ──────────────────────────────────────────────────────────
+const PAGE_TITLES = {
+  '/':                             'Dashboard',
+  '/bilty':                        'Bilty Booking',
+  '/bilty/all-records':            'All Booking Records',
+  '/warehouse':                    'Karachi Warehouse',
+  '/challan':                      'Challan Management',
+  '/challan/all-records':          'Challan History',
+  '/karachi-office':               'Income / Expense Ledger',
+  '/branch/lahore':                'Lahore Branch Overview',
+  '/branch/lahore/finance':        'Lahore Branch Finance',
+  '/branch/islamabad':             'Islamabad Branch Overview',
+  '/branch/islamabad/finance':     'Islamabad Branch Finance',
+  '/branch/islamabad/account-statement': 'Islamabad Account Statement',
+  '/branch/rawalpindi':            'Rawalpindi Branch Overview',
+  '/branch/rawalpindi/finance':    'Rawalpindi Branch Finance',
+  '/profit-report-islamabad':      'A/C Receivable — Islamabad',
+  '/profit-report-lahore':         'A/C Receivable — Lahore',
+  '/profit-report-rawalpindi':     'A/C Receivable — Rawalpindi',
+  '/commission-report-islamabad':  'Delivery Report — Islamabad',
+  '/broker-receivable':            'Broker A/C — Islamabad',
+  '/broker-receivable-lahore':     'Broker A/C — Lahore',
+  '/broker-receivable-rawalpindi': 'Broker A/C — Rawalpindi',
+  '/warehouse-rentals':            'Warehouse Rentals',
+  '/local-freight-parties':        'Local Freight Parties',
+  '/container-transport-ftl':      'Container Transport (FTL)',
+  '/claims':                       'Short Claims',
+  '/branches-audit':               'Branches Audit',
+  '/vehicle-management':           'Vehicle Management',
+  '/finance':                      'Finance Overview',
+};
+
+function getPageTitle(pathname) {
+  if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
+  for (const [key, val] of Object.entries(PAGE_TITLES)) {
+    if (key !== '/' && pathname.startsWith(key)) return val;
+  }
+  return 'ABID MEHMOOD — Goods Transport';
+}
+
+function formatDate(date) {
+  return date.toLocaleDateString('en-PK', {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+// ─── App ─────────────────────────────────────────────────────────────────────
+export default function App() {
+  const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [openGroups, setOpenGroups] = useState({
+    islamabad: true,
+    lahore: true,
+    rawalpindi: true,
+  });
+
+  const toggleGroup = (key) => {
+    setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  // Close sidebar whenever the route changes (mobile nav)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  // Auto expand group if child is active
+  useEffect(() => {
+    NAV_ITEMS.forEach(item => {
+      if (item.children) {
+        const hasActive = item.children.some(c => location.pathname === c.path);
+        if (hasActive) {
+          setOpenGroups(prev => ({ ...prev, [item.key]: true }));
+        }
+      }
+    });
+  }, [location.pathname]);
+
+  // Toggle body scroll lock when sidebar is open on mobile
+  useEffect(() => {
+    document.body.style.overflow = sidebarOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [sidebarOpen]);
+
+  const pageTitle = getPageTitle(location.pathname);
+
+  const isActive = (path) => {
+    if (path === '/') return location.pathname === '/';
+    return location.pathname === path || location.pathname.startsWith(path + '/');
+  };
+
+  return (
+    <>
+      {/* ── Sidebar ── */}
+      <div className={`sidebar${sidebarOpen ? ' active' : ''}`}>
+        <div className="sidebar-header">
+          <h2>ABID MEHMOOD</h2>
+          <p>Goods Transport System</p>
+        </div>
+
+        <nav className="sidebar-nav">
+          {NAV_ITEMS.map((item, idx) => {
+            if (item.divider) {
+              return <div key={`div-${idx}`} className="nav-divider" />;
+            }
+            if (item.section) {
+              return (
+                <div key={`sec-${idx}`} className="nav-section-title">
+                  {item.section}
+                </div>
+              );
+            }
+
+            // Collapsible branch group with subpages
+            if (item.children) {
+              const isOpen = openGroups[item.key];
+              const isGroupActive = item.children.some(c => location.pathname === c.path);
+
+              return (
+                <div key={`grp-${item.key}`} style={{ marginBottom: '2px' }}>
+                  <div
+                    className={`nav-group-header${isGroupActive ? ' active' : ''}`}
+                    onClick={() => toggleGroup(item.key)}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '15px' }}>{item.icon}</span>
+                      <span style={{ fontWeight: 600 }}>{item.label}</span>
+                    </div>
+                    <span className={`nav-group-arrow${isOpen ? ' open' : ''}`}>▶</span>
+                  </div>
+
+                  {isOpen && (
+                    <div className="nav-sub-menu">
+                      {item.children.map(child => {
+                        const childActive = location.pathname === child.path;
+                        return (
+                          <Link
+                            key={child.path}
+                            to={child.path}
+                            className={`nav-sub-item${childActive ? ' active' : ''}`}
+                          >
+                            <i>{child.icon}</i>
+                            <span>{child.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`nav-item${isActive(item.path) ? ' active' : ''}`}
+              >
+                <i>{item.icon}</i>
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* User pill */}
+        <div className="sidebar-user">
+          <div className="user-avatar">A</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              color: '#fff',
+              fontSize: '12px',
+              fontWeight: 500,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}>
+              Admin User
+            </div>
+            <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '10px' }}>
+              Administrator
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Mobile overlay ── */}
+      <div
+        className={`overlay${sidebarOpen ? ' active' : ''}`}
+        onClick={() => setSidebarOpen(false)}
+      />
+
+      {/* ── Top Header ── */}
+      <header className="main-header">
+        <div className="header-left">
+          <button
+            className="menu-toggle"
+            onClick={() => setSidebarOpen((v) => !v)}
+            aria-label="Toggle navigation"
+          >
+            ☰
+          </button>
+          <div className="header-title">
+            <h1>{pageTitle}</h1>
+          </div>
+        </div>
+        <div className="header-right">
+          <span className="header-date">{formatDate(new Date())}</span>
+          <span style={{ color: 'var(--secondary)', fontSize: '12px', fontWeight: 500 }}>
+            👤 Admin
+          </span>
+        </div>
+      </header>
+
+      {/* ── Main Content ── */}
+      <main className="main-content">
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/"                                        element={<Dashboard />} />
+            <Route path="/bilty"                                   element={<BiltyCreate />} />
+            <Route path="/bilty/all-records"                       element={<AllBookingRecord />} />
+            <Route path="/warehouse"                               element={<Warehouse />} />
+            <Route path="/challan"                                 element={<ChallanCreate />} />
+            <Route path="/challan/all-records"                     element={<AllChallanRecord />} />
+            <Route path="/branch/lahore"                           element={<BranchOffice branchName="Lahore" />} />
+            <Route path="/branch/lahore/finance"                   element={<BranchFinance branchName="Lahore" />} />
+            <Route path="/branch/islamabad"                        element={<BranchOffice branchName="Islamabad" />} />
+            <Route path="/branch/islamabad/finance"                element={<BranchFinance branchName="Islamabad" />} />
+            <Route path="/branch/islamabad/account-statement"      element={<IslamabadAccountStatement />} />
+            <Route path="/branch/rawalpindi"                       element={<BranchOffice branchName="Rawalpindi" />} />
+            <Route path="/branch/rawalpindi/finance"               element={<BranchFinance branchName="Rawalpindi" />} />
+            <Route path="/claims"                                  element={<Claims />} />
+            <Route path="/branches-audit"                          element={<BranchesAudit />} />
+            <Route path="/karachi-office"                          element={<KarachiLedger />} />
+            <Route path="/finance"                                 element={<FinanceDashboard />} />
+            <Route path="/local-freight-parties"                   element={<LocalFreightParties />} />
+            <Route path="/warehouse-rentals"                       element={<WarehouseRentals />} />
+            <Route path="/vehicle-management"                      element={<VehicleManagement />} />
+            <Route path="/container-transport-ftl"                 element={<ContainerTransportFTL />} />
+            <Route path="/container-transport-ftl/broker-management" element={<BrokerManagementFTL />} />
+            <Route path="/container-transport-ftl/trips-management"  element={<TripsManagementFTL />} />
+            <Route path="/container-transport-ftl/broker-accounts"   element={<BrokerAccountsFTL />} />
+            <Route path="/container-transport-ftl/booking-receipt"   element={<BookingReceipt />} />
+            <Route path="/container-transport-ftl/all-booking-receipts" element={<AllBookingReceipts />} />
+            <Route path="/commission-report-islamabad"             element={<CommissionReportIslamabad />} />
+            <Route path="/profit-report-islamabad"                 element={<ProfitReportIslamabad />} />
+            <Route path="/profit-report-lahore"                    element={<ProfitReportLahore />} />
+            <Route path="/profit-report-rawalpindi"                element={<ProfitReportRawalpindi />} />
+            <Route path="/broker-receivable"                       element={<BrokerReceivable />} />
+            <Route path="/broker-receivable-lahore"                element={<BrokerReceivableLahore />} />
+            <Route path="/broker-receivable-rawalpindi"            element={<BrokerReceivableRawalpindi />} />
+            <Route path="/broker-ledger"                           element={<BrokerLedger />} />
+            <Route path="*" element={
+              <div className="card">
+                <div className="card-header">
+                  <h3>🚧 Coming Soon</h3>
+                </div>
+                <p style={{ color: 'var(--text-light)', fontSize: '13px' }}>
+                  This module is under development as part of the Goods Transport System.
+                </p>
+              </div>
+            } />
+          </Routes>
+        </Suspense>
+      </main>
+    </>
+  );
+}

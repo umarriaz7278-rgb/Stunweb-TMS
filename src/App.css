@@ -1,0 +1,29 @@
+/* App.css — bilty-grid utilities & legacy overrides cleared */
+
+/* All global design tokens are in index.css */
+/* This file only holds page-specific grid helpers */
+
+.bilty-page {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.bilty-section-title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.bilty-page .card {
+  transform: none !important;
+}
+
+.bilty-page .card:hover {
+  transform: none !important;
+  box-shadow: var(--shadow-xs);
+}
+
+.bilty-page .form-group {
+  margin-bottom: 0;
+}
