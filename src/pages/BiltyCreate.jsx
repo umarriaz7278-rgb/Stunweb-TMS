@@ -64,12 +64,13 @@ export default function BiltyCreate() {
         if (data && data.length > 0) {
           const karachiBranch = data.find(b => b.name.toLowerCase() === 'karachi');
           if (karachiBranch) setKarachiBranchId(karachiBranch.id);
-          const filteredBranches = data.filter(b => b.name.toLowerCase() !== 'karachi');
-          const branchOrder = ['Rawalpindi', 'Islamabad', 'Lahore'];
+          const allowedBranches = ['Islamabad', 'Rawalpindi', 'Lahore'];
+          const filteredBranches = data.filter(b => 
+            allowedBranches.some(name => name.toLowerCase() === b.name.toLowerCase())
+          );
           const sortedBranches = [...filteredBranches].sort((a, b) => {
-            const aIndex = branchOrder.indexOf(a.name);
-            const bIndex = branchOrder.indexOf(b.name);
-            if (aIndex === -1 || bIndex === -1) return a.name.localeCompare(b.name);
+            const aIndex = allowedBranches.findIndex(name => name.toLowerCase() === a.name.toLowerCase());
+            const bIndex = allowedBranches.findIndex(name => name.toLowerCase() === b.name.toLowerCase());
             return aIndex - bIndex;
           });
           setBranches(sortedBranches);
@@ -118,7 +119,7 @@ export default function BiltyCreate() {
     // Validate destination_branch_id
     let destBranchId = formData.destination_branch_id;
     if (isManualDest) {
-      destBranchId = karachiBranchId;
+      destBranchId = karachiBranchId || branches[0]?.id;
     }
     
     if (!destBranchId || destBranchId.trim() === '') {

@@ -592,7 +592,7 @@ SELECT
   b.cbm,
   b.destination,
   b.destination_branch_id,
-  br.name AS destination_name,
+  COALESCE(NULLIF(b.destination, ''), br.name) AS destination_name,
   -- Remaining quantity = total - already loaded in any challan
   GREATEST(
     b.total_quantity - COALESCE(

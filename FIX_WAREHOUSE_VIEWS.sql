@@ -33,7 +33,7 @@ SELECT
   b.cbm,
   b.destination,
   b.destination_branch_id,
-  br.name AS destination_name,
+  COALESCE(NULLIF(b.destination, ''), br.name) AS destination_name,
   GREATEST(
     b.total_quantity - COALESCE(
       (SELECT SUM(cb.loaded_quantity)
