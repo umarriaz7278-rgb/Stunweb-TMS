@@ -561,7 +561,6 @@ export default function BiltyCreate() {
 
             {/* Sender & Receiver */}
             <div className="card bilty-section">
-              <h3 className="bilty-section-title">Sender & Receiver</h3>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 {/* Sender */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -592,7 +591,6 @@ export default function BiltyCreate() {
 
             {/* Goods Details */}
             <div className="card bilty-section">
-              <h3 className="bilty-section-title" style={{ marginBottom: '12px' }}>Goods Details</h3>
               <div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                   <thead>
