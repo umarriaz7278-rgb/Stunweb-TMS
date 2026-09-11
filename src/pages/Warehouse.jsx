@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
-import { Package } from 'lucide-react';
+import { Package, Search, Scale, DollarSign, FileText, X } from 'lucide-react';
 
 export default function Warehouse() {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDestination, setSelectedDestination] = useState('all');
 
   async function fetchInventory() {
     const { data, error } = await supabase
@@ -355,29 +357,310 @@ export default function Warehouse() {
     }
   };
 
-  const totalWeight = inventory.reduce((sum, item) => sum + Number(item.weight_kg || 0), 0);
+  // Unique destinations present in inventory
+  const uniqueDestinations = useMemo(() => {
+    const dests = new Set();
+    inventory.forEach(item => {
+      if (item.destination_name) dests.add(item.destination_name);
+    });
+    return Array.from(dests).sort();
+  }, [inventory]);
+
+  // Filtered inventory based on search term & selected destination
+  const filteredInventory = useMemo(() => {
+    return inventory.filter(item => {
+      const dest = (item.destination_name || '').toLowerCase();
+      const term = searchTerm.trim().toLowerCase();
+
+      const matchesSearch = !term ||
+        dest.includes(term) ||
+        String(item.bilty_number || '').toLowerCase().includes(term) ||
+        (item.sender_name || '').toLowerCase().includes(term) ||
+        (item.receiver_name || '').toLowerCase().includes(term) ||
+        (item.description || '').toLowerCase().includes(term);
+
+      const matchesDestination = selectedDestination === 'all' || dest === selectedDestination.toLowerCase();
+
+      return matchesSearch && matchesDestination;
+    });
+  }, [inventory, searchTerm, selectedDestination]);
+
+  // Overall warehouse totals
+  const totalWarehouseWeight = useMemo(() => {
+    return inventory.reduce((sum, item) => sum + Number(item.weight_kg || 0), 0);
+  }, [inventory]);
+
+  const totalWarehouseAmount = useMemo(() => {
+    return inventory.reduce((sum, item) => sum + Number(item.total_amount || 0), 0);
+  }, [inventory]);
+
+  // Filtered totals
+  const filteredWeight = useMemo(() => {
+    return filteredInventory.reduce((sum, item) => sum + Number(item.weight_kg || 0), 0);
+  }, [filteredInventory]);
+
+  const filteredAmount = useMemo(() => {
+    return filteredInventory.reduce((sum, item) => sum + Number(item.total_amount || 0), 0);
+  }, [filteredInventory]);
+
+  const isFiltered = searchTerm.trim() !== '' || selectedDestination !== 'all';
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-        <Package size={28} color="var(--primary-color)" />
-        <h1 className="page-title" style={{ marginBottom: 0 }}>Karachi Warehouse Inventory</h1>
-      </div>
-
-      {/* --- Total Weight Summary --- */}
-      <div className="card" style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '16px', background: 'var(--bg-card)', borderLeft: '4px solid #f59e0b' }}>
-        <span style={{ fontSize: '1.5rem' }}>⚖️</span>
-        <div>
-          <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Weight in Warehouse</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f59e0b' }}>{totalWeight.toLocaleString()} KG</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Package size={28} color="var(--primary-color)" />
+          <h1 className="page-title" style={{ marginBottom: 0 }}>Karachi Warehouse Inventory</h1>
         </div>
       </div>
 
+      {/* --- Top Stat Cards: Weight, Amount/Rent, and Bilties --- */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+        {/* Card 1: Total Weight */}
+        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '16px', background: 'var(--bg-card)', borderLeft: '4px solid #f59e0b', margin: 0, padding: '16px 20px' }}>
+          <div style={{ background: '#fef3c7', borderRadius: '10px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Scale size={24} color="#d97706" />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              {isFiltered ? 'Filtered Weight' : 'Total Weight in Warehouse'}
+            </div>
+            <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#d97706' }}>
+              {(isFiltered ? filteredWeight : totalWarehouseWeight).toLocaleString()} KG
+            </div>
+            {isFiltered && (
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                Total: {totalWarehouseWeight.toLocaleString()} KG
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Card 2: Total Amount (Rent) */}
+        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '16px', background: 'var(--bg-card)', borderLeft: '4px solid #10b981', margin: 0, padding: '16px 20px' }}>
+          <div style={{ background: '#d1fae5', borderRadius: '10px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <DollarSign size={24} color="#059669" />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              {isFiltered ? 'Filtered Rent Total' : 'Total Amount (Rent Total)'}
+            </div>
+            <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#059669' }}>
+              Rs. {(isFiltered ? filteredAmount : totalWarehouseAmount).toLocaleString()}
+            </div>
+            {isFiltered && (
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                Total: Rs. {totalWarehouseAmount.toLocaleString()}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Card 3: Total Bilties */}
+        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '16px', background: 'var(--bg-card)', borderLeft: '4px solid #3b82f6', margin: 0, padding: '16px 20px' }}>
+          <div style={{ background: '#dbeafe', borderRadius: '10px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <FileText size={24} color="#2563eb" />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              {isFiltered ? 'Filtered Bilties' : 'Total Pending Bilties'}
+            </div>
+            <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#2563eb' }}>
+              {isFiltered ? filteredInventory.length : inventory.length}
+            </div>
+            {isFiltered && (
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                Total: {inventory.length} Bilties
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* --- Search & Destination Filter Bar --- */}
+      <div className="card" style={{ marginBottom: '20px', padding: '16px 20px' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Destination Search Input */}
+          <div style={{ position: 'relative', flex: '1', minWidth: '260px' }}>
+            <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search Destination (e.g. Islamabad, Lahore, Rawalpindi)..."
+              style={{
+                width: '100%',
+                padding: '9px 36px 9px 38px',
+                fontSize: '0.92rem',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-main)'
+              }}
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+
+          {/* Quick Destination Dropdown */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Destination:</span>
+            <select
+              value={selectedDestination}
+              onChange={(e) => setSelectedDestination(e.target.value)}
+              style={{
+                padding: '9px 14px',
+                fontSize: '0.9rem',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-main)',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              <option value="all">All Destinations ({inventory.length})</option>
+              {uniqueDestinations.map(dest => {
+                const count = inventory.filter(i => (i.destination_name || '').toLowerCase() === dest.toLowerCase()).length;
+                return (
+                  <option key={dest} value={dest}>
+                    {dest} ({count})
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+
+          {/* Clear Filter Button */}
+          {isFiltered && (
+            <button
+              type="button"
+              onClick={() => { setSearchTerm(''); setSelectedDestination('all'); }}
+              className="btn btn-secondary"
+              style={{
+                padding: '8px 14px',
+                fontSize: '0.82rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              <X size={14} /> Clear Filter
+            </button>
+          )}
+        </div>
+
+        {/* Quick Destination Filter Pills */}
+        {uniqueDestinations.length > 0 && (
+          <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>Quick Select:</span>
+            <button
+              type="button"
+              onClick={() => setSelectedDestination('all')}
+              style={{
+                padding: '4px 12px',
+                fontSize: '0.78rem',
+                borderRadius: '20px',
+                border: selectedDestination === 'all' ? '1px solid var(--primary-color)' : '1px solid var(--border-color)',
+                background: selectedDestination === 'all' ? 'var(--primary-color)' : 'var(--bg-main)',
+                color: selectedDestination === 'all' ? '#fff' : 'var(--text-color)',
+                cursor: 'pointer',
+                fontWeight: 600
+              }}
+            >
+              All ({inventory.length})
+            </button>
+            {uniqueDestinations.map(dest => {
+              const count = inventory.filter(i => (i.destination_name || '').toLowerCase() === dest.toLowerCase()).length;
+              const isSelected = selectedDestination.toLowerCase() === dest.toLowerCase();
+              return (
+                <button
+                  key={dest}
+                  type="button"
+                  onClick={() => setSelectedDestination(dest)}
+                  style={{
+                    padding: '4px 12px',
+                    fontSize: '0.78rem',
+                    borderRadius: '20px',
+                    border: isSelected ? '1px solid var(--primary-color)' : '1px solid var(--border-color)',
+                    background: isSelected ? 'var(--primary-color)' : 'var(--bg-main)',
+                    color: isSelected ? '#fff' : 'var(--text-color)',
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                >
+                  {dest} ({count})
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Filter Summary Banner */}
+        {isFiltered && (
+          <div style={{
+            marginTop: '12px',
+            padding: '10px 14px',
+            background: 'rgba(59, 130, 246, 0.08)',
+            border: '1px solid rgba(59, 130, 246, 0.25)',
+            borderRadius: '6px',
+            fontSize: '0.84rem',
+            color: 'var(--text-color)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '8px'
+          }}>
+            <span>
+              Showing <strong>{filteredInventory.length}</strong> {filteredInventory.length === 1 ? 'bilty' : 'bilties'} for {selectedDestination !== 'all' ? <strong>"{selectedDestination}"</strong> : 'search'} {searchTerm ? `keyword "${searchTerm}"` : ''}
+            </span>
+            <span>
+              Weight: <strong style={{ color: '#d97706' }}>{filteredWeight.toLocaleString()} KG</strong> &nbsp;|&nbsp; Rent Total: <strong style={{ color: '#059669' }}>Rs. {filteredAmount.toLocaleString()}</strong>
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* --- Bilties Inventory Table --- */}
       <div className="card">
         {loading ? (
           <p>Loading inventory...</p>
-        ) : inventory.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)' }}>No pending items in the warehouse.</p>
+        ) : filteredInventory.length === 0 ? (
+          <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text-muted)' }}>
+            {isFiltered ? (
+              <div>
+                <p style={{ margin: 0, fontWeight: 600 }}>No bilties found matching your destination filter.</p>
+                <button
+                  type="button"
+                  onClick={() => { setSearchTerm(''); setSelectedDestination('all'); }}
+                  className="btn btn-secondary"
+                  style={{ marginTop: '10px', fontSize: '0.8rem', padding: '6px 12px' }}
+                >
+                  Show All Bilties
+                </button>
+              </div>
+            ) : (
+              <p style={{ margin: 0 }}>No pending items in the warehouse.</p>
+            )}
+          </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
             <thead>
@@ -395,11 +678,11 @@ export default function Warehouse() {
               </tr>
             </thead>
             <tbody>
-              {inventory.map(item => (
+              {filteredInventory.map(item => (
                 <tr key={item.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                   <td style={{ padding: '7px 10px', fontWeight: 700, color: 'var(--primary-color)', whiteSpace: 'nowrap' }}>{item.bilty_number}</td>
                   <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>{new Date(item.date).toLocaleDateString('en-PK')}</td>
-                  <td style={{ padding: '7px 10px' }}>{item.destination_name}</td>
+                  <td style={{ padding: '7px 10px', fontWeight: 600 }}>{item.destination_name}</td>
                   <td style={{ padding: '7px 10px' }}>{item.description}</td>
                   <td style={{ padding: '7px 10px' }}>{item.sender_name}</td>
                   <td style={{ padding: '7px 10px' }}>{item.receiver_name}</td>
