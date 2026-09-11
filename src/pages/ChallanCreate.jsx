@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Truck } from 'lucide-react';
 
@@ -430,12 +430,23 @@ export default function ChallanCreate() {
 
         <div className="card" style={{ marginBottom: '24px' }}>
           <h3>Vehicle & Driver Details</h3>
-          <div className="form-group full-width" style={{ marginTop: '16px' }} />
-          <div className="form-grid">
-            <div className="form-group"><label>Vehicle Number</label><input type="text" name="vehicle_number" value={formData.vehicle_number} onChange={handleFormChange} required /></div>
-            <div className="form-group"><label>Driver Name</label><input type="text" name="driver_name" value={formData.driver_name} onChange={handleFormChange} required /></div>
-            <div className="form-group"><label>Challan Date</label><input type="date" value={challanDate} onChange={e => setChallanDate(e.target.value)} required /></div>
-            <div className="form-group"><label>Broker Name</label><input type="text" name="broker_name" value={formData.broker_name} onChange={handleFormChange} /></div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginTop: '14px' }}>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label style={{ fontSize: '0.82rem', fontWeight: 600 }}>Vehicle Number</label>
+              <input type="text" name="vehicle_number" value={formData.vehicle_number} onChange={handleFormChange} placeholder="e.g. TLA-123" required style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
+            </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label style={{ fontSize: '0.82rem', fontWeight: 600 }}>Driver Name</label>
+              <input type="text" name="driver_name" value={formData.driver_name} onChange={handleFormChange} placeholder="Driver name" required style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
+            </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label style={{ fontSize: '0.82rem', fontWeight: 600 }}>Challan Date</label>
+              <input type="date" value={challanDate} onChange={e => setChallanDate(e.target.value)} required style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
+            </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label style={{ fontSize: '0.82rem', fontWeight: 600 }}>Broker Name</label>
+              <input type="text" name="broker_name" value={formData.broker_name} onChange={handleFormChange} placeholder="Broker name (optional)" style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
+            </div>
           </div>
         </div>
 
