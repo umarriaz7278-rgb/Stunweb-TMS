@@ -443,9 +443,13 @@ export default function IslamabadAccountStatement() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-        <MapPin size={28} color="var(--primary-color)" />
-        <h1 className="page-title" style={{ marginBottom: 0 }}>Islamabad Account Statement</h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '24px' }}>
+        <div style={{ background: '#eff6ff', borderRadius: '12px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <MapPin size={28} color="#2563eb" />
+        </div>
+        <div>
+          <h1 className="page-title" style={{ marginBottom: 0, color: '#1e293b', fontWeight: 800 }}>Islamabad Account Statement</h1>
+        </div>
       </div>
 
       {message && (
@@ -456,11 +460,11 @@ export default function IslamabadAccountStatement() {
 
       {!selectedAccount ? (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
             <div>
               <p style={{ margin: 0, color: 'var(--text-muted)' }}>Create customer accounts with Name, Address, Phone Number and NTN. Then open any account to see ledger detail.</p>
             </div>
-            <button className="btn btn-primary" onClick={() => setShowAccountForm(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Plus size={16} /> Add Customer Account</button>
+            <button className="btn btn-primary" onClick={() => setShowAccountForm(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', fontWeight: 700 }}><Plus size={16} /> Add Customer Account</button>
           </div>
 
           {pendingLink && (
@@ -480,31 +484,51 @@ export default function IslamabadAccountStatement() {
           )}
 
           {showAccountForm && (
-            <div className="card" style={{ marginBottom: '24px' }}>
-              <h2 style={{ marginTop: 0 }}>New Account</h2>
-              <form onSubmit={handleAccountSubmit} className="form-grid">
-                <div className="form-group"><label>Account Name</label><input type="text" name="name" value={accountForm.name} onChange={handleAccountChange} required /></div>
-                <div className="form-group"><label>Address</label><input type="text" name="address" value={accountForm.address} onChange={handleAccountChange} /></div>
-                <div className="form-group"><label>Phone Number</label><input type="text" name="cnic" value={accountForm.cnic} onChange={handleAccountChange} placeholder="0321-1234567" /></div>
-                <div className="form-group"><label>NTN</label><input type="text" name="ntn" value={accountForm.ntn} onChange={handleAccountChange} placeholder="Enter NTN" /></div>
-                <div className="form-group"><label>Opening Balance</label><input type="number" min="0" step="0.01" name="opening_balance" value={accountForm.opening_balance} onChange={handleAccountChange} /></div>
-                <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-                  <button type="submit" className="btn btn-primary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}><Save size={16} /> Save Account</button>
-                  <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={resetAccountForm}>Cancel</button>
+            <div className="card" style={{ marginBottom: '24px', borderLeft: '4px solid #2563eb' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+                <span style={{ fontSize: '1.2rem' }}>👤</span>
+                <h2 style={{ margin: 0, color: '#2563eb', fontWeight: 800, fontSize: '1.2rem' }}>New Customer Account</h2>
+              </div>
+              <form onSubmit={handleAccountSubmit}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '16px' }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>Account Name *</label>
+                    <input type="text" name="name" value={accountForm.name} onChange={handleAccountChange} placeholder="Enter account name" required style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>Address</label>
+                    <input type="text" name="address" value={accountForm.address} onChange={handleAccountChange} placeholder="Enter address" style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>Phone Number</label>
+                    <input type="text" name="cnic" value={accountForm.cnic} onChange={handleAccountChange} placeholder="0321-1234567" style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>NTN</label>
+                    <input type="text" name="ntn" value={accountForm.ntn} onChange={handleAccountChange} placeholder="Enter NTN" style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>Opening Balance</label>
+                    <input type="number" min="0" step="0.01" name="opening_balance" value={accountForm.opening_balance} onChange={handleAccountChange} placeholder="0" style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '12px', maxWidth: '400px' }}>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '0.95rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}><Save size={16} /> Save Account</button>
+                  <button type="button" className="btn btn-secondary" style={{ padding: '10px 20px', fontSize: '0.95rem', fontWeight: 600 }} onClick={resetAccountForm}>Cancel</button>
                 </div>
               </form>
             </div>
           )}
 
           <div className="card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h2 style={{ margin: 0 }}>Customer Accounts</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+              <h2 style={{ margin: 0, color: '#2563eb', fontWeight: 800, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>👥 Customer Accounts</h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ color: 'var(--text-muted)' }}>{accounts.length} accounts</span>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{accounts.length} accounts</span>
                 <button
                   className="btn btn-secondary"
                   onClick={printAccountsList}
-                  style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}
                 >
                   🖨️ Print List
                 </button>
@@ -516,15 +540,15 @@ export default function IslamabadAccountStatement() {
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
-                      <th style={{ padding: '12px' }}>#</th>
-                      <th style={{ padding: '12px' }}>Name</th>
-                      <th style={{ padding: '12px' }}>Address</th>
-                      <th style={{ padding: '12px' }}>Phone Number</th>
-                      <th style={{ padding: '12px' }}>NTN</th>
-                      <th style={{ padding: '12px', textAlign: 'right' }}>Opening Balance</th>
-                      <th style={{ padding: '12px', textAlign: 'right' }}>Closing Balance</th>
-                      <th style={{ padding: '12px' }}>Action</th>
+                    <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1', textAlign: 'left' }}>
+                      <th style={{ padding: '12px 10px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>#</th>
+                      <th style={{ padding: '12px 10px', color: '#2563eb', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>Name</th>
+                      <th style={{ padding: '12px 10px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>Address</th>
+                      <th style={{ padding: '12px 10px', color: '#d97706', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>Phone Number</th>
+                      <th style={{ padding: '12px 10px', color: '#7c3aed', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>NTN</th>
+                      <th style={{ padding: '12px 10px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Opening Balance</th>
+                      <th style={{ padding: '12px 10px', color: '#059669', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Closing Balance</th>
+                      <th style={{ padding: '12px 10px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'center' }}>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -532,21 +556,23 @@ export default function IslamabadAccountStatement() {
                       const accountClosing = computeAccountClosingBalance(account.id, account.opening_balance);
                       return (
                         <tr key={account.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                          <td style={{ padding: '12px' }}>{index + 1}</td>
-                          <td style={{ padding: '12px', fontWeight: 700 }}>{account.name}</td>
-                          <td style={{ padding: '12px' }}>{account.address || '—'}</td>
-                          <td style={{ padding: '12px' }}>{account.cnic || '—'}</td>
-                          <td style={{ padding: '12px' }}>{account.ntn || '—'}</td>
-                          <td style={{ padding: '12px', textAlign: 'right' }}>Rs. {Number(account.opening_balance || 0).toLocaleString()}</td>
-                          <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700 }}>Rs. {accountClosing.toLocaleString()}</td>
-                          <td style={{ padding: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                          <button className="btn btn-secondary" onClick={() => setSelectedAccount(account)} style={{ padding: '8px 12px' }}>Open Account</button>
-                          {pendingLink && (
-                            <button className="btn btn-primary" onClick={() => handleLinkBillToAccount(account)} style={{ padding: '8px 12px' }}>Link Bill</button>
-                          )}
-                          <button className="btn btn-secondary" onClick={() => handleDeleteAccount(account)} style={{ padding: '8px 12px', color: '#ef4444', borderColor: '#fecaca' }}>Delete</button>
-                        </td>
-                      </tr>
+                          <td style={{ padding: '12px 10px' }}>{index + 1}</td>
+                          <td style={{ padding: '12px 10px', fontWeight: 700, color: '#2563eb' }}>{account.name}</td>
+                          <td style={{ padding: '12px 10px' }}>{account.address || '—'}</td>
+                          <td style={{ padding: '12px 10px' }}>{account.cnic || '—'}</td>
+                          <td style={{ padding: '12px 10px' }}>{account.ntn || '—'}</td>
+                          <td style={{ padding: '12px 10px', textAlign: 'right' }}>Rs. {Number(account.opening_balance || 0).toLocaleString()}</td>
+                          <td style={{ padding: '12px 10px', textAlign: 'right', fontWeight: 700, color: '#059669' }}>Rs. {accountClosing.toLocaleString()}</td>
+                          <td style={{ padding: '12px 10px', textAlign: 'center' }}>
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                              <button className="btn btn-secondary" onClick={() => setSelectedAccount(account)} style={{ padding: '6px 12px', fontSize: '0.82rem', fontWeight: 600 }}>Open Account</button>
+                              {pendingLink && (
+                                <button className="btn btn-primary" onClick={() => handleLinkBillToAccount(account)} style={{ padding: '6px 12px', fontSize: '0.82rem', fontWeight: 600 }}>Link Bill</button>
+                              )}
+                              <button className="btn btn-secondary" onClick={() => handleDeleteAccount(account)} style={{ padding: '6px 10px', fontSize: '0.82rem', color: '#ef4444', borderColor: '#fecaca' }}>Delete</button>
+                            </div>
+                          </td>
+                        </tr>
                       );
                     })}
                   </tbody>
@@ -557,95 +583,98 @@ export default function IslamabadAccountStatement() {
         </div>
       ) : (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '18px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '18px', flexWrap: 'wrap' }}>
             <div>
-              <button className="btn btn-secondary" onClick={() => setSelectedAccount(null)} style={{ marginBottom: '12px' }}><ArrowLeft size={16} /> Back to Accounts</button>
-              <h2 style={{ margin: 0 }}>{selectedAccount.name}</h2>
-              <div style={{ color: 'var(--text-muted)', marginTop: '8px' }}>
+              <button className="btn btn-secondary" onClick={() => setSelectedAccount(null)} style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}><ArrowLeft size={16} /> Back to Accounts</button>
+              <h2 style={{ margin: 0, color: '#2563eb', fontWeight: 800, fontSize: '1.35rem' }}>{selectedAccount.name}</h2>
+              <div style={{ color: 'var(--text-muted)', marginTop: '8px', fontSize: '0.9rem' }}>
                 {selectedAccount.address || 'No address provided'}<br />
-                Phone Number: {selectedAccount.cnic || '—'} | NTN: {selectedAccount.ntn || '—'}
+                Phone Number: <strong>{selectedAccount.cnic || '—'}</strong> | NTN: <strong>{selectedAccount.ntn || '—'}</strong>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', marginLeft: 'auto' }}>
-              <button className="btn btn-secondary" style={{ padding: '10px 16px' }} onClick={printAccountStatement}>Print</button>
-              <button className="btn btn-secondary" style={{ padding: '10px 16px' }} onClick={printAccountsList}>Print List</button>
-              <button className="btn btn-primary" style={{ padding: '10px 16px', backgroundColor: '#3b82f6', border: 'none' }} onClick={downloadAccountStatementPdf}>Download PDF</button>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button className="btn btn-secondary" style={{ padding: '9px 16px', fontWeight: 600 }} onClick={printAccountStatement}>🖨️ Print</button>
+              <button className="btn btn-secondary" style={{ padding: '9px 16px', fontWeight: 600 }} onClick={printAccountsList}>Print List</button>
+              <button className="btn btn-primary" style={{ padding: '9px 16px', backgroundColor: '#3b82f6', border: 'none', fontWeight: 700 }} onClick={downloadAccountStatementPdf}>Download PDF</button>
             </div>
-            {pendingLink && (
-              <div className="card" style={{ marginBottom: '18px', border: '1px solid #f59e0b', backgroundColor: '#fffbeb', width: '100%' }}>
-                <div style={{ marginBottom: '10px', fontWeight: 700, color: '#92400e' }}>Pending Bill Linking</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.95rem', marginBottom: '12px' }}>
-                  <div><strong>Bilty #</strong> {pendingLink.bilty_number}</div>
-                  <div><strong>Date</strong> {pendingLink.date}</div>
-                  <div style={{ gridColumn: '1 / -1' }}><strong>Total Amount</strong> Rs. {Number(pendingLink.total_amount).toLocaleString()}</div>
-                  <div style={{ gridColumn: '1 / -1' }}><strong>Description</strong> {pendingLink.description}</div>
-                </div>
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                  <button className="btn btn-primary" style={{ padding: '10px 16px' }} onClick={() => handleLinkBillToAccount(selectedAccount)}>Link to {selectedAccount.name}</button>
-                  <button className="btn btn-secondary" style={{ padding: '10px 16px' }} onClick={() => { clearPendingLink(); setPendingLink(null); setMessage('Pending bill link cleared.'); }}>Cancel Pending Link</button>
-                </div>
+          </div>
+
+          {pendingLink && (
+            <div className="card" style={{ marginBottom: '18px', border: '1px solid #f59e0b', backgroundColor: '#fffbeb', width: '100%' }}>
+              <div style={{ marginBottom: '10px', fontWeight: 700, color: '#92400e' }}>Pending Bill Linking</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.95rem', marginBottom: '12px' }}>
+                <div><strong>Bilty #</strong> {pendingLink.bilty_number}</div>
+                <div><strong>Date</strong> {pendingLink.date}</div>
+                <div style={{ gridColumn: '1 / -1' }}><strong>Total Amount</strong> Rs. {Number(pendingLink.total_amount).toLocaleString()}</div>
+                <div style={{ gridColumn: '1 / -1' }}><strong>Description</strong> {pendingLink.description}</div>
               </div>
-            )}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(120px, 1fr))', gap: '12px', width: '100%', maxWidth: '680px' }}>
-              <div className="stat-card" style={{ padding: '14px' }}>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '6px' }}>Opening Balance</div>
-                <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>Rs. {Number(selectedAccount.opening_balance || 0).toLocaleString()}</div>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button className="btn btn-primary" style={{ padding: '10px 16px' }} onClick={() => handleLinkBillToAccount(selectedAccount)}>Link to {selectedAccount.name}</button>
+                <button className="btn btn-secondary" style={{ padding: '10px 16px' }} onClick={() => { clearPendingLink(); setPendingLink(null); setMessage('Pending bill link cleared.'); }}>Cancel Pending Link</button>
               </div>
-              <div className="stat-card" style={{ padding: '14px' }}>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '6px' }}>Closing Balance</div>
-                <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{finalBalance >= 0 ? 'Rs. ' : '-Rs. '}{Math.abs(finalBalance).toLocaleString()}</div>
-              </div>
-              <div className="stat-card" style={{ padding: '14px' }}>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '6px' }}>Total Debit</div>
-                <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#ef4444' }}>Rs. {totalDebit.toLocaleString()}</div>
-              </div>
-              <div className="stat-card" style={{ padding: '14px' }}>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '6px' }}>Total Credit</div>
-                <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#10b981' }}>Rs. {totalCredit.toLocaleString()}</div>
-              </div>
+            </div>
+          )}
+
+          {/* Stat Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', marginBottom: '20px' }}>
+            <div className="stat-card" style={{ padding: '16px', borderLeft: '4px solid #3b82f6', background: 'var(--bg-card)' }}>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '6px' }}>Opening Balance</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#1e293b' }}>Rs. {Number(selectedAccount.opening_balance || 0).toLocaleString()}</div>
+            </div>
+            <div className="stat-card" style={{ padding: '16px', borderLeft: '4px solid #10b981', background: 'var(--bg-card)' }}>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '6px' }}>Closing Balance</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#059669' }}>{finalBalance >= 0 ? 'Rs. ' : '-Rs. '}{Math.abs(finalBalance).toLocaleString()}</div>
+            </div>
+            <div className="stat-card" style={{ padding: '16px', borderLeft: '4px solid #ef4444', background: 'var(--bg-card)' }}>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '6px' }}>Total Debit</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ef4444' }}>Rs. {totalDebit.toLocaleString()}</div>
+            </div>
+            <div className="stat-card" style={{ padding: '16px', borderLeft: '4px solid #10b981', background: 'var(--bg-card)' }}>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '6px' }}>Total Credit</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#10b981' }}>Rs. {totalCredit.toLocaleString()}</div>
             </div>
           </div>
 
           <div className="card" style={{ marginBottom: '24px' }}>
-            <h3 style={{ marginTop: 0 }}>Transaction Ledger</h3>
+            <h3 style={{ marginTop: 0, color: '#7c3aed', fontWeight: 800, fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '8px' }}>📜 Transaction Ledger</h3>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
-                    <th style={{ padding: '12px' }}>Date</th>
-                    <th style={{ padding: '12px' }}>Description</th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>Debit</th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>Credit</th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>Balance</th>
-                    <th style={{ padding: '12px' }}>Action</th>
+                  <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1', textAlign: 'left' }}>
+                    <th style={{ padding: '12px 10px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>Date</th>
+                    <th style={{ padding: '12px 10px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>Description</th>
+                    <th style={{ padding: '12px 10px', color: '#ef4444', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Debit</th>
+                    <th style={{ padding: '12px 10px', color: '#10b981', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Credit</th>
+                    <th style={{ padding: '12px 10px', color: '#2563eb', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Balance</th>
+                    <th style={{ padding: '12px 10px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'center' }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {ledgerRows.map(row => (
                     <tr key={row.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '12px' }}>{row.date || '-'}</td>
-                      <td style={{ padding: '12px' }}>{row.description}</td>
-                      <td style={{ padding: '12px', textAlign: 'right' }}>Rs. {Number(row.debit || 0).toLocaleString()}</td>
-                      <td style={{ padding: '12px', textAlign: 'right' }}>Rs. {Number(row.credit || 0).toLocaleString()}</td>
-                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700 }}>Rs. {Number(row.balance || 0).toLocaleString()}</td>
-                      <td style={{ padding: '12px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      <td style={{ padding: '12px 10px' }}>{row.date || '-'}</td>
+                      <td style={{ padding: '12px 10px' }}>{row.description}</td>
+                      <td style={{ padding: '12px 10px', textAlign: 'right', color: '#ef4444', fontWeight: 600 }}>Rs. {Number(row.debit || 0).toLocaleString()}</td>
+                      <td style={{ padding: '12px 10px', textAlign: 'right', color: '#10b981', fontWeight: 600 }}>Rs. {Number(row.credit || 0).toLocaleString()}</td>
+                      <td style={{ padding: '12px 10px', textAlign: 'right', fontWeight: 700, color: '#2563eb' }}>Rs. {Number(row.balance || 0).toLocaleString()}</td>
+                      <td style={{ padding: '12px 10px', textAlign: 'center' }}>
                         {row.id !== 'opening' && (
-                          <>
+                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
                             <button
                               className="btn btn-secondary"
                               onClick={() => handleEditTransaction(row)}
-                              style={{ padding: '6px 10px', fontSize: '0.85rem' }}
+                              style={{ padding: '5px 10px', fontSize: '0.82rem' }}
                             >
                               Edit
                             </button>
                             <button
                               className="btn btn-secondary"
                               onClick={() => handleDeleteTransaction(row)}
-                              style={{ padding: '6px 10px', fontSize: '0.85rem', color: '#ef4444', borderColor: '#fecaca' }}
+                              style={{ padding: '5px 10px', fontSize: '0.82rem', color: '#ef4444', borderColor: '#fecaca' }}
                             >
                               Delete
                             </button>
-                          </>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -653,44 +682,72 @@ export default function IslamabadAccountStatement() {
                 </tbody>
               </table>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '24px', marginTop: '16px', fontWeight: 700 }}>
-              <div>Total Debit: Rs. {totalDebit.toLocaleString()}</div>
-              <div>Total Credit: Rs. {totalCredit.toLocaleString()}</div>
-              <div>Closing Balance: Rs. {finalBalance.toLocaleString()}</div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '24px', marginTop: '16px', fontWeight: 700, flexWrap: 'wrap' }}>
+              <div style={{ color: '#ef4444' }}>Total Debit: Rs. {totalDebit.toLocaleString()}</div>
+              <div style={{ color: '#10b981' }}>Total Credit: Rs. {totalCredit.toLocaleString()}</div>
+              <div style={{ color: '#2563eb' }}>Closing Balance: Rs. {finalBalance.toLocaleString()}</div>
             </div>
           </div>
 
-          <div className="card">
-            <h3 style={{ marginTop: 0 }}>Add Transaction</h3>
-            <form onSubmit={handleTxnSubmit} className="form-grid">
-              <div className="form-group"><label>Date</label><input type="date" name="date" value={txnForm.date} onChange={handleTxnChange} required /></div>
-              <div className="form-group"><label>Description</label><input type="text" name="description" value={txnForm.description} onChange={handleTxnChange} required placeholder="Enter transaction description" /></div>
-              <div className="form-group"><label>Type</label><select name="type" value={txnForm.type} onChange={handleTxnChange} style={{ padding: '8px', borderRadius: '8px', border: '1px solid #ccc' }}>
-                <option value="debit">Debit</option>
-                <option value="credit">Credit</option>
-              </select></div>
-              <div className="form-group"><label>Amount</label><input type="number" min="0" step="0.01" name="amount" value={txnForm.amount} onChange={handleTxnChange} required /></div>
-              <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '12px', marginTop: '8px' }}>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Save Transaction</button>
-                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setSelectedAccount(null)}>Close Account</button>
+          <div className="card" style={{ borderLeft: '4px solid #059669' }}>
+            <h3 style={{ marginTop: 0, color: '#059669', fontWeight: 800, fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '8px' }}>➕ Add New Transaction</h3>
+            <form onSubmit={handleTxnSubmit}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '16px' }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>Date</label>
+                  <input type="date" name="date" value={txnForm.date} onChange={handleTxnChange} required style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>Description</label>
+                  <input type="text" name="description" value={txnForm.description} onChange={handleTxnChange} required placeholder="Enter description" style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>Type</label>
+                  <select name="type" value={txnForm.type} onChange={handleTxnChange} style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%', borderRadius: '8px', border: '1px solid #ccc', backgroundColor: 'var(--bg-main)' }}>
+                    <option value="debit">Debit</option>
+                    <option value="credit">Credit</option>
+                  </select>
+                </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>Amount</label>
+                  <input type="number" min="0" step="0.01" name="amount" value={txnForm.amount} onChange={handleTxnChange} required placeholder="0.00" style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', maxWidth: '400px' }}>
+                <button type="submit" className="btn btn-primary" style={{ padding: '10px 20px', fontWeight: 700, flex: 1 }}>Save Transaction</button>
+                <button type="button" className="btn btn-secondary" style={{ padding: '10px 20px', fontWeight: 600, flex: 1 }} onClick={() => setSelectedAccount(null)}>Close Account</button>
               </div>
             </form>
           </div>
 
           {editingTxnId && (
-            <div className="card" style={{ marginBottom: '24px', border: '2px solid #3b82f6', backgroundColor: '#eff6ff' }}>
-              <h3 style={{ marginTop: 0, color: '#1e40af' }}>Edit Transaction</h3>
-              <div className="form-grid">
-                <div className="form-group"><label>Date</label><input type="date" name="date" value={editTxnForm.date} onChange={handleEditTxnChange} /></div>
-                <div className="form-group"><label>Description</label><input type="text" name="description" value={editTxnForm.description} onChange={handleEditTxnChange} /></div>
-                <div className="form-group"><label>Type</label><select name="type" value={editTxnForm.type} onChange={handleEditTxnChange} style={{ padding: '8px', borderRadius: '8px', border: '1px solid #ccc' }}>
-                  <option value="debit">Debit</option>
-                  <option value="credit">Credit</option>
-                </select></div>
-                <div className="form-group"><label>Amount</label><input type="number" min="0" step="0.01" name="amount" value={editTxnForm.amount} onChange={handleEditTxnChange} /></div>
-                <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '12px', marginTop: '8px' }}>
-                  <button type="button" className="btn btn-primary" style={{ flex: 1, backgroundColor: '#3b82f6' }} onClick={handleEditTxnSubmit}>Save Changes</button>
-                  <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={cancelEditTransaction}>Cancel</button>
+            <div className="card" style={{ marginTop: '24px', border: '2px solid #3b82f6', backgroundColor: '#eff6ff' }}>
+              <h3 style={{ marginTop: 0, color: '#1e40af', fontWeight: 800 }}>✏️ Edit Transaction</h3>
+              <div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '16px' }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700 }}>Date</label>
+                    <input type="date" name="date" value={editTxnForm.date} onChange={handleEditTxnChange} style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700 }}>Description</label>
+                    <input type="text" name="description" value={editTxnForm.description} onChange={handleEditTxnChange} style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700 }}>Type</label>
+                    <select name="type" value={editTxnForm.type} onChange={handleEditTxnChange} style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%', borderRadius: '8px', border: '1px solid #ccc' }}>
+                      <option value="debit">Debit</option>
+                      <option value="credit">Credit</option>
+                    </select>
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700 }}>Amount</label>
+                    <input type="number" min="0" step="0.01" name="amount" value={editTxnForm.amount} onChange={handleEditTxnChange} style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '12px', maxWidth: '400px' }}>
+                  <button type="button" className="btn btn-primary" style={{ flex: 1, backgroundColor: '#3b82f6', fontWeight: 700 }} onClick={handleEditTxnSubmit}>Save Changes</button>
+                  <button type="button" className="btn btn-secondary" style={{ flex: 1, fontWeight: 600 }} onClick={cancelEditTransaction}>Cancel</button>
                 </div>
               </div>
             </div>
