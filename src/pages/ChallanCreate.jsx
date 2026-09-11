@@ -509,10 +509,10 @@ export default function ChallanCreate() {
 
         <div className="card" style={{ marginBottom: '24px' }}>
           <h3>Step 3: Financial Calculations</h3>
-          <div className="form-grid" style={{ marginTop: '16px' }}>
-            <div className="form-group">
-              <label>Delivery (-)</label>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', marginTop: '16px' }}>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label style={{ fontSize: '0.82rem', fontWeight: 600 }}>Delivery (-)</label>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', maxWidth: '280px' }}>
                 <input
                   type="number"
                   min="0"
@@ -526,9 +526,9 @@ export default function ChallanCreate() {
                     const calcAmt = (netRentAmount * (parseFloat(pct) || 0)) / 100;
                     setFormData(prev => ({ ...prev, commission_deduction: parseFloat(calcAmt.toFixed(2)) }));
                   }}
-                  style={{ width: '80px' }}
+                  style={{ width: '70px', padding: '8px 10px', fontSize: '0.95rem' }}
                 />
-                <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>%</span>
+                <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>%</span>
                 <input
                   type="number"
                   min="0"
@@ -540,11 +540,22 @@ export default function ChallanCreate() {
                     handleFormChange(e);
                   }}
                   placeholder="Amount"
-                  style={{ flex: 1 }}
+                  style={{ width: '175px', padding: '8px 10px', fontSize: '0.95rem' }}
                 />
               </div>
             </div>
-            <div className="form-group"><label>Vehicle Freight (-)</label><input type="number" min="0" step="0.01" name="vehicle_freight" value={formData.vehicle_freight} onChange={handleFormChange} /></div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label style={{ fontSize: '0.82rem', fontWeight: 600 }}>Vehicle Freight (-)</label>
+              <input 
+                type="number" 
+                min="0" 
+                step="0.01" 
+                name="vehicle_freight" 
+                value={formData.vehicle_freight} 
+                onChange={handleFormChange} 
+                style={{ width: '250px', padding: '8px 10px', fontSize: '0.95rem' }}
+              />
+            </div>
           </div>
           
           <div style={{ marginTop: '24px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
