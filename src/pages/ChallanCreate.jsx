@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { useSettings } from '../context/SettingsContext';
 import { Truck } from 'lucide-react';
 
 export default function ChallanCreate() {
+  const { challanHeaderUrl } = useSettings();
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -238,20 +240,26 @@ export default function ChallanCreate() {
     if (!savedChallan) return;
     const c = savedChallan;
 
-    // Convert header image to base64
-    const headerBase64 = await new Promise((resolve) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        canvas.getContext('2d').drawImage(img, 0, 0);
-        resolve(canvas.toDataURL('image/png'));
-      };
-      img.onerror = () => resolve('');
-      img.src = '/challan-header.jpg';
-    });
+    // Convert header image to base64 or use direct data URL
+    let headerBase64 = '';
+    const srcUrl = challanHeaderUrl || '/challan-header.jpg';
+    if (srcUrl.startsWith('data:image/')) {
+      headerBase64 = srcUrl;
+    } else {
+      headerBase64 = await new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          canvas.getContext('2d').drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = () => resolve(srcUrl);
+        img.src = srcUrl;
+      });
+    }
 
     const biltyRows = c.bilties.map((b, i) => `
       <tr>

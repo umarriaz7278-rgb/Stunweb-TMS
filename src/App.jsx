@@ -33,6 +33,8 @@ const BrokerReceivableLahore   = lazy(() => import('./pages/BrokerReceivableLaho
 const ProfitReportRawalpindi   = lazy(() => import('./pages/ProfitReportRawalpindi'));
 const BrokerReceivableRawalpindi= lazy(() => import('./pages/BrokerReceivableRawalpindi'));
 const BrokerLedger             = lazy(() => import('./pages/BrokerLedger'));
+const Settings                 = lazy(() => import('./pages/Settings'));
+import { useSettings } from './context/SettingsContext';
 
 // ─── Page Loader ─────────────────────────────────────────────────────────────
 function PageLoader() {
@@ -101,6 +103,7 @@ const NAV_ITEMS = [
   { section: 'Admin' },
   { path: '/vehicle-management',         icon: '🚗', label: 'Vehicle Management' },
   { path: '/finance',                    icon: '💾', label: 'Finance Overview' },
+  { path: '/settings',                   icon: '⚙️', label: 'Settings' },
 ];
 
 // ─── Page title map ──────────────────────────────────────────────────────────
@@ -133,14 +136,15 @@ const PAGE_TITLES = {
   '/branches-audit':               'Branches Audit',
   '/vehicle-management':           'Vehicle Management',
   '/finance':                      'Finance Overview',
+  '/settings':                     'System Settings',
 };
 
-function getPageTitle(pathname) {
+function getPageTitle(pathname, defaultCompany = 'ABID MEHMOOD') {
   if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
   for (const [key, val] of Object.entries(PAGE_TITLES)) {
     if (key !== '/' && pathname.startsWith(key)) return val;
   }
-  return 'ABID MEHMOOD — Goods Transport';
+  return `${defaultCompany} — Goods Transport`;
 }
 
 function formatDate(date) {
@@ -155,6 +159,7 @@ function formatDate(date) {
 // ─── App ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const location = useLocation();
+  const { companyName, companySubtitle } = useSettings();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState({
     islamabad: true,
@@ -189,7 +194,7 @@ export default function App() {
     return () => { document.body.style.overflow = ''; };
   }, [sidebarOpen]);
 
-  const pageTitle = getPageTitle(location.pathname);
+  const pageTitle = getPageTitle(location.pathname, companyName);
 
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/';
@@ -201,8 +206,8 @@ export default function App() {
       {/* ── Sidebar ── */}
       <div className={`sidebar${sidebarOpen ? ' active' : ''}`}>
         <div className="sidebar-header">
-          <h2>ABID MEHMOOD</h2>
-          <p>Goods Transport System</p>
+          <h2>{companyName}</h2>
+          <p>{companySubtitle}</p>
         </div>
 
         <nav className="sidebar-nav">
@@ -357,6 +362,7 @@ export default function App() {
             <Route path="/broker-receivable-lahore"                element={<BrokerReceivableLahore />} />
             <Route path="/broker-receivable-rawalpindi"            element={<BrokerReceivableRawalpindi />} />
             <Route path="/broker-ledger"                           element={<BrokerLedger />} />
+            <Route path="/settings"                                element={<Settings />} />
             <Route path="*" element={
               <div className="card">
                 <div className="card-header">

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { useSettings } from '../context/SettingsContext';
 
 export default function BiltyCreate() {
+  const { biltyHeaderUrl } = useSettings();
   const [branches, setBranches] = useState([]);
   
   // Function to get Pakistan timezone date (UTC+5)
@@ -272,7 +274,7 @@ export default function BiltyCreate() {
     if (!savedBilty) return;
     const b = savedBilty;
     const c = b.printCharges || { rentAmount: 0, loading: 0, localFare: 0, ttExpense: 0, total: 0 };
-    const imgUrl = window.location.origin + '/bilty-header.jpg';
+    const imgUrl = biltyHeaderUrl || (window.location.origin + '/bilty-header.jpg');
     const printWindow = window.open('', '_blank', 'width=800,height=600');
     printWindow.document.write(`<!DOCTYPE html><html><head><meta charset='utf-8'/><title>Bilty #${b.bilty_number}</title><style>
       @page { size: A4; margin: 1mm 5mm; }
