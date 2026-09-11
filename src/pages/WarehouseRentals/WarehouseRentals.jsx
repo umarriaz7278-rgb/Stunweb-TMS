@@ -206,8 +206,8 @@ export default function WarehouseRentals() {
     <div>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-        <Warehouse size={30} color="var(--primary-color)" />
-        <h1 className="page-title" style={{ marginBottom: 0 }}>Warehouse Rentals</h1>
+        <Warehouse size={32} color="#2563eb" />
+        <h1 className="page-title" style={{ marginBottom: 0, color: '#1e40af', fontWeight: 800 }}>Warehouse Rentals</h1>
       </div>
       <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Manage client storage contracts, inventory, deliveries, and rental payments.</p>
 
@@ -294,19 +294,19 @@ export default function WarehouseRentals() {
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '900px' }}>
                 <thead>
-                  <tr style={{ borderBottom: '2px solid var(--border-color)', backgroundColor: '#f8fafc' }}>
-                    <th style={{ padding: '12px' }}>Client</th>
-                    <th style={{ padding: '12px' }}>Bag / Item #</th>
-                    <th style={{ padding: '12px' }}>Section</th>
-                    <th style={{ padding: '12px' }}>Date In</th>
-                    <th style={{ padding: '12px' }}>Days</th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>Total Qty</th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>Delivered</th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>Remaining</th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>Expected</th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>Paid</th>
-                    <th style={{ padding: '12px' }}>Status</th>
-                    <th style={{ padding: '12px', textAlign: 'center' }}>Action</th>
+                  <tr style={{ borderBottom: '2px solid #cbd5e1', backgroundColor: '#f1f5f9' }}>
+                    <th style={{ padding: '12px 10px', color: '#2563eb', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>Client</th>
+                    <th style={{ padding: '12px 10px', color: '#0284c7', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>Bag / Item #</th>
+                    <th style={{ padding: '12px 10px', color: '#7c3aed', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>Section</th>
+                    <th style={{ padding: '12px 10px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>Date In</th>
+                    <th style={{ padding: '12px 10px', color: '#d97706', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>Days</th>
+                    <th style={{ padding: '12px 10px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Total Qty</th>
+                    <th style={{ padding: '12px 10px', color: '#059669', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Delivered</th>
+                    <th style={{ padding: '12px 10px', color: '#3b82f6', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Remaining</th>
+                    <th style={{ padding: '12px 10px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Expected</th>
+                    <th style={{ padding: '12px 10px', color: '#10b981', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Paid</th>
+                    <th style={{ padding: '12px 10px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>Status</th>
+                    <th style={{ padding: '12px 10px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'center' }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -362,36 +362,36 @@ export default function WarehouseRentals() {
       {activeTab === 'Add Client & Item' && (
         <form onSubmit={handleAddItem}>
           {/* Client Toggle */}
-          <div className="card" style={{ marginBottom: '20px' }}>
-            <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+          <div className="card" style={{ marginBottom: '20px', borderTop: '4px solid #2563eb' }}>
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
               <button type="button" className={`btn ${!useExistingClient ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setUseExistingClient(false)}>New Client</button>
               <button type="button" className={`btn ${useExistingClient ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setUseExistingClient(true)}>Existing Client</button>
             </div>
 
             {!useExistingClient ? (
               <>
-                <h3 style={{ marginBottom: '16px' }}>1. Client Details</h3>
+                <h3 style={{ marginBottom: '16px', color: '#2563eb', fontWeight: 800, fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '8px' }}>👤 1. Client Details</h3>
                 <div className="form-grid">
-                  <div className="form-group">
-                    <label>Client Name *</label>
-                    <input type="text" value={clientForm.name} onChange={e => setClientForm(p => ({ ...p, name: e.target.value }))} required={!useExistingClient} />
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e40af', marginBottom: '6px', display: 'block' }}>Client Name *</label>
+                    <input type="text" value={clientForm.name} onChange={e => setClientForm(p => ({ ...p, name: e.target.value }))} required={!useExistingClient} placeholder="Enter client name" style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', boxSizing: 'border-box' }} />
                   </div>
-                  <div className="form-group">
-                    <label>Contact Number</label>
-                    <input type="text" value={clientForm.contact_number} onChange={e => setClientForm(p => ({ ...p, contact_number: e.target.value }))} />
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e40af', marginBottom: '6px', display: 'block' }}>Contact Number</label>
+                    <input type="text" value={clientForm.contact_number} onChange={e => setClientForm(p => ({ ...p, contact_number: e.target.value }))} placeholder="e.g. 0321-1234567" style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', boxSizing: 'border-box' }} />
                   </div>
-                  <div className="form-group full-width">
-                    <label>Email</label>
-                    <input type="email" value={clientForm.email} onChange={e => setClientForm(p => ({ ...p, email: e.target.value }))} />
+                  <div className="form-group full-width" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e40af', marginBottom: '6px', display: 'block' }}>Email</label>
+                    <input type="email" value={clientForm.email} onChange={e => setClientForm(p => ({ ...p, email: e.target.value }))} placeholder="client@email.com" style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', boxSizing: 'border-box' }} />
                   </div>
                 </div>
               </>
             ) : (
               <>
-                <h3 style={{ marginBottom: '16px' }}>1. Select Existing Client</h3>
-                <div className="form-group">
-                  <label>Client *</label>
-                  <select value={itemForm.client_id} onChange={e => setItemForm(p => ({ ...p, client_id: e.target.value }))} required={useExistingClient}>
+                <h3 style={{ marginBottom: '16px', color: '#2563eb', fontWeight: 800, fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '8px' }}>👤 1. Select Existing Client</h3>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e40af', marginBottom: '6px', display: 'block' }}>Client *</label>
+                  <select value={itemForm.client_id} onChange={e => setItemForm(p => ({ ...p, client_id: e.target.value }))} required={useExistingClient} style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', boxSizing: 'border-box' }}>
                     <option value="">-- Select Client --</option>
                     {clients.map(c => <option key={c.id} value={c.id}>{c.name} ({c.contact_number})</option>)}
                   </select>
@@ -401,62 +401,62 @@ export default function WarehouseRentals() {
           </div>
 
           {/* Item Details */}
-          <div className="card" style={{ marginBottom: '20px' }}>
-            <h3 style={{ marginBottom: '16px' }}>2. Item Details</h3>
+          <div className="card" style={{ marginBottom: '20px', borderTop: '4px solid #059669' }}>
+            <h3 style={{ marginBottom: '16px', color: '#059669', fontWeight: 800, fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '8px' }}>📦 2. Item Details</h3>
             <div className="form-grid">
-              <div className="form-group">
-                <label>Bag / Item Number</label>
-                <input type="text" value={itemForm.bag_number} onChange={e => setItemForm(p => ({ ...p, bag_number: e.target.value }))} />
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#065f46', marginBottom: '6px', display: 'block' }}>Bag / Item Number</label>
+                <input type="text" value={itemForm.bag_number} onChange={e => setItemForm(p => ({ ...p, bag_number: e.target.value }))} placeholder="e.g. BAG-001" style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', boxSizing: 'border-box' }} />
               </div>
-              <div className="form-group">
-                <label>Quantity *</label>
-                <input type="number" min="1" value={itemForm.quantity} onChange={e => setItemForm(p => ({ ...p, quantity: e.target.value }))} required />
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#065f46', marginBottom: '6px', display: 'block' }}>Quantity *</label>
+                <input type="number" min="1" value={itemForm.quantity} onChange={e => setItemForm(p => ({ ...p, quantity: e.target.value }))} required placeholder="0" style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', fontWeight: 700, borderRadius: '8px', border: '1.5px solid #86efac', boxSizing: 'border-box' }} />
               </div>
-              <div className="form-group">
-                <label>Weight per Item (KG)</label>
-                <input type="number" step="0.01" min="0" value={itemForm.weight_per_item} onChange={e => setItemForm(p => ({ ...p, weight_per_item: e.target.value }))} />
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#065f46', marginBottom: '6px', display: 'block' }}>Weight per Item (KG)</label>
+                <input type="number" step="0.01" min="0" value={itemForm.weight_per_item} onChange={e => setItemForm(p => ({ ...p, weight_per_item: e.target.value }))} placeholder="0.00" style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', boxSizing: 'border-box' }} />
               </div>
-              <div className="form-group">
-                <label>Total Weight (KG)</label>
-                <input type="text" readOnly value={((parseFloat(itemForm.quantity) || 0) * (parseFloat(itemForm.weight_per_item) || 0)).toFixed(2)} style={{ backgroundColor: '#f1f5f9', cursor: 'not-allowed' }} />
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#065f46', marginBottom: '6px', display: 'block' }}>Total Weight (KG)</label>
+                <input type="text" readOnly value={((parseFloat(itemForm.quantity) || 0) * (parseFloat(itemForm.weight_per_item) || 0)).toFixed(2)} style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', fontWeight: 700, borderRadius: '8px', border: '1.5px solid #cbd5e1', backgroundColor: '#f1f5f9', cursor: 'not-allowed', boxSizing: 'border-box' }} />
               </div>
             </div>
           </div>
 
           {/* Storage Details */}
-          <div className="card" style={{ marginBottom: '20px' }}>
-            <h3 style={{ marginBottom: '16px' }}>3. Storage Details</h3>
+          <div className="card" style={{ marginBottom: '20px', borderTop: '4px solid #d97706' }}>
+            <h3 style={{ marginBottom: '16px', color: '#b45309', fontWeight: 800, fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '8px' }}>🏭 3. Storage Details</h3>
             <div className="form-grid">
-              <div className="form-group">
-                <label>Date In *</label>
-                <input type="date" value={itemForm.date_in} onChange={e => setItemForm(p => ({ ...p, date_in: e.target.value }))} required />
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#92400e', marginBottom: '6px', display: 'block' }}>Date In *</label>
+                <input type="date" value={itemForm.date_in} onChange={e => setItemForm(p => ({ ...p, date_in: e.target.value }))} required style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #fde68a', boxSizing: 'border-box' }} />
               </div>
-              <div className="form-group">
-                <label>Rent Period (Days)</label>
-                <input type="number" min="1" value={itemForm.rent_period_days} onChange={e => setItemForm(p => ({ ...p, rent_period_days: e.target.value }))} />
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#92400e', marginBottom: '6px', display: 'block' }}>Rent Period (Days)</label>
+                <input type="number" min="1" value={itemForm.rent_period_days} onChange={e => setItemForm(p => ({ ...p, rent_period_days: e.target.value }))} placeholder="30" style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #fde68a', boxSizing: 'border-box' }} />
               </div>
-              <div className="form-group">
-                <label>Expected Payment</label>
-                <input type="number" step="0.01" min="0" value={itemForm.expected_payment} onChange={e => setItemForm(p => ({ ...p, expected_payment: e.target.value }))} />
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#92400e', marginBottom: '6px', display: 'block' }}>Expected Payment (Rs.)</label>
+                <input type="number" step="0.01" min="0" value={itemForm.expected_payment} onChange={e => setItemForm(p => ({ ...p, expected_payment: e.target.value }))} placeholder="0.00" style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #fde68a', boxSizing: 'border-box' }} />
               </div>
-              <div className="form-group">
-                <label>Warehouse Section / Location</label>
-                <input type="text" value={itemForm.warehouse_section} onChange={e => setItemForm(p => ({ ...p, warehouse_section: e.target.value }))} placeholder="e.g. A-2, Block B" />
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#92400e', marginBottom: '6px', display: 'block' }}>Warehouse Section / Location</label>
+                <input type="text" value={itemForm.warehouse_section} onChange={e => setItemForm(p => ({ ...p, warehouse_section: e.target.value }))} placeholder="e.g. A-2, Block B" style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #fde68a', boxSizing: 'border-box' }} />
               </div>
             </div>
           </div>
 
           {/* Remarks */}
-          <div className="card" style={{ marginBottom: '20px' }}>
-            <h3 style={{ marginBottom: '16px' }}>5. Additional Notes / Remarks</h3>
-            <div className="form-group">
-              <label>Damage, Lost Items, Special Conditions</label>
-              <textarea rows={3} value={itemForm.remarks} onChange={e => setItemForm(p => ({ ...p, remarks: e.target.value }))} />
+          <div className="card" style={{ marginBottom: '20px', borderTop: '4px solid #64748b' }}>
+            <h3 style={{ marginBottom: '16px', color: '#475569', fontWeight: 800, fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '8px' }}>📝 5. Additional Notes / Remarks</h3>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '6px', display: 'block' }}>Damage, Lost Items, Special Conditions</label>
+              <textarea rows={3} value={itemForm.remarks} onChange={e => setItemForm(p => ({ ...p, remarks: e.target.value }))} style={{ width: '100%', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', boxSizing: 'border-box', resize: 'vertical' }} />
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary" disabled={loading} style={{ padding: '12px 32px', fontSize: '1rem', width: '100%' }}>
-            {loading ? 'Saving...' : 'Save Client & Item'}
+          <button type="submit" className="btn btn-primary" disabled={loading} style={{ padding: '13px 32px', fontSize: '1rem', fontWeight: 800, width: '100%', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            {loading ? 'Saving...' : '💾 Save Client & Item'}
           </button>
         </form>
       )}
@@ -465,13 +465,13 @@ export default function WarehouseRentals() {
       {activeTab === 'Deliveries' && (
         <div>
           {/* Delivery Form */}
-          <div className="card" style={{ marginBottom: '24px' }}>
-            <h3 style={{ marginBottom: '16px' }}>4. Record Pickup / Delivery</h3>
+          <div className="card" style={{ marginBottom: '24px', borderTop: '4px solid #2563eb' }}>
+            <h3 style={{ marginBottom: '16px', color: '#2563eb', fontWeight: 800, fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '8px' }}>📤 4. Record Pickup / Delivery</h3>
             <form onSubmit={handleDelivery}>
               <div className="form-grid">
-                <div className="form-group full-width">
-                  <label>Select Item / Bag *</label>
-                  <select value={deliveryForm.item_id} onChange={e => setDeliveryForm(p => ({ ...p, item_id: e.target.value }))} required>
+                <div className="form-group full-width" style={{ margin: 0, marginBottom: '14px' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e40af', marginBottom: '6px', display: 'block' }}>Select Item / Bag *</label>
+                  <select value={deliveryForm.item_id} onChange={e => setDeliveryForm(p => ({ ...p, item_id: e.target.value }))} required style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #93c5fd', boxSizing: 'border-box' }}>
                     <option value="">-- Select Active Item --</option>
                     {items.filter(i => getRemainingQty(i) > 0).map(i => (
                       <option key={i.id} value={i.id}>
@@ -481,8 +481,8 @@ export default function WarehouseRentals() {
                   </select>
                 </div>
                 {deliveryForm.item_id && (
-                  <div className="form-group full-width">
-                    <div style={{ padding: '10px 16px', backgroundColor: '#eff6ff', borderRadius: '6px', border: '1px solid #bfdbfe', display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+                  <div className="form-group full-width" style={{ margin: 0, marginBottom: '14px' }}>
+                    <div style={{ padding: '10px 16px', backgroundColor: '#eff6ff', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', gap: '24px', flexWrap: 'wrap', fontSize: '0.9rem' }}>
                       {(() => {
                         const sel = items.find(i => i.id === deliveryForm.item_id);
                         if (!sel) return null;
@@ -498,47 +498,47 @@ export default function WarehouseRentals() {
                     </div>
                   </div>
                 )}
-                <div className="form-group">
-                  <label>Date Out *</label>
-                  <input type="date" value={deliveryForm.date_out} onChange={e => setDeliveryForm(p => ({ ...p, date_out: e.target.value }))} required />
+                <div className="form-group" style={{ margin: 0, marginBottom: '14px' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e40af', marginBottom: '6px', display: 'block' }}>Date Out *</label>
+                  <input type="date" value={deliveryForm.date_out} onChange={e => setDeliveryForm(p => ({ ...p, date_out: e.target.value }))} required style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #93c5fd', boxSizing: 'border-box' }} />
                 </div>
-                <div className="form-group">
-                  <label>Delivered Quantity *</label>
-                  <input type="number" min="1" value={deliveryForm.delivered_quantity} onChange={e => setDeliveryForm(p => ({ ...p, delivered_quantity: e.target.value }))} required />
+                <div className="form-group" style={{ margin: 0, marginBottom: '14px' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e40af', marginBottom: '6px', display: 'block' }}>Delivered Quantity *</label>
+                  <input type="number" min="1" value={deliveryForm.delivered_quantity} onChange={e => setDeliveryForm(p => ({ ...p, delivered_quantity: e.target.value }))} required placeholder="0" style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', fontWeight: 700, borderRadius: '8px', border: '1.5px solid #93c5fd', boxSizing: 'border-box' }} />
                 </div>
-                <div className="form-group">
-                  <label>Payment Received</label>
-                  <input type="number" step="0.01" min="0" value={deliveryForm.payment_received} onChange={e => setDeliveryForm(p => ({ ...p, payment_received: e.target.value }))} />
+                <div className="form-group" style={{ margin: 0, marginBottom: '14px' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#059669', marginBottom: '6px', display: 'block' }}>Payment Received (Rs.)</label>
+                  <input type="number" step="0.01" min="0" value={deliveryForm.payment_received} onChange={e => setDeliveryForm(p => ({ ...p, payment_received: e.target.value }))} placeholder="0.00" style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #86efac', boxSizing: 'border-box' }} />
                 </div>
-                <div className="form-group">
-                  <label>Late Charges</label>
-                  <input type="number" step="0.01" min="0" value={deliveryForm.late_charges} onChange={e => setDeliveryForm(p => ({ ...p, late_charges: e.target.value }))} />
+                <div className="form-group" style={{ margin: 0, marginBottom: '14px' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#dc2626', marginBottom: '6px', display: 'block' }}>Late Charges (Rs.)</label>
+                  <input type="number" step="0.01" min="0" value={deliveryForm.late_charges} onChange={e => setDeliveryForm(p => ({ ...p, late_charges: e.target.value }))} placeholder="0.00" style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #fca5a5', boxSizing: 'border-box' }} />
                 </div>
-                <div className="form-group full-width">
-                  <label>Delivery Notes</label>
-                  <input type="text" value={deliveryForm.notes} onChange={e => setDeliveryForm(p => ({ ...p, notes: e.target.value }))} placeholder="Any delivery remarks..." />
+                <div className="form-group full-width" style={{ margin: 0, marginBottom: '14px' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '6px', display: 'block' }}>Delivery Notes</label>
+                  <input type="text" value={deliveryForm.notes} onChange={e => setDeliveryForm(p => ({ ...p, notes: e.target.value }))} placeholder="Any delivery remarks..." style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', boxSizing: 'border-box' }} />
                 </div>
               </div>
-              <button type="submit" className="btn btn-primary" disabled={loading} style={{ marginTop: '12px', width: '100%', padding: '12px' }}>
-                {loading ? 'Processing...' : 'Confirm Delivery / Pickup'}
+              <button type="submit" className="btn btn-primary" disabled={loading} style={{ marginTop: '12px', width: '100%', padding: '13px', fontSize: '1rem', fontWeight: 800, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                {loading ? 'Processing...' : '✅ Confirm Delivery / Pickup'}
               </button>
             </form>
           </div>
 
           {/* Delivery History */}
           <div className="card">
-            <h3 style={{ marginBottom: '16px' }}>Delivery History</h3>
+            <h3 style={{ marginBottom: '16px', color: '#7c3aed', fontWeight: 800, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>📋 Delivery History</h3>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
-                  <tr style={{ borderBottom: '2px solid var(--border-color)', backgroundColor: '#f8fafc' }}>
-                    <th style={{ padding: '12px' }}>Client</th>
-                    <th style={{ padding: '12px' }}>Bag #</th>
-                    <th style={{ padding: '12px' }}>Date Out</th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>Delivered Qty</th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>Payment Received</th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>Late Charges</th>
-                    <th style={{ padding: '12px' }}>Notes</th>
+                  <tr style={{ borderBottom: '2px solid #cbd5e1', backgroundColor: '#f1f5f9' }}>
+                    <th style={{ padding: '12px 10px', color: '#2563eb', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>Client</th>
+                    <th style={{ padding: '12px 10px', color: '#0284c7', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>Bag #</th>
+                    <th style={{ padding: '12px 10px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>Date Out</th>
+                    <th style={{ padding: '12px 10px', color: '#059669', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Delivered Qty</th>
+                    <th style={{ padding: '12px 10px', color: '#10b981', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Payment Received</th>
+                    <th style={{ padding: '12px 10px', color: '#dc2626', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Late Charges</th>
+                    <th style={{ padding: '12px 10px', color: '#475569', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>Notes</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -594,15 +594,15 @@ export default function WarehouseRentals() {
           </div>
 
           {/* Section Breakdown */}
-          <div className="card" style={{ marginBottom: '24px' }}>
-            <h3 style={{ marginBottom: '16px' }}>Warehouse Section Status</h3>
+          <div className="card" style={{ marginBottom: '24px', borderTop: '4px solid #7c3aed' }}>
+            <h3 style={{ marginBottom: '16px', color: '#7c3aed', fontWeight: 800, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>🏭 Warehouse Section Status</h3>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
-                <tr style={{ borderBottom: '2px solid var(--border-color)', backgroundColor: '#f8fafc' }}>
-                  <th style={{ padding: '12px' }}>Section</th>
-                  <th style={{ padding: '12px', textAlign: 'right' }}>Items in Storage</th>
-                  <th style={{ padding: '12px', textAlign: 'right' }}>Qty Remaining</th>
-                  <th style={{ padding: '12px', textAlign: 'right' }}>Active Clients</th>
+                <tr style={{ borderBottom: '2px solid #cbd5e1', backgroundColor: '#f5f3ff' }}>
+                  <th style={{ padding: '12px 10px', color: '#7c3aed', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>Section</th>
+                  <th style={{ padding: '12px 10px', color: '#2563eb', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Items in Storage</th>
+                  <th style={{ padding: '12px 10px', color: '#0284c7', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Qty Remaining</th>
+                  <th style={{ padding: '12px 10px', color: '#059669', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Active Clients</th>
                 </tr>
               </thead>
               <tbody>
@@ -626,17 +626,17 @@ export default function WarehouseRentals() {
           </div>
 
           {/* Delivered vs Remaining Summary */}
-          <div className="card">
-            <h3 style={{ marginBottom: '16px' }}>Delivered vs Remaining — Per Client</h3>
+          <div className="card" style={{ borderTop: '4px solid #059669' }}>
+            <h3 style={{ marginBottom: '16px', color: '#059669', fontWeight: 800, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>📊 Delivered vs Remaining — Per Client</h3>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
-                <tr style={{ borderBottom: '2px solid var(--border-color)', backgroundColor: '#f8fafc' }}>
-                  <th style={{ padding: '12px' }}>Client</th>
-                  <th style={{ padding: '12px' }}>Contact</th>
-                  <th style={{ padding: '12px', textAlign: 'right' }}>Total Stored</th>
-                  <th style={{ padding: '12px', textAlign: 'right' }}>Delivered</th>
-                  <th style={{ padding: '12px', textAlign: 'right' }}>Remaining</th>
-                  <th style={{ padding: '12px', textAlign: 'right' }}>Payment Status</th>
+                <tr style={{ borderBottom: '2px solid #cbd5e1', backgroundColor: '#f0fdf4' }}>
+                  <th style={{ padding: '12px 10px', color: '#059669', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>Client</th>
+                  <th style={{ padding: '12px 10px', color: '#475569', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase' }}>Contact</th>
+                  <th style={{ padding: '12px 10px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Total Stored</th>
+                  <th style={{ padding: '12px 10px', color: '#10b981', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Delivered</th>
+                  <th style={{ padding: '12px 10px', color: '#3b82f6', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Remaining</th>
+                  <th style={{ padding: '12px 10px', color: '#d97706', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', textAlign: 'right' }}>Payment Status</th>
                 </tr>
               </thead>
               <tbody>
