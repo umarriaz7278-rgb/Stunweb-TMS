@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { supabase } from '../supabaseClient';
-import { TrendingUp, Plus, X, Lock, Unlock, Users, Phone, MapPin, Search, Edit2, Trash2, Save, UserCheck } from 'lucide-react';
+import { TrendingUp, Plus, X, Lock, Unlock, Users, Phone, MapPin, Search, Edit2, Trash2, Save, UserCheck, ChevronDown, ChevronUp, FileText, CheckCircle2, DollarSign, Eye } from 'lucide-react';
 
 const BROKERS_STORAGE_KEY = 'islamabad_broker_accounts';
 
@@ -41,6 +41,15 @@ export default function BrokerReceivable() {
     phone: '',
     address: '',
   });
+
+  // Per-broker expanded ledger state
+  const [expandedBroker, setExpandedBroker] = useState(null); // broker.id
+  const [brokerChallanMap, setBrokerChallanMap] = useState({}); // { brokerId: [challans] }
+  const [brokerReceivedMap, setBrokerReceivedMap] = useState({}); // { brokerId: [payments] }
+  const [loadingBrokerDetail, setLoadingBrokerDetail] = useState(false);
+  const [brokerPayForm, setBrokerPayForm] = useState({ date: new Date().toISOString().split('T')[0], description: '', amount: '' });
+  const [showBrokerPayForm, setShowBrokerPayForm] = useState(false);
+  const [savingBrokerPay, setSavingBrokerPay] = useState(false);
 
   // Closed months
   const [closedMonths, setClosedMonths] = useState(() => {
@@ -90,7 +99,7 @@ export default function BrokerReceivable() {
     // Step 2: Fetch those challans with all financial fields
     const { data, error } = await supabase
       .from('challans')
-      .select('id, challan_number, challan_date, vehicle_number, total_bilty_amount, commission_deduction, vehicle_freight, branch_deposit')
+      .select('id, challan_number, challan_date, vehicle_number, total_bilty_amount, commission_deduction, vehicle_freight, branch_deposit, broker_name')
       .in('id', islamabadChallanIds)
       .order('id', { ascending: false });
 
@@ -224,6 +233,60 @@ export default function BrokerReceivable() {
     const freight = parseFloat(ch.vehicle_freight) || 0;
     const deposit = parseFloat(ch.branch_deposit) || 0;
     return biltyAmt - commission - freight - deposit;
+  };
+
+  // Helper: Get all challans associated with a specific broker
+  const getBrokerChallans = (brokerName) => {
+    if (!brokerName) return [];
+    const bName = brokerName.trim().toLowerCase();
+    return challans.filter(ch => (ch.broker_name || '').trim().toLowerCase() === bName);
+  };
+
+  // Helper: Get all payments associated with a specific broker
+  const getBrokerReceived = (brokerName) => {
+    if (!brokerName) return [];
+    const bName = brokerName.trim().toLowerCase();
+    return received.filter(r => {
+      const directMatch = (r.broker_name || '').trim().toLowerCase() === bName;
+      const descMatch = (r.description || '').toLowerCase().includes(bName);
+      return directMatch || descMatch;
+    });
+  };
+
+  // Save received payment for a specific broker
+  const handleSaveBrokerPayment = async (broker, e) => {
+    e.preventDefault();
+    if (!brokerPayForm.amount || parseFloat(brokerPayForm.amount) <= 0) {
+      setMsg({ text: 'Please enter a valid amount.', type: 'error' });
+      return;
+    }
+    setSavingBrokerPay(true);
+    const desc = `[${broker.name}] ${brokerPayForm.description || ''}`.trim();
+    
+    // First try insert with broker_name
+    let insertData = {
+      date: brokerPayForm.date,
+      description: desc,
+      amount: parseFloat(brokerPayForm.amount),
+      broker_name: broker.name
+    };
+
+    let { error } = await supabase.from('broker_received_islamabad').insert([insertData]);
+    if (error && error.message && error.message.includes('broker_name')) {
+      delete insertData.broker_name;
+      const res = await supabase.from('broker_received_islamabad').insert([insertData]);
+      error = res.error;
+    }
+
+    setSavingBrokerPay(false);
+    if (error) {
+      setMsg({ text: 'Error recording payment: ' + error.message, type: 'error' });
+    } else {
+      setMsg({ text: `Payment of Rs. ${parseFloat(brokerPayForm.amount).toLocaleString('en-PK')} recorded for ${broker.name}!`, type: 'success' });
+      setBrokerPayForm({ date: new Date().toISOString().split('T')[0], description: '', amount: '' });
+      setShowBrokerPayForm(false);
+      fetchReceived();
+    }
   };
 
   // Month filter helpers
@@ -701,63 +764,284 @@ export default function BrokerReceivable() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredBrokers.map((b, i) => (
-                      <tr
-                        key={b.id}
-                        style={{ borderBottom: '1px solid var(--border)' }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                        onMouseLeave={e => e.currentTarget.style.background = ''}
-                      >
-                        <td style={{ padding: '12px 14px', color: 'var(--text-muted)', fontWeight: 600 }}>{i + 1}</td>
-                        <td style={{ padding: '12px 14px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#dbeafe', color: '#1e40af', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem' }}>
-                              {b.name ? b.name.charAt(0).toUpperCase() : 'B'}
-                            </div>
-                            <div>
-                              <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.95rem' }}>{b.name}</div>
-                              <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>ID: {String(b.id).slice(0, 8)}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td style={{ padding: '12px 14px' }}>
-                          {b.phone ? (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#065f46', fontWeight: 600, background: '#d1fae5', padding: '3px 10px', borderRadius: '6px', fontSize: '0.85rem' }}>
-                              <Phone size={13} /> {b.phone}
-                            </span>
-                          ) : (
-                            <span style={{ color: '#94a3b8' }}>—</span>
+                    {filteredBrokers.map((b, i) => {
+                      const isExpanded = expandedBroker === b.id;
+                      const bChallans = getBrokerChallans(b.name);
+                      const bReceived = getBrokerReceived(b.name);
+                      const bTotalReceivable = bChallans.reduce((acc, ch) => acc + calcReceivable(ch), 0);
+                      const bTotalReceived = bReceived.reduce((acc, r) => acc + (parseFloat(r.amount) || 0), 0);
+                      const bBalance = bTotalReceivable - bTotalReceived;
+
+                      return (
+                        <Fragment key={b.id}>
+                          <tr
+                            style={{ borderBottom: isExpanded ? 'none' : '1px solid var(--border)', background: isExpanded ? '#eff6ff' : '' }}
+                            onMouseEnter={e => { if (!isExpanded) e.currentTarget.style.background = '#f8fafc'; }}
+                            onMouseLeave={e => { if (!isExpanded) e.currentTarget.style.background = ''; }}
+                          >
+                            <td style={{ padding: '12px 14px', color: 'var(--text-muted)', fontWeight: 600 }}>{i + 1}</td>
+                            <td style={{ padding: '12px 14px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#dbeafe', color: '#1e40af', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem' }}>
+                                  {b.name ? b.name.charAt(0).toUpperCase() : 'B'}
+                                </div>
+                                <div>
+                                  <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.95rem' }}>{b.name}</div>
+                                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>ID: {String(b.id).slice(0, 8)}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td style={{ padding: '12px 14px' }}>
+                              {b.phone ? (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#065f46', fontWeight: 600, background: '#d1fae5', padding: '3px 10px', borderRadius: '6px', fontSize: '0.85rem' }}>
+                                  <Phone size={13} /> {b.phone}
+                                </span>
+                              ) : (
+                                <span style={{ color: '#94a3b8' }}>—</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '12px 14px' }}>
+                              {b.address ? (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#475569' }}>
+                                  <MapPin size={14} color="#7c3aed" /> {b.address}
+                                </span>
+                              ) : (
+                                <span style={{ color: '#94a3b8' }}>—</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                              <div style={{ display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedBroker(isExpanded ? null : b.id)}
+                                  style={{
+                                    background: isExpanded ? '#2563eb' : '#eff6ff',
+                                    color: isExpanded ? '#fff' : '#2563eb',
+                                    border: '1.5px solid #93c5fd',
+                                    borderRadius: '6px',
+                                    padding: '6px 12px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    fontSize: '0.82rem',
+                                    fontWeight: 700
+                                  }}
+                                  title="View Challans & Ledger"
+                                >
+                                  <FileText size={14} />
+                                  {isExpanded ? 'Hide Ledger' : 'View Ledger'}
+                                  {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                </button>
+                                <button
+                                  onClick={() => handleEditBroker(b)}
+                                  style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', color: '#2563eb', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 600 }}
+                                  title="Edit Broker"
+                                >
+                                  <Edit2 size={14} /> Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteBroker(b.id)}
+                                  style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 600 }}
+                                  title="Delete Broker"
+                                >
+                                  <Trash2 size={14} /> Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+
+                          {/* Expanded Per-Broker Ledger */}
+                          {isExpanded && (
+                            <tr>
+                              <td colSpan={5} style={{ padding: '20px 24px', background: '#f8fafc', borderBottom: '2px solid #93c5fd' }}>
+                                {/* Stat Summary Cards */}
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '12px', marginBottom: '18px' }}>
+                                  <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '10px', border: '1.5px solid #bfdbfe', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                                    <div style={{ fontSize: '0.75rem', color: '#1e40af', fontWeight: 800, textTransform: 'uppercase' }}>Challans Linked</div>
+                                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e40af', marginTop: '4px' }}>{bChallans.length} Challan(s)</div>
+                                  </div>
+                                  <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '10px', border: '1.5px solid #bfdbfe', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                                    <div style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: 800, textTransform: 'uppercase' }}>Total Receivable (چلانات)</div>
+                                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#2563eb', marginTop: '4px' }}>Rs. {bTotalReceivable.toLocaleString('en-PK')}</div>
+                                  </div>
+                                  <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '10px', border: '1.5px solid #bbf7d0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                                    <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 800, textTransform: 'uppercase' }}>Total Received (وصول شدہ)</div>
+                                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#059669', marginTop: '4px' }}>Rs. {bTotalReceived.toLocaleString('en-PK')}</div>
+                                  </div>
+                                  <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '10px', border: bBalance > 0 ? '1.5px solid #fecaca' : '1.5px solid #bbf7d0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                                    <div style={{ fontSize: '0.75rem', color: bBalance > 0 ? '#dc2626' : '#059669', fontWeight: 800, textTransform: 'uppercase' }}>Remaining Balance (بقایا)</div>
+                                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: bBalance > 0 ? '#dc2626' : '#059669', marginTop: '4px' }}>Rs. {bBalance.toLocaleString('en-PK')}</div>
+                                  </div>
+                                </div>
+
+                                {/* Two Column Grid: Challans & Received Payments */}
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '18px' }}>
+                                  
+                                  {/* 1. Challans List for this Broker */}
+                                  <div style={{ background: '#fff', borderRadius: '10px', border: '1px solid #cbd5e1', overflow: 'hidden' }}>
+                                    <div style={{ padding: '10px 14px', background: '#eff6ff', borderBottom: '1px solid #cbd5e1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: '#1e40af', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <FileText size={15} /> Challans Linked to {b.name} ({bChallans.length})
+                                      </h4>
+                                    </div>
+                                    {bChallans.length === 0 ? (
+                                      <div style={{ padding: '24px', textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>
+                                        No Islamabad challans linked to <strong>{b.name}</strong> yet.
+                                      </div>
+                                    ) : (
+                                      <div style={{ overflowX: 'auto', maxHeight: '280px' }}>
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
+                                          <thead>
+                                            <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                                              <th style={{ padding: '8px 10px', textAlign: 'left', color: '#475569' }}>Date</th>
+                                              <th style={{ padding: '8px 10px', textAlign: 'left', color: '#475569' }}>Challan #</th>
+                                              <th style={{ padding: '8px 10px', textAlign: 'left', color: '#475569' }}>Vehicle #</th>
+                                              <th style={{ padding: '8px 10px', textAlign: 'right', color: '#2563eb' }}>Receivable</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {bChallans.map(ch => (
+                                              <tr key={ch.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                <td style={{ padding: '8px 10px' }}>{ch.challan_date ? new Date(ch.challan_date).toLocaleDateString('en-PK') : '—'}</td>
+                                                <td style={{ padding: '8px 10px', fontWeight: 700, color: '#1e40af' }}>#{ch.challan_number}</td>
+                                                <td style={{ padding: '8px 10px' }}>{ch.vehicle_number || '—'}</td>
+                                                <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: '#2563eb' }}>
+                                                  Rs. {calcReceivable(ch).toLocaleString('en-PK')}
+                                                </td>
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                          <tfoot>
+                                            <tr style={{ background: '#eff6ff', fontWeight: 800, borderTop: '2px solid #bfdbfe' }}>
+                                              <td colSpan={3} style={{ padding: '8px 10px', color: '#1e40af' }}>Total Receivable</td>
+                                              <td style={{ padding: '8px 10px', textAlign: 'right', color: '#2563eb' }}>Rs. {bTotalReceivable.toLocaleString('en-PK')}</td>
+                                            </tr>
+                                          </tfoot>
+                                        </table>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* 2. Received Payments & Add Form */}
+                                  <div style={{ background: '#fff', borderRadius: '10px', border: '1px solid #cbd5e1', overflow: 'hidden' }}>
+                                    <div style={{ padding: '10px 14px', background: '#ecfdf5', borderBottom: '1px solid #cbd5e1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                      <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: '#065f46', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <DollarSign size={15} /> Received Payments ({bReceived.length})
+                                      </h4>
+                                      <button
+                                        type="button"
+                                        onClick={() => setShowBrokerPayForm(p => !p)}
+                                        style={{ padding: '4px 10px', fontSize: '0.78rem', fontWeight: 700, background: '#059669', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                      >
+                                        {showBrokerPayForm ? <><X size={12} /> Cancel</> : <><Plus size={12} /> Receive Amount (رقم وصول کریں)</>}
+                                      </button>
+                                    </div>
+
+                                    {/* Mini Receive Payment Form */}
+                                    {showBrokerPayForm && (
+                                      <form onSubmit={(e) => handleSaveBrokerPayment(b, e)} style={{ padding: '12px 14px', background: '#f0fdf4', borderBottom: '1px solid #86efac' }}>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '8px', marginBottom: '8px' }}>
+                                          <div>
+                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#065f46', display: 'block', marginBottom: '3px' }}>Date</label>
+                                            <input
+                                              type="date"
+                                              value={brokerPayForm.date}
+                                              onChange={e => setBrokerPayForm(p => ({ ...p, date: e.target.value }))}
+                                              required
+                                              style={{ width: '100%', padding: '5px 8px', fontSize: '0.82rem', borderRadius: '6px', border: '1px solid #86efac', boxSizing: 'border-box' }}
+                                            />
+                                          </div>
+                                          <div>
+                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#065f46', display: 'block', marginBottom: '3px' }}>Description</label>
+                                            <input
+                                              type="text"
+                                              value={brokerPayForm.description}
+                                              onChange={e => setBrokerPayForm(p => ({ ...p, description: e.target.value }))}
+                                              placeholder="Remarks / details"
+                                              style={{ width: '100%', padding: '5px 8px', fontSize: '0.82rem', borderRadius: '6px', border: '1px solid #86efac', boxSizing: 'border-box' }}
+                                            />
+                                          </div>
+                                          <div>
+                                            <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#065f46', display: 'block', marginBottom: '3px' }}>Amount (Rs.) *</label>
+                                            <input
+                                              type="number"
+                                              min="0"
+                                              step="0.01"
+                                              value={brokerPayForm.amount}
+                                              onChange={e => setBrokerPayForm(p => ({ ...p, amount: e.target.value }))}
+                                              placeholder="0.00"
+                                              required
+                                              style={{ width: '100%', padding: '5px 8px', fontSize: '0.84rem', fontWeight: 700, borderRadius: '6px', border: '1.5px solid #059669', boxSizing: 'border-box' }}
+                                            />
+                                          </div>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                                          <button
+                                            type="submit"
+                                            disabled={savingBrokerPay}
+                                            style={{ padding: '5px 14px', fontSize: '0.8rem', fontWeight: 700, background: '#059669', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                                          >
+                                            {savingBrokerPay ? 'Saving...' : 'Save Payment'}
+                                          </button>
+                                        </div>
+                                      </form>
+                                    )}
+
+                                    {bReceived.length === 0 ? (
+                                      <div style={{ padding: '24px', textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>
+                                        No received payment entries recorded for <strong>{b.name}</strong>.
+                                      </div>
+                                    ) : (
+                                      <div style={{ overflowX: 'auto', maxHeight: '280px' }}>
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
+                                          <thead>
+                                            <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                                              <th style={{ padding: '8px 10px', textAlign: 'left', color: '#475569' }}>Date</th>
+                                              <th style={{ padding: '8px 10px', textAlign: 'left', color: '#475569' }}>Description</th>
+                                              <th style={{ padding: '8px 10px', textAlign: 'right', color: '#059669' }}>Amount</th>
+                                              <th style={{ padding: '8px 10px', textAlign: 'center', color: '#475569', width: '30px' }}></th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {bReceived.map(r => (
+                                              <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                <td style={{ padding: '8px 10px' }}>{r.date ? new Date(r.date).toLocaleDateString('en-PK') : '—'}</td>
+                                                <td style={{ padding: '8px 10px' }}>{r.description || '—'}</td>
+                                                <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: '#059669' }}>
+                                                  Rs. {(parseFloat(r.amount) || 0).toLocaleString('en-PK')}
+                                                </td>
+                                                <td style={{ padding: '8px 10px', textAlign: 'center' }}>
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => handleDeleteReceived(r.id)}
+                                                    style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px' }}
+                                                    title="Delete Payment"
+                                                  >
+                                                    <X size={14} />
+                                                  </button>
+                                                </td>
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                          <tfoot>
+                                            <tr style={{ background: '#ecfdf5', fontWeight: 800, borderTop: '2px solid #a7f3d0' }}>
+                                              <td colSpan={2} style={{ padding: '8px 10px', color: '#065f46' }}>Total Received</td>
+                                              <td style={{ padding: '8px 10px', textAlign: 'right', color: '#059669' }}>Rs. {bTotalReceived.toLocaleString('en-PK')}</td>
+                                              <td></td>
+                                            </tr>
+                                          </tfoot>
+                                        </table>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
                           )}
-                        </td>
-                        <td style={{ padding: '12px 14px' }}>
-                          {b.address ? (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#475569' }}>
-                              <MapPin size={14} color="#7c3aed" /> {b.address}
-                            </span>
-                          ) : (
-                            <span style={{ color: '#94a3b8' }}>—</span>
-                          )}
-                        </td>
-                        <td style={{ padding: '12px 14px', textAlign: 'center' }}>
-                          <div style={{ display: 'inline-flex', gap: '8px' }}>
-                            <button
-                              onClick={() => handleEditBroker(b)}
-                              style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', color: '#2563eb', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 600 }}
-                              title="Edit Broker"
-                            >
-                              <Edit2 size={14} /> Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteBroker(b.id)}
-                              style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: 600 }}
-                              title="Delete Broker"
-                            >
-                              <Trash2 size={14} /> Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                        </Fragment>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

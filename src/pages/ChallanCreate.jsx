@@ -13,6 +13,14 @@ export default function ChallanCreate() {
   // Branch filter (not printed)
   const [selectedBranch, setSelectedBranch] = useState('');
 
+  // Islamabad broker list for dropdown
+  const [islamabadBrokers, setIslamabadBrokers] = useState(() => {
+    try {
+      const s = localStorage.getItem('islamabad_broker_accounts');
+      return s ? JSON.parse(s) : [];
+    } catch { return []; }
+  });
+
   // Form Fields
   const [formData, setFormData] = useState({
     vehicle_number: '',
@@ -452,8 +460,24 @@ export default function ChallanCreate() {
               <input type="date" value={challanDate} onChange={e => setChallanDate(e.target.value)} required style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
             </div>
             <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '0.82rem', fontWeight: 600 }}>Broker Name</label>
-              <input type="text" name="broker_name" value={formData.broker_name} onChange={handleFormChange} placeholder="Broker name (optional)" style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
+              <label style={{ fontSize: '0.82rem', fontWeight: 600 }}>Broker Name
+                {selectedBranch === 'Islamabad' && <span style={{ color: '#2563eb', marginLeft: '6px', fontSize: '0.75rem' }}>(ISB Brokers)</span>}
+              </label>
+              {selectedBranch === 'Islamabad' && islamabadBrokers.length > 0 ? (
+                <select
+                  name="broker_name"
+                  value={formData.broker_name}
+                  onChange={handleFormChange}
+                  style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%', border: '1.5px solid #2563eb', borderRadius: '6px', background: '#eff6ff', color: '#1e40af', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  <option value="">-- Select Broker --</option>
+                  {islamabadBrokers.map(b => (
+                    <option key={b.id} value={b.name}>{b.name}{b.phone ? ` (${b.phone})` : ''}</option>
+                  ))}
+                </select>
+              ) : (
+                <input type="text" name="broker_name" value={formData.broker_name} onChange={handleFormChange} placeholder="Broker name (optional)" style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
+              )}
             </div>
           </div>
         </div>
