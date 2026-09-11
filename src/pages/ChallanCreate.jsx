@@ -456,16 +456,16 @@ export default function ChallanCreate() {
           
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.95rem' }}>
             <thead>
-              <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
-                <th style={{ padding: '8px' }}>Select</th>
-                <th style={{ padding: '8px' }}>Bilty #</th>
-                <th style={{ padding: '8px' }}>Destination</th>
-                <th style={{ padding: '8px' }}>Available Qty</th>
-                <th style={{ padding: '8px' }}>Rent Amount</th>
-                <th style={{ padding: '8px' }}>Local Fare</th>
-                <th style={{ padding: '8px' }}>Loading</th>
-                <th style={{ padding: '8px' }}>TT</th>
-                <th style={{ padding: '8px' }}>Load Qty</th>
+              <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
+                <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Select</th>
+                <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bilty #</th>
+                <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Destination</th>
+                <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Available Qty</th>
+                <th style={{ padding: '10px 8px', color: '#c0392b', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Rent Amount</th>
+                <th style={{ padding: '10px 8px', color: '#059669', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Local Fare</th>
+                <th style={{ padding: '10px 8px', color: '#d97706', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Loading</th>
+                <th style={{ padding: '10px 8px', color: '#2563eb', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>TT Expense</th>
+                <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Load Qty</th>
               </tr>
             </thead>
             <tbody>
