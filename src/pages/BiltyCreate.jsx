@@ -478,15 +478,12 @@ export default function BiltyCreate() {
 
   return (
     <div className="bilty-page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-        <h1 className="page-title" style={{ marginBottom: 0, fontSize: '1.3rem' }}>Create New Bilty</h1>
-        {savedBilty && (
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button type="button" onClick={handlePrint} className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '5px' }}>Print Bilty</button>
-            <button type="button" onClick={handleWhatsApp} style={{ padding: '6px 14px', fontSize: '0.82rem', fontWeight: 600, border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', background: '#25D366', color: '#fff', display: 'flex', alignItems: 'center', gap: '5px' }}>WhatsApp</button>
-          </div>
-        )}
-      </div>
+      {savedBilty && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginBottom: '12px' }}>
+          <button type="button" onClick={handlePrint} className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '5px' }}>Print Bilty</button>
+          <button type="button" onClick={handleWhatsApp} style={{ padding: '6px 14px', fontSize: '0.82rem', fontWeight: 600, border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', background: '#25D366', color: '#fff', display: 'flex', alignItems: 'center', gap: '5px' }}>WhatsApp</button>
+        </div>
+      )}
 
       {message && (
         <div style={{
@@ -564,26 +561,26 @@ export default function BiltyCreate() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 {/* Sender */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--primary-color, #e85d04)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sender</div>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--primary-color, #e85d04)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sender</div>
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label>Name</label>
-                    <input type="text" name="sender_name" value={formData.sender_name} onChange={handleChange} placeholder="Sender name" required />
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Name</label>
+                    <input type="text" name="sender_name" value={formData.sender_name} onChange={handleChange} placeholder="Sender name" required style={{ padding: '9px 12px', fontSize: '0.98rem', height: '40px', width: '100%' }} />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label>Contact</label>
-                    <input type="text" name="sender_phone" value={formData.sender_phone} onChange={handleChange} placeholder="0321..." />
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Contact</label>
+                    <input type="text" name="sender_phone" value={formData.sender_phone} onChange={handleChange} placeholder="0321..." style={{ padding: '9px 12px', fontSize: '0.98rem', height: '40px', width: '100%' }} />
                   </div>
                 </div>
                 {/* Receiver */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', borderLeft: '1px solid var(--border)', paddingLeft: '14px' }}>
-                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--primary-color, #e85d04)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Receiver</div>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--primary-color, #e85d04)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Receiver</div>
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label>Name</label>
-                    <input type="text" name="receiver_name" value={formData.receiver_name} onChange={handleChange} placeholder="Receiver name" required />
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Name</label>
+                    <input type="text" name="receiver_name" value={formData.receiver_name} onChange={handleChange} placeholder="Receiver name" required style={{ padding: '9px 12px', fontSize: '0.98rem', height: '40px', width: '100%' }} />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label>Contact</label>
-                    <input type="text" name="receiver_phone" value={formData.receiver_phone} onChange={handleChange} placeholder="0333..." />
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Contact</label>
+                    <input type="text" name="receiver_phone" value={formData.receiver_phone} onChange={handleChange} placeholder="0333..." style={{ padding: '9px 12px', fontSize: '0.98rem', height: '40px', width: '100%' }} />
                   </div>
                 </div>
               </div>
