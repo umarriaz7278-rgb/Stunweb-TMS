@@ -402,7 +402,7 @@ export default function ChallanCreate() {
 
       <form onSubmit={(e) => e.preventDefault()}>
         <div className="card no-print" style={{ marginBottom: '24px' }}>
-          <h3>Select Destination Branch</h3>
+          <h3 style={{ color: '#2563eb', fontWeight: 800, fontSize: '1.05rem', margin: 0 }}>📍 Step 1: Select Destination Branch</h3>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '8px 0 12px 0' }}>Choose the branch to filter bilties by destination.</p>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             {['Lahore', 'Islamabad', 'Rawalpindi'].map(branch => (
@@ -429,7 +429,7 @@ export default function ChallanCreate() {
         </div>
 
         <div className="card" style={{ marginBottom: '24px' }}>
-          <h3>Vehicle & Driver Details</h3>
+          <h3 style={{ color: '#d97706', fontWeight: 800, fontSize: '1.05rem', margin: 0 }}>🚛 Vehicle & Driver Details</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginTop: '14px' }}>
             <div className="form-group" style={{ margin: 0 }}>
               <label style={{ fontSize: '0.82rem', fontWeight: 600 }}>Vehicle Number</label>
@@ -451,7 +451,7 @@ export default function ChallanCreate() {
         </div>
 
         <div className="card" style={{ marginBottom: '24px' }}>
-          <h3>Step 2: Select Bilties from Warehouse</h3>
+          <h3 style={{ color: '#7c3aed', fontWeight: 800, fontSize: '1.05rem', margin: 0 }}>📦 Step 2: Select Bilties from Warehouse</h3>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '8px 0 16px 0' }}>Select bilties and specify how many packages you are loading. You can dispatch partial quantities.</p>
           
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.95rem' }}>
@@ -508,11 +508,11 @@ export default function ChallanCreate() {
         </div>
 
         <div className="card" style={{ marginBottom: '24px' }}>
-          <h3>Step 3: Financial Calculations</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', marginTop: '16px' }}>
+          <h3 style={{ color: '#059669', fontWeight: 800, fontSize: '1.05rem', margin: 0 }}>💰 Step 3: Financial Calculations</h3>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginTop: '16px' }}>
             <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '0.82rem', fontWeight: 600 }}>Delivery (-)</label>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', maxWidth: '280px' }}>
+              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>Delivery (%)</label>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                 <input
                   type="number"
                   min="0"
@@ -526,9 +526,9 @@ export default function ChallanCreate() {
                     const calcAmt = (netRentAmount * (parseFloat(pct) || 0)) / 100;
                     setFormData(prev => ({ ...prev, commission_deduction: parseFloat(calcAmt.toFixed(2)) }));
                   }}
-                  style={{ width: '70px', padding: '8px 10px', fontSize: '0.95rem' }}
+                  style={{ width: '70px', padding: '9px 10px', fontSize: '0.98rem', height: '42px' }}
                 />
-                <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>%</span>
+                <span style={{ fontWeight: 700, color: '#64748b' }}>%</span>
                 <input
                   type="number"
                   min="0"
@@ -540,12 +540,13 @@ export default function ChallanCreate() {
                     handleFormChange(e);
                   }}
                   placeholder="Amount"
-                  style={{ width: '175px', padding: '8px 10px', fontSize: '0.95rem' }}
+                  style={{ width: '150px', padding: '9px 10px', fontSize: '0.98rem', height: '42px' }}
                 />
               </div>
             </div>
+
             <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '0.82rem', fontWeight: 600 }}>Vehicle Freight (-)</label>
+              <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>Vehicle Freight (-)</label>
               <input 
                 type="number" 
                 min="0" 
@@ -553,29 +554,30 @@ export default function ChallanCreate() {
                 name="vehicle_freight" 
                 value={formData.vehicle_freight} 
                 onChange={handleFormChange} 
-                style={{ width: '250px', padding: '8px 10px', fontSize: '0.95rem' }}
+                placeholder="0"
+                style={{ width: '180px', padding: '9px 12px', fontSize: '0.98rem', height: '42px' }}
               />
             </div>
           </div>
           
           <div style={{ marginTop: '24px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span>Total Rent Amount:</span>
-              <strong>Rs. {calculatedTotalBiltyAmount.toLocaleString()}</strong>
+              <span style={{ fontWeight: 600, color: '#1e293b' }}>Total Rent Amount:</span>
+              <strong style={{ color: '#0f172a' }}>Rs. {calculatedTotalBiltyAmount.toLocaleString()}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: 'var(--text-muted)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#dc2626' }}>
               <span>Total Local Fare (all bilties):</span>
               <strong>- Rs. {totalLocalFare.toLocaleString()}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: 'var(--text-muted)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#dc2626' }}>
               <span>Total Loading (all bilties):</span>
               <strong>- Rs. {totalLoading.toLocaleString()}</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', borderTop: '1px solid #cbd5e1', paddingTop: '8px' }}>
-              <span style={{ fontWeight: 600 }}>Net Rent Amount:</span>
-              <strong style={{ color: 'var(--primary-color)' }}>Rs. {netRentAmount.toLocaleString()}</strong>
+              <span style={{ fontWeight: 700, color: '#2563eb' }}>Net Rent Amount:</span>
+              <strong style={{ color: '#2563eb' }}>Rs. {netRentAmount.toLocaleString()}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: 'var(--text-muted)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#dc2626' }}>
               <span>Delivery:</span>
               <strong>- Rs. {commissionDeduction.toLocaleString()}</strong>
             </div>
@@ -587,21 +589,21 @@ export default function ChallanCreate() {
               <span>+ Add Loading:</span>
               <strong>+ Rs. {totalLoading.toLocaleString()}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: 'var(--text-muted)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#dc2626' }}>
               <span>Vehicle Freight:</span>
               <strong>- Rs. {parseFloat(formData.vehicle_freight || 0).toLocaleString()}</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', fontSize: '1.2rem', fontWeight: 700, borderTop: '2px solid #cbd5e1', paddingTop: '12px' }}>
-              <span>Profit:</span>
+              <span style={{ color: '#0f172a' }}>Profit:</span>
               <span style={{ color: profit >= 0 ? '#10b981' : '#ef4444' }}>Rs. {profit.toLocaleString()}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', marginBottom: '8px' }}>
-              <span style={{ fontWeight: 600 }}>Branch Deposit (-):</span>
+              <span style={{ fontWeight: 700, color: '#d97706' }}>Branch Deposit (-):</span>
               <input type="number" min="0" step="0.01" name="branch_deposit" value={formData.branch_deposit} onChange={handleFormChange} style={{ width: '180px', padding: '6px 10px', fontSize: '0.95rem', textAlign: 'right' }} />
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '1.1rem', fontWeight: 700, borderTop: '2px solid #cbd5e1', paddingTop: '12px' }}>
-              <span>Receivable from Broker:</span>
-              <span style={{ color: receivableFromBroker >= 0 ? '#3B82F6' : '#ef4444' }}>Rs. {receivableFromBroker.toLocaleString()}</span>
+              <span style={{ color: '#2563eb' }}>Receivable from Broker:</span>
+              <span style={{ color: receivableFromBroker >= 0 ? '#2563eb' : '#ef4444' }}>Rs. {receivableFromBroker.toLocaleString()}</span>
             </div>
           </div>
         </div>
