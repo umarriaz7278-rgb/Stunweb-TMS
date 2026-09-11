@@ -431,8 +431,8 @@ export default function BranchOffice({ branchName }) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-        <MapPin size={32} color="var(--primary-color)" />
-        <h1 className="page-title" style={{ marginBottom: 0 }}>{branchName} Operations Hub</h1>
+        <MapPin size={32} color="#2563eb" />
+        <h1 className="page-title" style={{ marginBottom: 0, color: '#1e40af', fontWeight: 800 }}>{branchName} Operations Hub</h1>
       </div>
       <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Securely manage isolated inventory and deliveries destined only for {branchName}.</p>
 
@@ -443,31 +443,33 @@ export default function BranchOffice({ branchName }) {
       )}
 
       {/* --- SECTION 1: INCOMING VEHICLES --- */}
-      <h2 style={{ fontSize: '1.2rem', marginBottom: '16px', color: 'var(--primary-color)' }}>1. Incoming Vehicles (Arrival Verification)</h2>
+      <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#2563eb', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+        🚛 1. Incoming Vehicles (Arrival Verification)
+      </h2>
       {!selectedChallan ? (
         <div className="card" style={{ marginBottom: '32px' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
-              <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
-                <th style={{ padding: '12px' }}>Challan #</th>
-                <th style={{ padding: '12px' }}>Date</th>
-                <th style={{ padding: '12px' }}>Vehicle #</th>
-                <th style={{ padding: '12px' }}>Driver</th>
-                <th style={{ padding: '12px' }}>Action</th>
+              <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
+                <th style={{ padding: '12px 10px', color: '#2563eb', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase' }}>Challan #</th>
+                <th style={{ padding: '12px 10px', color: '#0f172a', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase' }}>Date</th>
+                <th style={{ padding: '12px 10px', color: '#0284c7', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase' }}>Vehicle #</th>
+                <th style={{ padding: '12px 10px', color: '#7c3aed', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase' }}>Driver</th>
+                <th style={{ padding: '12px 10px', color: '#0f172a', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase' }}>Action</th>
               </tr>
             </thead>
             <tbody>
               {incomingChallans.map(ch => (
                 <tr key={ch.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={{ padding: '12px', fontWeight: 600 }}>{ch.challan_number}</td>
-                  <td style={{ padding: '12px' }}>{ch.challan_date ? new Date(ch.challan_date + 'T00:00:00').toLocaleDateString('en-PK') : '—'}</td>
-                  <td style={{ padding: '12px' }}>{ch.vehicle_number}</td>
-                  <td style={{ padding: '12px' }}>{ch.driver_name}</td>
-                  <td style={{ padding: '12px' }}>
+                  <td style={{ padding: '12px 10px', fontWeight: 700, color: '#2563eb' }}>{ch.challan_number}</td>
+                  <td style={{ padding: '12px 10px' }}>{ch.challan_date ? new Date(ch.challan_date + 'T00:00:00').toLocaleDateString('en-PK') : '—'}</td>
+                  <td style={{ padding: '12px 10px', fontWeight: 600, color: '#0284c7' }}>{ch.vehicle_number}</td>
+                  <td style={{ padding: '12px 10px', fontWeight: 600, color: '#7c3aed' }}>{ch.driver_name}</td>
+                  <td style={{ padding: '12px 10px' }}>
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                      <button className="btn btn-secondary" style={{ padding: '5px 10px', fontSize: '0.8rem' }} onClick={() => setViewChallan(viewChallan?.id === ch.id ? null : ch)}>📋 View Bilties</button>
-                      <button className="btn btn-secondary" style={{ padding: '5px 10px', fontSize: '0.8rem' }} onClick={() => handlePrintChallan(ch)}>🖨️ Print</button>
-                      <button className="btn btn-secondary" style={{ padding: '5px 10px', fontSize: '0.8rem' }} onClick={() => handleSelectChallan(ch)}>✅ Verify Arrival</button>
+                      <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.82rem', fontWeight: 600 }} onClick={() => setViewChallan(viewChallan?.id === ch.id ? null : ch)}>📋 View Bilties</button>
+                      <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.82rem', fontWeight: 600 }} onClick={() => handlePrintChallan(ch)}>🖨️ Print</button>
+                      <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.82rem', fontWeight: 600, backgroundColor: '#2563eb' }} onClick={() => handleSelectChallan(ch)}>✅ Verify Arrival</button>
                     </div>
                   </td>
                 </tr>
@@ -476,35 +478,35 @@ export default function BranchOffice({ branchName }) {
             </tbody>
           </table>
           {viewChallan && (
-            <div style={{ marginTop: '16px', border: '1px solid var(--primary-color)', borderRadius: '10px', padding: '16px' }}>
+            <div style={{ marginTop: '16px', border: '1.5px solid #2563eb', borderRadius: '10px', padding: '16px', backgroundColor: '#f8fafc' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <h4 style={{ color: 'var(--primary-color)', fontSize: '0.95rem' }}>📋 Challan #{viewChallan.challan_number} — Bilties Detail</h4>
-                <button onClick={() => setViewChallan(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', color: 'var(--text-muted)' }}>✕</button>
+                <h4 style={{ color: '#2563eb', fontSize: '1rem', fontWeight: 800, margin: 0 }}>📋 Challan #{viewChallan.challan_number} — Bilties Detail</h4>
+                <button onClick={() => setViewChallan(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#64748b', fontWeight: 700 }}>✕</button>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                <span>🚛 Vehicle: <strong style={{ color: 'var(--text-main)' }}>{viewChallan.vehicle_number}</strong></span>
-                <span>👤 Driver: <strong style={{ color: 'var(--text-main)' }}>{viewChallan.driver_name}</strong></span>
-                {viewChallan.route_number && <span>🛣️ Route: <strong style={{ color: 'var(--text-main)' }}>{viewChallan.route_number}</strong></span>}
-                {viewChallan.road_permit_number && <span>📄 Permit: <strong style={{ color: 'var(--text-main)' }}>{viewChallan.road_permit_number}</strong></span>}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px', fontSize: '0.85rem', color: '#475569' }}>
+                <span>🚛 Vehicle: <strong style={{ color: '#0f172a' }}>{viewChallan.vehicle_number}</strong></span>
+                <span>👤 Driver: <strong style={{ color: '#0f172a' }}>{viewChallan.driver_name}</strong></span>
+                {viewChallan.route_number && <span>🛣️ Route: <strong style={{ color: '#0f172a' }}>{viewChallan.route_number}</strong></span>}
+                {viewChallan.road_permit_number && <span>📄 Permit: <strong style={{ color: '#0f172a' }}>{viewChallan.road_permit_number}</strong></span>}
               </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                 <thead>
-                  <tr style={{ background: 'var(--bg-main)', borderBottom: '2px solid var(--border)' }}>
-                    <th style={{ padding: '7px 10px', textAlign: 'left' }}>#</th>
-                    <th style={{ padding: '7px 10px', textAlign: 'left' }}>Bilty #</th>
-                    <th style={{ padding: '7px 10px', textAlign: 'left' }}>Destination</th>
-                    <th style={{ padding: '7px 10px', textAlign: 'left' }}>Description</th>
-                    <th style={{ padding: '7px 10px', textAlign: 'right' }}>Loaded Qty</th>
+                  <tr style={{ background: '#e2e8f0', borderBottom: '2px solid #cbd5e1' }}>
+                    <th style={{ padding: '8px 10px', textAlign: 'left', color: '#0f172a', fontWeight: 800 }}>#</th>
+                    <th style={{ padding: '8px 10px', textAlign: 'left', color: '#2563eb', fontWeight: 800 }}>Bilty #</th>
+                    <th style={{ padding: '8px 10px', textAlign: 'left', color: '#0284c7', fontWeight: 800 }}>Destination</th>
+                    <th style={{ padding: '8px 10px', textAlign: 'left', color: '#475569', fontWeight: 800 }}>Description</th>
+                    <th style={{ padding: '8px 10px', textAlign: 'right', color: '#059669', fontWeight: 800 }}>Loaded Qty</th>
                   </tr>
                 </thead>
                 <tbody>
                   {viewChallan.challan_bilties.map((cb, i) => (
-                    <tr key={cb.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                      <td style={{ padding: '7px 10px' }}>{i + 1}</td>
-                      <td style={{ padding: '7px 10px', fontWeight: 700, color: 'var(--primary-color)' }}>{cb.bilties?.bilty_number}</td>
-                      <td style={{ padding: '7px 10px' }}>{cb.bilties?.branches?.name || '-'}</td>
-                      <td style={{ padding: '7px 10px' }}>{cb.bilties?.description}</td>
-                      <td style={{ padding: '7px 10px', textAlign: 'right', fontWeight: 700 }}>{cb.loaded_quantity}</td>
+                    <tr key={cb.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '8px 10px' }}>{i + 1}</td>
+                      <td style={{ padding: '8px 10px', fontWeight: 700, color: '#2563eb' }}>{cb.bilties?.bilty_number}</td>
+                      <td style={{ padding: '8px 10px', fontWeight: 600 }}>{cb.bilties?.branches?.name || '-'}</td>
+                      <td style={{ padding: '8px 10px' }}>{cb.bilties?.description}</td>
+                      <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 800, color: '#059669' }}>{cb.loaded_quantity}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -513,19 +515,19 @@ export default function BranchOffice({ branchName }) {
           )}
         </div>
       ) : (
-        <div className="card" style={{ border: '1px solid var(--primary-color)', marginBottom: '32px' }}>
+        <div className="card" style={{ border: '2px solid #2563eb', marginBottom: '32px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-             <h3>Verifying Challan #{selectedChallan.challan_number}</h3>
-             <button className="btn btn-secondary" onClick={() => setSelectedChallan(null)}>Cancel</button>
+             <h3 style={{ margin: 0, color: '#2563eb', fontWeight: 800, fontSize: '1.2rem' }}>Verifying Challan #{selectedChallan.challan_number}</h3>
+             <button className="btn btn-secondary" onClick={() => setSelectedChallan(null)} style={{ fontWeight: 600 }}>Cancel</button>
           </div>
           <form onSubmit={submitVerification}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', marginBottom: '24px' }}>
               <thead>
-                <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
-                  <th style={{ padding: '12px' }}>Bilty #</th>
-                  <th style={{ padding: '12px' }}>Expected</th>
-                  <th style={{ padding: '12px' }}>Received</th>
-                  <th style={{ padding: '12px' }}>Short</th>
+                <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
+                  <th style={{ padding: '12px 10px', color: '#2563eb', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase' }}>Bilty #</th>
+                  <th style={{ padding: '12px 10px', color: '#0284c7', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase' }}>Expected</th>
+                  <th style={{ padding: '12px 10px', color: '#059669', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase' }}>Received</th>
+                  <th style={{ padding: '12px 10px', color: '#dc2626', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase' }}>Short</th>
                 </tr>
               </thead>
               <tbody>
@@ -533,23 +535,23 @@ export default function BranchOffice({ branchName }) {
                   const bInfo = cb.bilties; const vData = verificationData[cb.id];
                   return (
                     <tr key={cb.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '12px', fontWeight: 600 }}>{bInfo.bilty_number}</td>
-                      <td style={{ padding: '12px', fontWeight: 'bold' }}>{cb.loaded_quantity}</td>
-                      <td style={{ padding: '12px' }}><input type="number" min="0" max={cb.loaded_quantity} value={vData.received_qty} onChange={(e) => handleQtyChange(cb.id, 'received_qty', e.target.value)} style={{ width: '80px', padding: '6px' }} /></td>
-                      <td style={{ padding: '12px' }}><input type="number" min="0" max={cb.loaded_quantity} value={vData.short_qty} onChange={(e) => handleQtyChange(cb.id, 'short_qty', e.target.value)} style={{ width: '80px', padding: '6px', color: vData.short_qty > 0 ? '#ef4444' : 'inherit' }} /></td>
+                      <td style={{ padding: '12px 10px', fontWeight: 700, color: '#2563eb' }}>{bInfo.bilty_number}</td>
+                      <td style={{ padding: '12px 10px', fontWeight: 800, color: '#0284c7' }}>{cb.loaded_quantity}</td>
+                      <td style={{ padding: '12px 10px' }}><input type="number" min="0" max={cb.loaded_quantity} value={vData.received_qty} onChange={(e) => handleQtyChange(cb.id, 'received_qty', e.target.value)} style={{ width: '100px', height: '38px', padding: '6px 10px', fontSize: '0.95rem', fontWeight: 700, borderRadius: '6px', border: '1.5px solid #059669' }} /></td>
+                      <td style={{ padding: '12px 10px' }}><input type="number" min="0" max={cb.loaded_quantity} value={vData.short_qty} onChange={(e) => handleQtyChange(cb.id, 'short_qty', e.target.value)} style={{ width: '100px', height: '38px', padding: '6px 10px', fontSize: '0.95rem', fontWeight: 700, borderRadius: '6px', border: '1.5px solid #dc2626', color: vData.short_qty > 0 ? '#dc2626' : 'inherit' }} /></td>
                     </tr>
                   )
                 })}
               </tbody>
             </table>
-            <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Processing...' : 'Confirm Arrival'}</button>
+            <button type="submit" className="btn btn-primary" style={{ padding: '10px 24px', fontWeight: 700, fontSize: '0.95rem', backgroundColor: '#2563eb' }} disabled={loading}>{loading ? 'Processing...' : 'Confirm Arrival'}</button>
           </form>
         </div>
       )}
 
       {/* --- SECTION 2: BRANCH WAREHOUSE & DELIVERY --- */}
-      <h2 style={{ fontSize: '1.2rem', marginBottom: '16px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px' }}>
-         <PackageOpen size={20} /> 2. {branchName} Warehouse (Customer Deliveries)
+      <h2 style={{ fontSize: '1.25rem', marginBottom: '16px', color: '#059669', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+         <PackageOpen size={22} color="#059669" /> 2. {branchName} Warehouse (Customer Deliveries)
       </h2>
       {!selectedBilty ? (
         <>
@@ -557,30 +559,30 @@ export default function BranchOffice({ branchName }) {
             <div className="card" style={{ marginBottom: '20px', padding: '16px', border: '1px solid #d1d5db', backgroundColor: '#f8fafc' }}>
               <div style={{ marginBottom: '12px', fontWeight: 700, color: '#111827' }}>Delivery recorded successfully. Print or download the receipt:</div>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                <button className="btn btn-secondary" style={{ padding: '10px 16px' }} onClick={() => printDeliveryReceipt(recentDelivery)}>Print Receipt</button>
-                <button className="btn btn-primary" style={{ padding: '10px 16px', backgroundColor: '#3b82f6', border: 'none' }} onClick={() => downloadDeliveryPdf(recentDelivery)}>Download PDF</button>
+                <button className="btn btn-secondary" style={{ padding: '10px 16px', fontWeight: 700 }} onClick={() => printDeliveryReceipt(recentDelivery)}>Print Receipt</button>
+                <button className="btn btn-primary" style={{ padding: '10px 16px', backgroundColor: '#3b82f6', border: 'none', fontWeight: 700 }} onClick={() => downloadDeliveryPdf(recentDelivery)}>Download PDF</button>
               </div>
             </div>
           )}
           <div className="card">
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
-              <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
-                <th style={{ padding: '12px' }}>Bilty #</th>
-                <th style={{ padding: '12px' }}>Receiver</th>
-                <th style={{ padding: '12px' }}>Desc</th>
-                <th style={{ padding: '12px', textAlign: 'right' }}>Stock Ready</th>
-                <th style={{ padding: '12px' }}>Action</th>
+              <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
+                <th style={{ padding: '12px 10px', color: '#2563eb', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase' }}>Bilty #</th>
+                <th style={{ padding: '12px 10px', color: '#0f172a', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase' }}>Receiver</th>
+                <th style={{ padding: '12px 10px', color: '#64748b', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase' }}>Desc</th>
+                <th style={{ padding: '12px 10px', color: '#059669', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', textAlign: 'right' }}>Stock Ready</th>
+                <th style={{ padding: '12px 10px', color: '#0f172a', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', textAlign: 'center' }}>Action</th>
               </tr>
             </thead>
             <tbody>
               {warehouseInventory.map(item => (
                 <tr key={item.bilty_id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={{ padding: '12px', fontWeight: 600 }}>{item.bilty_number}</td>
-                  <td style={{ padding: '12px' }}>{item.receiver_name}</td>
-                  <td style={{ padding: '12px' }}>{item.description}</td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 'bold', color: '#10b981' }}>{item.branch_available_qty}</td>
-                  <td style={{ padding: '12px' }}><button className="btn btn-secondary" onClick={() => handleSelectBilty(item)}>Handover</button></td>
+                  <td style={{ padding: '12px 10px', fontWeight: 700, color: '#2563eb' }}>{item.bilty_number}</td>
+                  <td style={{ padding: '12px 10px', fontWeight: 600 }}>{item.receiver_name}</td>
+                  <td style={{ padding: '12px 10px', color: '#475569' }}>{item.description}</td>
+                  <td style={{ padding: '12px 10px', textAlign: 'right', fontWeight: 800, color: '#059669', fontSize: '1rem' }}>{item.branch_available_qty}</td>
+                  <td style={{ padding: '12px 10px', textAlign: 'center' }}><button className="btn btn-secondary" style={{ padding: '6px 14px', fontWeight: 700, color: '#059669', borderColor: '#86efac' }} onClick={() => handleSelectBilty(item)}>Handover</button></td>
                 </tr>
               ))}
               {warehouseInventory.length === 0 && <tr><td colSpan="5" style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)' }}>Warehouse is empty.</td></tr>}
@@ -589,39 +591,193 @@ export default function BranchOffice({ branchName }) {
         </div>
         </>
       ) : (
-        <div className="card" style={{ border: '1px solid #10b981' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-             <h3>Delivering Bilty #{selectedBilty.bilty_number}</h3>
-             <button className="btn btn-secondary" onClick={() => setSelectedBilty(null)}>Cancel</button>
+        <div className="card" style={{ border: '2px solid #10b981', boxShadow: '0 4px 16px rgba(16, 185, 129, 0.12)', borderRadius: '12px' }}>
+          {/* Card Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', paddingBottom: '14px', borderBottom: '2px solid #e2e8f0', flexWrap: 'wrap', gap: '10px' }}>
+             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+               <span style={{ fontSize: '1.4rem' }}>📦</span>
+               <div>
+                 <h3 style={{ margin: 0, color: '#059669', fontWeight: 900, fontSize: '1.3rem' }}>
+                   Delivering Bilty #{selectedBilty.bilty_number}
+                 </h3>
+                 <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                   Receiver: <strong style={{ color: '#0f172a' }}>{selectedBilty.receiver_name}</strong> | Item: <strong style={{ color: '#0f172a' }}>{selectedBilty.description}</strong>
+                 </span>
+               </div>
+             </div>
+             <button className="btn btn-secondary" onClick={() => setSelectedBilty(null)} style={{ fontWeight: 700, padding: '8px 16px' }}>✕ Cancel</button>
           </div>
+
           <form onSubmit={submitDelivery}>
-            <div className="form-grid" style={{ marginBottom: '20px' }}>
-              <div className="form-group"><label>Customer CNIC</label><input type="text" name="customer_cnic" value={deliveryFormData.customer_cnic} onChange={handleDeliveryFormChange} /></div>
-              <div className="form-group"><label>Customer Phone</label><input type="text" name="customer_phone" value={deliveryFormData.customer_phone} onChange={handleDeliveryFormChange} required /></div>
-              <div className="form-group full-width"><label>Deliver Qty (Max: {selectedBilty.branch_available_qty})</label><input type="number" min="1" max={selectedBilty.branch_available_qty} name="delivered_qty" value={deliveryFormData.delivered_qty} onChange={handleDeliveryFormChange} required style={{ border: '2px solid #10b981' }} /></div>
-            </div>
-            <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
-              <h4 style={{ marginBottom: '16px' }}>Income Collection</h4>
-              <div className="form-grid">
-                 <div className="form-group"><label>Freight</label><input type="number" step="0.01" min="0" name="paid_amount" value={deliveryFormData.paid_amount} onChange={handleDeliveryFormChange} /></div>
-                 <div className="form-group"><label>Unloading</label><input type="number" step="0.01" min="0" name="extra_unloading" value={deliveryFormData.extra_unloading} onChange={handleDeliveryFormChange} /></div>
-                 <div className="form-group"><label>Loading</label><input type="number" step="0.01" min="0" name="extra_labor" value={deliveryFormData.extra_labor} onChange={handleDeliveryFormChange} /></div>
-                 <div className="form-group"><label>Local Fare</label><input type="number" step="0.01" min="0" name="local_fare" value={deliveryFormData.local_fare} onChange={handleDeliveryFormChange} /></div>
-                 <div className="form-group"><label>Other Charges</label><input type="number" step="0.01" min="0" name="extra_other" value={deliveryFormData.extra_other} onChange={handleDeliveryFormChange} /></div>
-              </div>
-              <div style={{ gridColumn: '1 / -1', marginTop: '10px', padding: '10px 14px', borderRadius: '8px', background: '#ffffff', border: '1px solid #d1d5db' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontWeight: 700, color: '#111827' }}>Total Amount</span>
-                  <span style={{ fontWeight: 900, color: '#10b981' }}>Rs. {deliveryTotal.toLocaleString('en-PK')}</span>
+            {/* Top 2-Column Responsive Grid: Delivering Details (Left) and Income Collection (Right) */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '20px', marginBottom: '22px', alignItems: 'stretch' }}>
+              
+              {/* Left Column: Customer & Delivery Info */}
+              <div style={{ padding: '18px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1.5px solid #cbd5e1', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <h4 style={{ margin: '0 0 14px 0', color: '#2563eb', fontSize: '1.08rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    👤 Customer & Delivery Info
+                  </h4>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a', marginBottom: '6px', display: 'block' }}>
+                        Customer CNIC
+                      </label>
+                      <input
+                        type="text"
+                        name="customer_cnic"
+                        value={deliveryFormData.customer_cnic}
+                        onChange={handleDeliveryFormChange}
+                        placeholder="e.g. 37405-1234567-1"
+                        style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', backgroundColor: '#fff' }}
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a', marginBottom: '6px', display: 'block' }}>
+                        Customer Phone <span style={{ color: '#ef4444' }}>*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="customer_phone"
+                        value={deliveryFormData.customer_phone}
+                        onChange={handleDeliveryFormChange}
+                        placeholder="e.g. 0321-1234567"
+                        required
+                        style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', backgroundColor: '#fff' }}
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>
+                          Deliver Qty <span style={{ color: '#ef4444' }}>*</span>
+                        </label>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#059669', background: '#dcfce7', padding: '2px 8px', borderRadius: '6px' }}>
+                          Max: {selectedBilty.branch_available_qty}
+                        </span>
+                      </div>
+                      <input
+                        type="number"
+                        min="1"
+                        max={selectedBilty.branch_available_qty}
+                        name="delivered_qty"
+                        value={deliveryFormData.delivered_qty}
+                        onChange={handleDeliveryFormChange}
+                        required
+                        style={{ width: '100%', height: '44px', padding: '10px 14px', fontSize: '1.05rem', fontWeight: 800, borderRadius: '8px', border: '2px solid #10b981', background: '#f0fdf4' }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              {/* Right Column: Income Collection (Beside Customer Details, No Scrolling needed!) */}
+              <div style={{ padding: '18px', backgroundColor: '#f0fdf4', borderRadius: '12px', border: '1.5px solid #86efac', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <h4 style={{ margin: 0, color: '#15803d', fontSize: '1.08rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      💰 Income Collection
+                    </h4>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#166534', background: '#dcfce7', padding: '3px 8px', borderRadius: '6px', textTransform: 'uppercase' }}>
+                      Auto Ledger Post
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px', marginBottom: '14px' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1d4ed8', marginBottom: '4px', display: 'block' }}>Freight (Rent)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="paid_amount"
+                        value={deliveryFormData.paid_amount}
+                        onChange={handleDeliveryFormChange}
+                        style={{ width: '100%', height: '42px', padding: '9px 12px', fontSize: '1rem', fontWeight: 700, borderRadius: '8px', border: '1.5px solid #93c5fd', background: '#fff' }}
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#d97706', marginBottom: '4px', display: 'block' }}>Unloading</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="extra_unloading"
+                        value={deliveryFormData.extra_unloading}
+                        onChange={handleDeliveryFormChange}
+                        style={{ width: '100%', height: '42px', padding: '9px 12px', fontSize: '1rem', fontWeight: 700, borderRadius: '8px', border: '1.5px solid #fde68a', background: '#fff' }}
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#b45309', marginBottom: '4px', display: 'block' }}>Loading</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="extra_labor"
+                        value={deliveryFormData.extra_labor}
+                        onChange={handleDeliveryFormChange}
+                        style={{ width: '100%', height: '42px', padding: '9px 12px', fontSize: '1rem', fontWeight: 700, borderRadius: '8px', border: '1.5px solid #fde68a', background: '#fff' }}
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#7c3aed', marginBottom: '4px', display: 'block' }}>Local Fare</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="local_fare"
+                        value={deliveryFormData.local_fare}
+                        onChange={handleDeliveryFormChange}
+                        style={{ width: '100%', height: '42px', padding: '9px 12px', fontSize: '1rem', fontWeight: 700, borderRadius: '8px', border: '1.5px solid #c4b5fd', background: '#fff' }}
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569', marginBottom: '4px', display: 'block' }}>Other Charges</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="extra_other"
+                        value={deliveryFormData.extra_other}
+                        onChange={handleDeliveryFormChange}
+                        style={{ width: '100%', height: '42px', padding: '9px 12px', fontSize: '1rem', fontWeight: 700, borderRadius: '8px', border: '1.5px solid #cbd5e1', background: '#fff' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Live Total Amount Box */}
+                <div style={{ padding: '12px 16px', borderRadius: '10px', background: '#ffffff', border: '2px solid #86efac', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Amount</span>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Rent + Unloading + Loading + Fare + Other</div>
+                  </div>
+                  <span style={{ fontSize: '1.45rem', fontWeight: 900, color: '#15803d' }}>
+                    Rs. {deliveryTotal.toLocaleString('en-PK')}
+                  </span>
+                </div>
+              </div>
+
             </div>
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              <button type="submit" className="btn btn-primary" style={{ flex: 1, minWidth: '200px', padding: '12px', backgroundColor: '#10b981', border: 'none' }} disabled={loading}>{loading ? 'Processing...' : 'Confirm Delivery'}</button>
-              <button type="button" className="btn btn-secondary" style={{ flex: 1, minWidth: '200px', padding: '12px' }} disabled={loading} onClick={(e) => submitDelivery(e, true)}>{loading ? 'Processing...' : 'Confirm & Print'}</button>
+
+            {/* Bottom Action Buttons */}
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <button type="submit" className="btn btn-primary" style={{ flex: 1, minWidth: '180px', padding: '12px 18px', backgroundColor: '#10b981', border: 'none', fontWeight: 800, fontSize: '0.98rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} disabled={loading}>
+                {loading ? 'Processing...' : '✅ Confirm Delivery'}
+              </button>
+              <button type="button" className="btn btn-secondary" style={{ flex: 1, minWidth: '180px', padding: '12px 18px', fontWeight: 800, fontSize: '0.98rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} disabled={loading} onClick={(e) => submitDelivery(e, true)}>
+                {loading ? 'Processing...' : '🖨️ Confirm & Print'}
+              </button>
               {branchName === 'Islamabad' && (
-                <button type="button" className="btn btn-secondary" style={{ flex: 1, minWidth: '200px', padding: '12px', backgroundColor: '#f59e0b', color: '#fff', border: 'none' }} disabled={loading} onClick={handleLinkAccountStatement}>
-                  {loading ? 'Processing...' : 'Link Account Statement'}
+                <button type="button" className="btn btn-secondary" style={{ flex: 1, minWidth: '180px', padding: '12px 18px', backgroundColor: '#f59e0b', color: '#fff', border: 'none', fontWeight: 800, fontSize: '0.98rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} disabled={loading} onClick={handleLinkAccountStatement}>
+                  {loading ? 'Processing...' : '🔗 Link Account Statement'}
                 </button>
               )}
             </div>
