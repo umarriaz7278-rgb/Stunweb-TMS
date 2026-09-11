@@ -291,9 +291,13 @@ export default function AllChallanRecord() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-        <Truck size={28} color="var(--primary-color)" />
-        <h1 className="page-title" style={{ marginBottom: 0 }}>All Challan Record</h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '24px' }}>
+        <div style={{ background: '#eff6ff', borderRadius: '12px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Truck size={28} color="#2563eb" />
+        </div>
+        <div>
+          <h1 className="page-title" style={{ marginBottom: 0, color: '#1e293b', fontWeight: 800 }}>All Challan Record</h1>
+        </div>
       </div>
 
       {/* Search */}
@@ -319,18 +323,18 @@ export default function AllChallanRecord() {
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
             <thead>
-              <tr style={{ borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
-                <th style={{ padding: '10px 8px' }}>#</th>
-                <th style={{ padding: '10px 8px' }}>Challan No</th>
-                <th style={{ padding: '10px 8px' }}>Date</th>
-                <th style={{ padding: '10px 8px' }}>Vehicle</th>
-                <th style={{ padding: '10px 8px' }}>Broker</th>
-                <th style={{ padding: '10px 8px' }}>Driver</th>
-                <th style={{ padding: '10px 8px' }}>Destination</th>
-                <th style={{ padding: '10px 8px' }}>Route</th>
-                <th style={{ padding: '10px 8px', textAlign: 'right' }}>Rent Amount</th>
-                <th style={{ padding: '10px 8px', textAlign: 'right' }}>Profit</th>
-                <th style={{ padding: '10px 8px', textAlign: 'center' }}>Actions</th>
+              <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1', textAlign: 'left' }}>
+                <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>#</th>
+                <th style={{ padding: '10px 8px', color: '#2563eb', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Challan No</th>
+                <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Date</th>
+                <th style={{ padding: '10px 8px', color: '#d97706', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Vehicle</th>
+                <th style={{ padding: '10px 8px', color: '#7c3aed', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Broker</th>
+                <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Driver</th>
+                <th style={{ padding: '10px 8px', color: '#2563eb', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Destination</th>
+                <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Route</th>
+                <th style={{ padding: '10px 8px', textAlign: 'right', color: '#c0392b', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Rent Amount</th>
+                <th style={{ padding: '10px 8px', textAlign: 'right', color: '#16a34a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Profit</th>
+                <th style={{ padding: '10px 8px', textAlign: 'center', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
