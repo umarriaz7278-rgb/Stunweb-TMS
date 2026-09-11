@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { MapPin, Plus, ArrowLeft, Save } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { MapPin, Plus, ArrowLeft, Save, Search, DollarSign, Users, X, Wallet } from 'lucide-react';
 
 const ACCOUNTS_KEY = 'islamabad_account_statement_accounts';
 const TRANSACTIONS_KEY = 'islamabad_account_statement_transactions';
@@ -72,6 +72,7 @@ export default function IslamabadAccountStatement() {
   });
   const [message, setMessage] = useState('');
   const [pendingLink, setPendingLink] = useState(loadPendingLink);
+  const [customerSearch, setCustomerSearch] = useState('');
 
   useEffect(() => {
     saveAccounts(accounts);
@@ -279,6 +280,37 @@ export default function IslamabadAccountStatement() {
     return balance;
   };
 
+  const accountClosingBalances = useMemo(() => {
+    const map = {};
+    accounts.forEach(acc => {
+      map[acc.id] = computeAccountClosingBalance(acc.id, acc.opening_balance);
+    });
+    return map;
+  }, [accounts, transactions]);
+
+  const totalAllClosingBalance = useMemo(() => {
+    return Object.values(accountClosingBalances).reduce((sum, val) => sum + (Number(val) || 0), 0);
+  }, [accountClosingBalances]);
+
+  const totalAllOpeningBalance = useMemo(() => {
+    return accounts.reduce((sum, acc) => sum + (Number(acc.opening_balance) || 0), 0);
+  }, [accounts]);
+
+  const filteredAccounts = useMemo(() => {
+    const q = customerSearch.trim().toLowerCase();
+    if (!q) return accounts;
+    return accounts.filter(acc =>
+      (acc.name || '').toLowerCase().includes(q) ||
+      (acc.address || '').toLowerCase().includes(q) ||
+      (acc.cnic || '').toLowerCase().includes(q) ||
+      (acc.ntn || '').toLowerCase().includes(q)
+    );
+  }, [accounts, customerSearch]);
+
+  const filteredClosingBalance = useMemo(() => {
+    return filteredAccounts.reduce((sum, acc) => sum + (Number(accountClosingBalances[acc.id]) || 0), 0);
+  }, [filteredAccounts, accountClosingBalances]);
+
   const buildAccountsListPrintHtml = () => {
     const header = `
       <div style="padding: 18px 20px; background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%); color: #ffffff; border-radius: 14px 14px 0 0; text-align: center; margin-bottom: 18px; box-shadow: 0 6px 20px rgba(15, 23, 42, 0.14);">
@@ -460,6 +492,48 @@ export default function IslamabadAccountStatement() {
 
       {!selectedAccount ? (
         <div>
+          {/* Top Summary Stat Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginBottom: '22px' }}>
+            <div className="card" style={{ padding: '18px 20px', background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)', border: '1.5px solid #86efac', borderLeft: '6px solid #10b981', borderRadius: '12px', boxShadow: '0 2px 8px rgba(16, 185, 129, 0.1)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.6px' }}>Total Closing Balance</span>
+                <span style={{ background: '#10b981', color: '#fff', padding: '6px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Wallet size={18} /></span>
+              </div>
+              <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#15803d', lineHeight: 1.2 }}>
+                Rs. {totalAllClosingBalance.toLocaleString()}
+              </div>
+              <div style={{ fontSize: '0.8rem', color: '#166534', marginTop: '6px', fontWeight: 600 }}>
+                {customerSearch ? `Filtered Balance: Rs. ${filteredClosingBalance.toLocaleString()}` : `Total dues across all ${accounts.length} accounts`}
+              </div>
+            </div>
+
+            <div className="card" style={{ padding: '18px 20px', background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', border: '1.5px solid #93c5fd', borderLeft: '6px solid #3b82f6', borderRadius: '12px', boxShadow: '0 2px 8px rgba(59, 130, 246, 0.1)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1e40af', textTransform: 'uppercase', letterSpacing: '0.6px' }}>Total Opening Balance</span>
+                <span style={{ background: '#3b82f6', color: '#fff', padding: '6px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><DollarSign size={18} /></span>
+              </div>
+              <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#1d4ed8', lineHeight: 1.2 }}>
+                Rs. {totalAllOpeningBalance.toLocaleString()}
+              </div>
+              <div style={{ fontSize: '0.8rem', color: '#1e40af', marginTop: '6px', fontWeight: 600 }}>
+                Combined initial ledger balances
+              </div>
+            </div>
+
+            <div className="card" style={{ padding: '18px 20px', background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)', border: '1.5px solid #fde68a', borderLeft: '6px solid #f59e0b', borderRadius: '12px', boxShadow: '0 2px 8px rgba(245, 158, 11, 0.1)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.6px' }}>Total Customers</span>
+                <span style={{ background: '#f59e0b', color: '#fff', padding: '6px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Users size={18} /></span>
+              </div>
+              <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#b45309', lineHeight: 1.2 }}>
+                {accounts.length}
+              </div>
+              <div style={{ fontSize: '0.8rem', color: '#92400e', marginTop: '6px', fontWeight: 600 }}>
+                {customerSearch ? `${filteredAccounts.length} customer(s) matching search` : `Registered customer ledger accounts`}
+              </div>
+            </div>
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
             <div>
               <p style={{ margin: 0, color: 'var(--text-muted)' }}>Create customer accounts with Name, Address, Phone Number and NTN. Then open any account to see ledger detail.</p>
@@ -521,10 +595,61 @@ export default function IslamabadAccountStatement() {
           )}
 
           <div className="card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
-              <h2 style={{ margin: 0, color: '#2563eb', fontWeight: 800, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>👥 Customer Accounts</h2>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{accounts.length} accounts</span>
+            {/* Header & Search Bar */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h2 style={{ margin: 0, color: '#2563eb', fontWeight: 800, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  👥 Customer Accounts
+                </h2>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600 }}>
+                  Showing {filteredAccounts.length} of {accounts.length} accounts
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                {/* Search Input */}
+                <div style={{ position: 'relative', width: '280px' }}>
+                  <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }} />
+                  <input
+                    type="text"
+                    value={customerSearch}
+                    onChange={(e) => setCustomerSearch(e.target.value)}
+                    placeholder="Search name, phone, address..."
+                    style={{
+                      width: '100%',
+                      padding: '8px 34px 8px 36px',
+                      fontSize: '0.9rem',
+                      borderRadius: '8px',
+                      border: '1.5px solid #cbd5e1',
+                      height: '38px',
+                      outline: 'none',
+                      backgroundColor: '#f8fafc'
+                    }}
+                  />
+                  {customerSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setCustomerSearch('')}
+                      style={{
+                        position: 'absolute',
+                        right: '8px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: '#94a3b8',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                      title="Clear search"
+                    >
+                      <X size={15} />
+                    </button>
+                  )}
+                </div>
+
                 <button
                   className="btn btn-secondary"
                   onClick={printAccountsList}
@@ -534,8 +659,14 @@ export default function IslamabadAccountStatement() {
                 </button>
               </div>
             </div>
+
             {accounts.length === 0 ? (
               <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>No customer accounts found. Add a new account to begin.</div>
+            ) : filteredAccounts.length === 0 ? (
+              <div style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>
+                <p style={{ margin: '0 0 10px', fontSize: '1rem', fontWeight: 600 }}>No customer accounts matched &quot;{customerSearch}&quot;</p>
+                <button className="btn btn-secondary" onClick={() => setCustomerSearch('')} style={{ padding: '6px 14px', fontSize: '0.85rem' }}>Clear Search</button>
+              </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -552,8 +683,8 @@ export default function IslamabadAccountStatement() {
                     </tr>
                   </thead>
                   <tbody>
-                    {accounts.map((account, index) => {
-                      const accountClosing = computeAccountClosingBalance(account.id, account.opening_balance);
+                    {filteredAccounts.map((account, index) => {
+                      const accountClosing = accountClosingBalances[account.id] !== undefined ? accountClosingBalances[account.id] : computeAccountClosingBalance(account.id, account.opening_balance);
                       return (
                         <tr key={account.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                           <td style={{ padding: '12px 10px' }}>{index + 1}</td>
