@@ -38,7 +38,10 @@ const BranchDeliveryReport     = lazy(() => import('./pages/BranchDeliveryReport
 const BranchReceivable         = lazy(() => import('./pages/BranchReceivable'));
 const BranchBrokerAC           = lazy(() => import('./pages/BranchBrokerAC'));
 const BranchAccountStatement   = lazy(() => import('./pages/BranchAccountStatement'));
+const Login                    = lazy(() => import('./pages/Login'));
+const SuperAdminDashboard      = lazy(() => import('./pages/SuperAdminDashboard'));
 import { useSettings } from './context/SettingsContext';
+import { useAuth } from './context/AuthContext';
 
 
 // ─── Page Loader ─────────────────────────────────────────────────────────────
@@ -91,6 +94,8 @@ const NAV_ITEMS = [
 // ─── Page title map ──────────────────────────────────────────────────────────
 const PAGE_TITLES = {
   '/':                             'Dashboard',
+  '/super-admin':                  'SaaS Super Admin Control Panel',
+  '/login':                        'Login Portal',
   '/bilty':                        'Bilty Booking',
   '/bilty/all-records':            'All Booking Records',
   '/warehouse':                    'Karachi Warehouse',
@@ -134,6 +139,7 @@ function formatDate(date) {
 export default function App() {
   const location = useLocation();
   const { companyName, companySubtitle } = useSettings();
+  const { currentUser, isAuthenticated, isSuperAdmin, tenant, logout, loading: authLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState({
     islamabad: true,
@@ -163,8 +169,6 @@ export default function App() {
     loadCustomBranches();
   }, []);
 
-
-
   const toggleGroup = (key) => {
     setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }));
   };
@@ -192,7 +196,47 @@ export default function App() {
     return () => { document.body.style.overflow = ''; };
   }, [sidebarOpen]);
 
-  const pageTitle = getPageTitle(location.pathname, companyName);
+  // Auth Loading
+  if (authLoading) {
+    return <PageLoader />;
+  }
+
+  // Handle Login Route
+  if (location.pathname === '/login') {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <Login />
+      </Suspense>
+    );
+  }
+
+  // Handle Super Admin Route
+  if (location.pathname === '/super-admin') {
+    if (!isAuthenticated || !isSuperAdmin) {
+      return (
+        <Suspense fallback={<PageLoader />}>
+          <Login />
+        </Suspense>
+      );
+    }
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <SuperAdminDashboard />
+      </Suspense>
+    );
+  }
+
+  // Handle Unauthenticated
+  if (!isAuthenticated) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <Login />
+      </Suspense>
+    );
+  }
+
+  const displayCompanyName = tenant?.company_name || companyName;
+  const pageTitle = getPageTitle(location.pathname, displayCompanyName);
 
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/';
@@ -204,8 +248,8 @@ export default function App() {
       {/* ── Sidebar ── */}
       <div className={`sidebar${sidebarOpen ? ' active' : ''}`}>
         <div className="sidebar-header">
-          <h2>{companyName}</h2>
-          <p>{companySubtitle}</p>
+          <h2>{displayCompanyName}</h2>
+          <p>{tenant ? `${tenant.plan_type || 'Standard'} Plan` : companySubtitle}</p>
         </div>
 
         <nav className="sidebar-nav">
@@ -320,23 +364,47 @@ export default function App() {
         </nav>
 
         {/* User pill */}
-        <div className="sidebar-user">
-          <div className="user-avatar">A</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{
-              color: '#fff',
-              fontSize: '12px',
-              fontWeight: 500,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}>
-              Admin User
+        <div className="sidebar-user" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+            <div className="user-avatar" style={{ backgroundColor: '#3b82f6', color: '#fff', fontWeight: 'bold' }}>
+              {(tenant?.company_name || currentUser?.username || 'A').charAt(0).toUpperCase()}
             </div>
-            <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '10px' }}>
-              Administrator
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                color: '#fff',
+                fontSize: '12px',
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}>
+                {tenant?.owner_name || currentUser?.full_name || currentUser?.username || 'Client User'}
+              </div>
+              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px' }}>
+                {tenant ? `${tenant.username} (${tenant.plan_type || 'Client'})` : 'Super Administrator'}
+              </div>
             </div>
           </div>
+          <button
+            onClick={() => {
+              logout();
+              window.location.href = '/login';
+            }}
+            title="Logout"
+            style={{
+              background: 'rgba(239, 68, 68, 0.2)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: '6px',
+              color: '#fca5a5',
+              padding: '4px 8px',
+              fontSize: '11px',
+              cursor: 'pointer',
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            🚪 Logout
+          </button>
         </div>
       </div>
 
@@ -360,11 +428,49 @@ export default function App() {
             <h1>{pageTitle}</h1>
           </div>
         </div>
-        <div className="header-right">
+        <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {isSuperAdmin && (
+            <Link
+              to="/super-admin"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                color: '#fbbf24',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: 600,
+                textDecoration: 'none',
+              }}
+            >
+              👑 Super Admin Panel
+            </Link>
+          )}
           <span className="header-date">{formatDate(new Date())}</span>
           <span style={{ color: 'var(--secondary)', fontSize: '12px', fontWeight: 500 }}>
-            👤 Admin
+            👤 {tenant?.username || currentUser?.username || 'Admin'}
           </span>
+          <button
+            onClick={() => {
+              logout();
+              window.location.href = '/login';
+            }}
+            style={{
+              padding: '5px 10px',
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              color: '#f87171',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Logout
+          </button>
         </div>
       </header>
 

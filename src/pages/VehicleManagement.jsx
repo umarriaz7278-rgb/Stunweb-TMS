@@ -7,6 +7,8 @@ import {
   FileText, ShieldCheck, RefreshCw, Layers
 } from 'lucide-react';
 
+import { useAuth } from '../context/AuthContext';
+
 const STORAGE_KEYS = {
   VEHICLES: 'vtm_fleet_vehicles',
   TRIPS: 'vtm_fleet_trips',
@@ -42,13 +44,16 @@ const getToday = () => new Date().toISOString().slice(0, 10);
 const getCurrentMonth = () => new Date().toISOString().slice(0, 7);
 
 export default function VehicleManagement() {
+  const { tenantId } = useAuth();
+  const getScopedKey = (baseKey) => `tenant_${tenantId || 'master'}_${baseKey}`;
+
   const [activeTab, setActiveTab] = useState('dashboard');
   
-  const [vehicles, setVehicles] = useState(() => safeParse(STORAGE_KEYS.VEHICLES, []));
-  const [trips, setTrips] = useState(() => safeParse(STORAGE_KEYS.TRIPS, []));
-  const [expenses, setExpenses] = useState(() => safeParse(STORAGE_KEYS.EXPENSES, []));
-  const [maintenance, setMaintenance] = useState(() => safeParse(STORAGE_KEYS.MAINTENANCE, []));
-  const [supplierPayments, setSupplierPayments] = useState(() => safeParse(STORAGE_KEYS.SUPPLIER_PAYMENTS, []));
+  const [vehicles, setVehicles] = useState(() => safeParse(getScopedKey(STORAGE_KEYS.VEHICLES), []));
+  const [trips, setTrips] = useState(() => safeParse(getScopedKey(STORAGE_KEYS.TRIPS), []));
+  const [expenses, setExpenses] = useState(() => safeParse(getScopedKey(STORAGE_KEYS.EXPENSES), []));
+  const [maintenance, setMaintenance] = useState(() => safeParse(getScopedKey(STORAGE_KEYS.MAINTENANCE), []));
+  const [supplierPayments, setSupplierPayments] = useState(() => safeParse(getScopedKey(STORAGE_KEYS.SUPPLIER_PAYMENTS), []));
 
   const [toast, setToast] = useState(null);
   const showToast = (message, type = 'success') => {
@@ -56,11 +61,20 @@ export default function VehicleManagement() {
     setTimeout(() => setToast(null), 3500);
   };
 
-  useEffect(() => safeSave(STORAGE_KEYS.VEHICLES, vehicles), [vehicles]);
-  useEffect(() => safeSave(STORAGE_KEYS.TRIPS, trips), [trips]);
-  useEffect(() => safeSave(STORAGE_KEYS.EXPENSES, expenses), [expenses]);
-  useEffect(() => safeSave(STORAGE_KEYS.MAINTENANCE, maintenance), [maintenance]);
-  useEffect(() => safeSave(STORAGE_KEYS.SUPPLIER_PAYMENTS, supplierPayments), [supplierPayments]);
+  useEffect(() => {
+    setVehicles(safeParse(getScopedKey(STORAGE_KEYS.VEHICLES), []));
+    setTrips(safeParse(getScopedKey(STORAGE_KEYS.TRIPS), []));
+    setExpenses(safeParse(getScopedKey(STORAGE_KEYS.EXPENSES), []));
+    setMaintenance(safeParse(getScopedKey(STORAGE_KEYS.MAINTENANCE), []));
+    setSupplierPayments(safeParse(getScopedKey(STORAGE_KEYS.SUPPLIER_PAYMENTS), []));
+  }, [tenantId]);
+
+  useEffect(() => safeSave(getScopedKey(STORAGE_KEYS.VEHICLES), vehicles), [vehicles, tenantId]);
+  useEffect(() => safeSave(getScopedKey(STORAGE_KEYS.TRIPS), trips), [trips, tenantId]);
+  useEffect(() => safeSave(getScopedKey(STORAGE_KEYS.EXPENSES), expenses), [expenses, tenantId]);
+  useEffect(() => safeSave(getScopedKey(STORAGE_KEYS.MAINTENANCE), maintenance), [maintenance, tenantId]);
+  useEffect(() => safeSave(getScopedKey(STORAGE_KEYS.SUPPLIER_PAYMENTS), supplierPayments), [supplierPayments, tenantId]);
+
 
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
   const [vehicleEditing, setVehicleEditing] = useState(null);
