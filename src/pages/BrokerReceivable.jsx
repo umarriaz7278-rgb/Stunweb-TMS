@@ -381,7 +381,7 @@ export default function BrokerReceivable() {
         {[
           ['ledger', 'Broker Ledger (Challans)'],
           ['received', 'Amount Received'],
-          ['brokers', '🤝 Broker Name List (بروکرز لسٹ)'],
+          ['brokers', '🤝 Broker Name List'],
         ].map(([key, label]) => (
           <button key={key} onClick={() => setActiveTab(key)} style={{
             padding: '10px 20px', fontSize: '0.9rem', fontWeight: 700, border: 'none',
@@ -594,7 +594,7 @@ export default function BrokerReceivable() {
               </div>
               <div>
                 <h2 style={{ margin: 0, color: '#1e40af', fontSize: '1.3rem', fontWeight: 800 }}>
-                  Broker Name List (بروکرز لسٹ)
+                  Broker Name List
                 </h2>
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                   Total Registered Brokers: <strong style={{ color: '#2563eb' }}>{brokers.length}</strong>
@@ -626,7 +626,7 @@ export default function BrokerReceivable() {
             <div className="card" style={{ padding: '24px', marginBottom: '22px', borderTop: '4px solid #2563eb', animation: 'fadeIn 0.3s' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#1e40af', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {editingBrokerId ? '✏️ Edit Broker Account' : '➕ Create New Broker Account (نیا بروکر اکاؤنٹ)'}
+                  {editingBrokerId ? '✏️ Edit Broker Account' : '➕ Create New Broker Account'}
                 </h3>
                 <button
                   type="button"
@@ -641,7 +641,7 @@ export default function BrokerReceivable() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginBottom: '20px' }}>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e40af', marginBottom: '6px', display: 'block' }}>
-                      Broker Name (بروکر کا نام) *
+                      Broker Name *
                     </label>
                     <input
                       type="text"
@@ -655,7 +655,7 @@ export default function BrokerReceivable() {
 
                   <div className="form-group" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#059669', marginBottom: '6px', display: 'block' }}>
-                      Mobile Number (موبائل نمبر)
+                      Mobile Number
                     </label>
                     <input
                       type="text"
@@ -668,7 +668,7 @@ export default function BrokerReceivable() {
 
                   <div className="form-group" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#7c3aed', marginBottom: '6px', display: 'block' }}>
-                      Address / Location (پتہ / ایڈریس)
+                      Address / Location
                     </label>
                     <input
                       type="text"
@@ -862,15 +862,15 @@ export default function BrokerReceivable() {
                                     <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e40af', marginTop: '4px' }}>{bChallans.length} Challan(s)</div>
                                   </div>
                                   <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '10px', border: '1.5px solid #bfdbfe', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                                    <div style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: 800, textTransform: 'uppercase' }}>Total Receivable (چلانات)</div>
+                                    <div style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: 800, textTransform: 'uppercase' }}>Total Receivable</div>
                                     <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#2563eb', marginTop: '4px' }}>Rs. {bTotalReceivable.toLocaleString('en-PK')}</div>
                                   </div>
                                   <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '10px', border: '1.5px solid #bbf7d0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                                    <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 800, textTransform: 'uppercase' }}>Total Received (وصول شدہ)</div>
+                                    <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 800, textTransform: 'uppercase' }}>Total Received</div>
                                     <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#059669', marginTop: '4px' }}>Rs. {bTotalReceived.toLocaleString('en-PK')}</div>
                                   </div>
                                   <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '10px', border: bBalance > 0 ? '1.5px solid #fecaca' : '1.5px solid #bbf7d0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                                    <div style={{ fontSize: '0.75rem', color: bBalance > 0 ? '#dc2626' : '#059669', fontWeight: 800, textTransform: 'uppercase' }}>Remaining Balance (بقایا)</div>
+                                    <div style={{ fontSize: '0.75rem', color: bBalance > 0 ? '#dc2626' : '#059669', fontWeight: 800, textTransform: 'uppercase' }}>Remaining Balance</div>
                                     <div style={{ fontSize: '1.25rem', fontWeight: 800, color: bBalance > 0 ? '#dc2626' : '#059669', marginTop: '4px' }}>Rs. {bBalance.toLocaleString('en-PK')}</div>
                                   </div>
                                 </div>
@@ -934,7 +934,7 @@ export default function BrokerReceivable() {
                                         onClick={() => setShowBrokerPayForm(p => !p)}
                                         style={{ padding: '4px 10px', fontSize: '0.78rem', fontWeight: 700, background: '#059669', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                                       >
-                                        {showBrokerPayForm ? <><X size={12} /> Cancel</> : <><Plus size={12} /> Receive Amount (رقم وصول کریں)</>}
+                                        {showBrokerPayForm ? <><X size={12} /> Cancel</> : <><Plus size={12} /> Receive Amount</>}
                                       </button>
                                     </div>
 
