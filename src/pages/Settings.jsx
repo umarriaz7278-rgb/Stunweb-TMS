@@ -30,7 +30,7 @@ export default function Settings() {
   const [message, setMessage] = useState({ text: '', type: '' });
 
   // ── Branch Management State ──────────────────────────────────────────────────
-  const LOCKED_BRANCHES = ['islamabad', 'lahore', 'rawalpindi', 'karachi'];
+  const LOCKED_BRANCHES = ['islamabad', 'karachi'];
   const [branches, setBranches] = useState([]);
   const [branchLoading, setBranchLoading] = useState(true);
   const [newBranchName, setNewBranchName] = useState('');
@@ -512,7 +512,7 @@ export default function Settings() {
           </h2>
         </div>
         <p style={{ color: '#64748b', fontSize: '0.88rem', marginBottom: '18px' }}>
-          Create new branches or delete user-created branches. Built-in branches (Islamabad, Lahore, Rawalpindi) cannot be deleted.
+          Create new branches or delete custom branches.
           When a new branch is created, it automatically gets its own sub-pages (Overview, Finance, Account Statement, Delivery Report, A/C Receivable, Broker A/C).
         </p>
 

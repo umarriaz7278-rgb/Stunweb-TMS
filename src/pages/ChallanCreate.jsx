@@ -45,7 +45,7 @@ export default function ChallanCreate() {
   const [biltyCharges, setBiltyCharges] = useState({});
 
   // All dispatch branches (loaded from Supabase, excluding Karachi)
-  const [allBranches, setAllBranches] = useState(['Lahore', 'Islamabad', 'Rawalpindi']);
+  const [allBranches, setAllBranches] = useState(['Islamabad']);
 
   useEffect(() => {
     async function fetchInventory() {

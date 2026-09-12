@@ -75,28 +75,6 @@ const NAV_ITEMS = [
       { path: '/broker-receivable',                  icon: '🤝', label: 'Broker A/C ISB' },
     ]
   },
-  {
-    key: 'lahore',
-    label: 'Lahore Branch',
-    icon: '🏙️',
-    children: [
-      { path: '/branch/lahore',                      icon: '📋', label: 'Branch Overview' },
-      { path: '/branch/lahore/finance',              icon: '💵', label: 'Branch Finance' },
-      { path: '/profit-report-lahore',               icon: '📈', label: 'A/C Receivable LHR' },
-      { path: '/broker-receivable-lahore',           icon: '🤝', label: 'Broker A/C LHR' },
-    ]
-  },
-  {
-    key: 'rawalpindi',
-    label: 'Rawalpindi Branch',
-    icon: '🏗️',
-    children: [
-      { path: '/branch/rawalpindi',                  icon: '📋', label: 'Branch Overview' },
-      { path: '/branch/rawalpindi/finance',          icon: '💵', label: 'Branch Finance' },
-      { path: '/profit-report-rawalpindi',           icon: '📈', label: 'A/C Receivable RWP' },
-      { path: '/broker-receivable-rawalpindi',       icon: '🤝', label: 'Broker A/C RWP' },
-    ]
-  },
   { divider: true },
   { section: 'Operations' },
   { path: '/warehouse-rentals',          icon: '📦', label: 'Warehouse Rentals' },
@@ -120,20 +98,12 @@ const PAGE_TITLES = {
   '/challan':                      'Challan Management',
   '/challan/all-records':          'Challan History',
   '/karachi-office':               'Income / Expense Ledger',
-  '/branch/lahore':                'Lahore Branch Overview',
-  '/branch/lahore/finance':        'Lahore Branch Finance',
   '/branch/islamabad':             'Islamabad Branch Overview',
   '/branch/islamabad/finance':     'Islamabad Branch Finance',
   '/branch/islamabad/account-statement': 'Islamabad Account Statement',
-  '/branch/rawalpindi':            'Rawalpindi Branch Overview',
-  '/branch/rawalpindi/finance':    'Rawalpindi Branch Finance',
   '/profit-report-islamabad':      'A/C Receivable — Islamabad',
-  '/profit-report-lahore':         'A/C Receivable — Lahore',
-  '/profit-report-rawalpindi':     'A/C Receivable — Rawalpindi',
   '/commission-report-islamabad':  'Delivery Report — Islamabad',
   '/broker-receivable':            'Broker A/C — Islamabad',
-  '/broker-receivable-lahore':     'Broker A/C — Lahore',
-  '/broker-receivable-rawalpindi': 'Broker A/C — Rawalpindi',
   '/warehouse-rentals':            'Warehouse Rentals',
   '/local-freight-parties':        'Local Freight Parties',
   '/container-transport-ftl':      'Container Transport (FTL)',
@@ -168,12 +138,10 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState({
     islamabad: true,
-    lahore: true,
-    rawalpindi: true,
   });
 
-  // Custom branches (user-created via Settings, excludes built-in ISB/LHR/RWP)
-  const BUILTIN_BRANCHES = ['islamabad', 'lahore', 'rawalpindi', 'karachi'];
+  // Custom branches (user-created via Settings, excludes built-in ISB/Karachi)
+  const BUILTIN_BRANCHES = ['islamabad', 'karachi'];
   const [customBranches, setCustomBranches] = useState([]);
 
   useEffect(() => {

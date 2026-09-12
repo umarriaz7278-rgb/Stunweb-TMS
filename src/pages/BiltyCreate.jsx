@@ -69,7 +69,7 @@ export default function BiltyCreate() {
 
           // Exclude Karachi (origin), include all other destination branches (both built-in and custom)
           const destinationBranches = data.filter(b => b.name.toLowerCase() !== 'karachi');
-          const priorityBranches = ['islamabad', 'rawalpindi', 'lahore'];
+          const priorityBranches = ['islamabad'];
           const sortedBranches = [...destinationBranches].sort((a, b) => {
             const aIndex = priorityBranches.indexOf(a.name.toLowerCase());
             const bIndex = priorityBranches.indexOf(b.name.toLowerCase());
