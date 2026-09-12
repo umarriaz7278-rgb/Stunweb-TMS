@@ -66,14 +66,17 @@ export default function BiltyCreate() {
         if (data && data.length > 0) {
           const karachiBranch = data.find(b => b.name.toLowerCase() === 'karachi');
           if (karachiBranch) setKarachiBranchId(karachiBranch.id);
-          const allowedBranches = ['Islamabad', 'Rawalpindi', 'Lahore'];
-          const filteredBranches = data.filter(b => 
-            allowedBranches.some(name => name.toLowerCase() === b.name.toLowerCase())
-          );
-          const sortedBranches = [...filteredBranches].sort((a, b) => {
-            const aIndex = allowedBranches.findIndex(name => name.toLowerCase() === a.name.toLowerCase());
-            const bIndex = allowedBranches.findIndex(name => name.toLowerCase() === b.name.toLowerCase());
-            return aIndex - bIndex;
+
+          // Exclude Karachi (origin), include all other destination branches (both built-in and custom)
+          const destinationBranches = data.filter(b => b.name.toLowerCase() !== 'karachi');
+          const priorityBranches = ['islamabad', 'rawalpindi', 'lahore'];
+          const sortedBranches = [...destinationBranches].sort((a, b) => {
+            const aIndex = priorityBranches.indexOf(a.name.toLowerCase());
+            const bIndex = priorityBranches.indexOf(b.name.toLowerCase());
+            if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+            if (aIndex !== -1) return -1;
+            if (bIndex !== -1) return 1;
+            return a.name.localeCompare(b.name);
           });
           setBranches(sortedBranches);
           // Set first branch as default
