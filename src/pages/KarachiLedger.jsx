@@ -205,24 +205,102 @@ export default function KarachiLedger() {
       </div>
 
       {/* --- Forms Section --- */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
-        <div className="card" style={{ border: '1px solid #10b981' }}>
-           <h3 style={{ color: '#10b981', marginBottom: '16px' }}>+ Record Income</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+        {/* Record Income */}
+        <div className="card" style={{ border: '1.5px solid #86efac', borderTop: '5px solid #10b981', borderRadius: '12px', padding: '22px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.08)' }}>
+           <h3 style={{ color: '#047857', marginBottom: '18px', fontSize: '1.2rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+             <TrendingUp size={22} color="#10b981" /> + Record Income
+           </h3>
            <form onSubmit={(e) => submitEntry(e, 'income')}>
-             <div className="form-group"><label>Date</label><input type="date" name="date" value={incomeForm.date} onChange={handleIncomeChange} required/></div>
-             <div className="form-group"><label>Description</label><input type="text" name="description" value={incomeForm.description} onChange={handleIncomeChange} required/></div>
-             <div className="form-group"><label>Amount</label><input type="number" min="0" step="0.01" name="amount" value={incomeForm.amount} onChange={handleIncomeChange} required style={{ border: '2px solid #10b981' }}/></div>
-             <button type="submit" className="btn btn-primary" style={{ backgroundColor: '#10b981', border: 'none', width: '100%' }} disabled={loading}>Save Income</button>
+             <div className="form-group" style={{ marginBottom: '14px' }}>
+               <label style={{ fontSize: '0.88rem', fontWeight: 700, color: '#065f46', marginBottom: '6px', display: 'block' }}>Date</label>
+               <input 
+                 type="date" 
+                 name="date" 
+                 value={incomeForm.date} 
+                 onChange={handleIncomeChange} 
+                 required 
+                 style={{ width: '100%', height: '46px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', backgroundColor: '#fff', boxSizing: 'border-box' }}
+               />
+             </div>
+             <div className="form-group" style={{ marginBottom: '14px' }}>
+               <label style={{ fontSize: '0.88rem', fontWeight: 700, color: '#065f46', marginBottom: '6px', display: 'block' }}>Description</label>
+               <input 
+                 type="text" 
+                 name="description" 
+                 value={incomeForm.description} 
+                 onChange={handleIncomeChange} 
+                 required 
+                 placeholder="e.g. Booking Income, Freight, etc."
+                 style={{ width: '100%', height: '46px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', backgroundColor: '#fff', boxSizing: 'border-box' }}
+               />
+             </div>
+             <div className="form-group" style={{ marginBottom: '18px' }}>
+               <label style={{ fontSize: '0.88rem', fontWeight: 700, color: '#065f46', marginBottom: '6px', display: 'block' }}>Amount (Rs.)</label>
+               <input 
+                 type="number" 
+                 min="0" 
+                 step="0.01" 
+                 name="amount" 
+                 value={incomeForm.amount} 
+                 onChange={handleIncomeChange} 
+                 required 
+                 placeholder="0.00"
+                 style={{ width: '100%', height: '48px', padding: '10px 14px', fontSize: '1.15rem', fontWeight: 800, borderRadius: '8px', border: '2px solid #10b981', backgroundColor: '#f0fdf4', color: '#065f46', boxSizing: 'border-box' }}
+               />
+             </div>
+             <button type="submit" className="btn btn-primary" style={{ backgroundColor: '#10b981', border: 'none', width: '100%', height: '48px', fontSize: '1.05rem', fontWeight: 800, borderRadius: '8px', cursor: 'pointer' }} disabled={loading}>
+               {loading ? 'Saving...' : 'Save Income'}
+             </button>
            </form>
         </div>
 
-        <div className="card" style={{ border: '1px solid #ef4444' }}>
-           <h3 style={{ color: '#ef4444', marginBottom: '16px' }}>- Record Expense</h3>
+        {/* Record Expense */}
+        <div className="card" style={{ border: '1.5px solid #fca5a5', borderTop: '5px solid #ef4444', borderRadius: '12px', padding: '22px', boxShadow: '0 4px 12px rgba(239, 68, 68, 0.08)' }}>
+           <h3 style={{ color: '#b91c1c', marginBottom: '18px', fontSize: '1.2rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+             <TrendingDown size={22} color="#ef4444" /> - Record Expense
+           </h3>
            <form onSubmit={(e) => submitEntry(e, 'expense')}>
-             <div className="form-group"><label>Date</label><input type="date" name="date" value={expenseForm.date} onChange={handleExpenseChange} required/></div>
-             <div className="form-group"><label>Description</label><input type="text" name="description" value={expenseForm.description} onChange={handleExpenseChange} required/></div>
-             <div className="form-group"><label>Amount Spent</label><input type="number" min="0" step="0.01" name="amount" value={expenseForm.amount} onChange={handleExpenseChange} required style={{ border: '2px solid #ef4444' }}/></div>
-             <button type="submit" className="btn btn-primary" style={{ backgroundColor: '#ef4444', border: 'none', width: '100%' }} disabled={loading}>Save Expense</button>
+             <div className="form-group" style={{ marginBottom: '14px' }}>
+               <label style={{ fontSize: '0.88rem', fontWeight: 700, color: '#991b1b', marginBottom: '6px', display: 'block' }}>Date</label>
+               <input 
+                 type="date" 
+                 name="date" 
+                 value={expenseForm.date} 
+                 onChange={handleExpenseChange} 
+                 required 
+                 style={{ width: '100%', height: '46px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', backgroundColor: '#fff', boxSizing: 'border-box' }}
+               />
+             </div>
+             <div className="form-group" style={{ marginBottom: '14px' }}>
+               <label style={{ fontSize: '0.88rem', fontWeight: 700, color: '#991b1b', marginBottom: '6px', display: 'block' }}>Description</label>
+               <input 
+                 type="text" 
+                 name="description" 
+                 value={expenseForm.description} 
+                 onChange={handleExpenseChange} 
+                 required 
+                 placeholder="e.g. Office Expense, Fuel, Tea, etc."
+                 style={{ width: '100%', height: '46px', padding: '10px 14px', fontSize: '1rem', borderRadius: '8px', border: '1.5px solid #cbd5e1', backgroundColor: '#fff', boxSizing: 'border-box' }}
+               />
+             </div>
+             <div className="form-group" style={{ marginBottom: '18px' }}>
+               <label style={{ fontSize: '0.88rem', fontWeight: 700, color: '#991b1b', marginBottom: '6px', display: 'block' }}>Amount Spent (Rs.)</label>
+               <input 
+                 type="number" 
+                 min="0" 
+                 step="0.01" 
+                 name="amount" 
+                 value={expenseForm.amount} 
+                 onChange={handleExpenseChange} 
+                 required 
+                 placeholder="0.00"
+                 style={{ width: '100%', height: '48px', padding: '10px 14px', fontSize: '1.15rem', fontWeight: 800, borderRadius: '8px', border: '2px solid #ef4444', backgroundColor: '#fef2f2', color: '#991b1b', boxSizing: 'border-box' }}
+               />
+             </div>
+             <button type="submit" className="btn btn-primary" style={{ backgroundColor: '#ef4444', border: 'none', width: '100%', height: '48px', fontSize: '1.05rem', fontWeight: 800, borderRadius: '8px', cursor: 'pointer' }} disabled={loading}>
+               {loading ? 'Saving...' : 'Save Expense'}
+             </button>
            </form>
         </div>
       </div>
