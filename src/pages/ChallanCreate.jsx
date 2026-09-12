@@ -44,6 +44,9 @@ export default function ChallanCreate() {
   // Store bilty charges keyed by bilty id
   const [biltyCharges, setBiltyCharges] = useState({});
 
+  // All dispatch branches (loaded from Supabase, excluding Karachi)
+  const [allBranches, setAllBranches] = useState(['Lahore', 'Islamabad', 'Rawalpindi']);
+
   useEffect(() => {
     async function fetchInventory() {
       const { data } = await supabase
@@ -66,8 +69,22 @@ export default function ChallanCreate() {
         }
       }
     }
+
+    async function fetchBranches() {
+      const { data } = await supabase.from('branches').select('*').order('name');
+      if (data) {
+        // Exclude Karachi (origin branch) from dispatch list
+        const dispatchBranches = data
+          .filter(b => b.name.toLowerCase() !== 'karachi')
+          .map(b => b.name);
+        if (dispatchBranches.length > 0) setAllBranches(dispatchBranches);
+      }
+    }
+
     fetchInventory();
+    fetchBranches();
   }, []);
+
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -421,7 +438,7 @@ export default function ChallanCreate() {
           <h3 style={{ color: '#2563eb', fontWeight: 800, fontSize: '1.05rem', margin: 0 }}>📍 Step 1: Select Destination Branch</h3>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '8px 0 12px 0' }}>Choose the branch to filter bilties by destination.</p>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            {['Lahore', 'Islamabad', 'Rawalpindi'].map(branch => (
+            {allBranches.map(branch => (
               <button
                 key={branch}
                 type="button"
@@ -461,26 +478,36 @@ export default function ChallanCreate() {
             </div>
             <div className="form-group" style={{ margin: 0 }}>
               <label style={{ fontSize: '0.82rem', fontWeight: 600 }}>Broker Name
-                {selectedBranch === 'Islamabad' && <span style={{ color: '#2563eb', marginLeft: '6px', fontSize: '0.75rem' }}>(ISB Brokers)</span>}
+                {selectedBranch && (() => {
+                  const bKey = `${selectedBranch.toLowerCase()}_broker_accounts`;
+                  const bList = (() => { try { return JSON.parse(localStorage.getItem(bKey) || '[]'); } catch { return []; } })();
+                  return bList.length > 0 ? <span style={{ color: '#2563eb', marginLeft: '6px', fontSize: '0.75rem' }}>({selectedBranch} Brokers)</span> : null;
+                })()}
               </label>
-              {selectedBranch === 'Islamabad' && islamabadBrokers.length > 0 ? (
-                <select
-                  name="broker_name"
-                  value={formData.broker_name}
-                  onChange={handleFormChange}
-                  style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%', border: '1.5px solid #2563eb', borderRadius: '6px', background: '#eff6ff', color: '#1e40af', fontWeight: 600, cursor: 'pointer' }}
-                >
-                  <option value="">-- Select Broker --</option>
-                  {islamabadBrokers.map(b => (
-                    <option key={b.id} value={b.name}>{b.name}{b.phone ? ` (${b.phone})` : ''}</option>
-                  ))}
-                </select>
-              ) : (
-                <input type="text" name="broker_name" value={formData.broker_name} onChange={handleFormChange} placeholder="Broker name (optional)" style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
-              )}
+              {selectedBranch && (() => {
+                const bKey = `${selectedBranch.toLowerCase()}_broker_accounts`;
+                const bList = (() => { try { return JSON.parse(localStorage.getItem(bKey) || '[]'); } catch { return []; } })();
+                if (bList.length > 0) {
+                  return (
+                    <select
+                      name="broker_name"
+                      value={formData.broker_name}
+                      onChange={handleFormChange}
+                      style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%', border: '1.5px solid #2563eb', borderRadius: '6px', background: '#eff6ff', color: '#1e40af', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      <option value="">-- Select Broker --</option>
+                      {bList.map(b => (
+                        <option key={b.id} value={b.name}>{b.name}{b.phone ? ` (${b.phone})` : ''}</option>
+                      ))}
+                    </select>
+                  );
+                }
+                return <input type="text" name="broker_name" value={formData.broker_name} onChange={handleFormChange} placeholder="Broker name (optional)" style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />;
+              })() || <input type="text" name="broker_name" value={formData.broker_name} onChange={handleFormChange} placeholder="Broker name (optional)" style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />}
             </div>
           </div>
         </div>
+
 
         <div className="card" style={{ marginBottom: '24px' }}>
           <h3 style={{ color: '#7c3aed', fontWeight: 800, fontSize: '1.05rem', margin: 0 }}>📦 Step 2: Select Bilties from Warehouse</h3>

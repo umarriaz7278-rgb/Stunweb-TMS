@@ -34,7 +34,12 @@ const ProfitReportRawalpindi   = lazy(() => import('./pages/ProfitReportRawalpin
 const BrokerReceivableRawalpindi= lazy(() => import('./pages/BrokerReceivableRawalpindi'));
 const BrokerLedger             = lazy(() => import('./pages/BrokerLedger'));
 const Settings                 = lazy(() => import('./pages/Settings'));
+const BranchDeliveryReport     = lazy(() => import('./pages/BranchDeliveryReport'));
+const BranchReceivable         = lazy(() => import('./pages/BranchReceivable'));
+const BranchBrokerAC           = lazy(() => import('./pages/BranchBrokerAC'));
+const BranchAccountStatement   = lazy(() => import('./pages/BranchAccountStatement'));
 import { useSettings } from './context/SettingsContext';
+
 
 // ─── Page Loader ─────────────────────────────────────────────────────────────
 function PageLoader() {
@@ -167,6 +172,32 @@ export default function App() {
     rawalpindi: true,
   });
 
+  // Custom branches (user-created via Settings, excludes built-in ISB/LHR/RWP)
+  const BUILTIN_BRANCHES = ['islamabad', 'lahore', 'rawalpindi', 'karachi'];
+  const [customBranches, setCustomBranches] = useState([]);
+
+  useEffect(() => {
+    async function loadCustomBranches() {
+      const { supabase: sb } = await import('./supabaseClient');
+      const { data } = await sb.from('branches').select('*').order('name');
+      if (data) {
+        const custom = data.filter(b => !BUILTIN_BRANCHES.includes(b.name.toLowerCase()));
+        setCustomBranches(custom);
+        // Auto-expand newly added branch groups
+        if (custom.length > 0) {
+          setOpenGroups(prev => {
+            const next = { ...prev };
+            custom.forEach(b => { next[b.name.toLowerCase()] = true; });
+            return next;
+          });
+        }
+      }
+    }
+    loadCustomBranches();
+  }, []);
+
+
+
   const toggleGroup = (key) => {
     setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }));
   };
@@ -273,6 +304,52 @@ export default function App() {
               </Link>
             );
           })}
+
+          {/* ── Dynamic Custom Branches (user-created) ── */}
+          {customBranches.map(branch => {
+            const slug = branch.name.toLowerCase();
+            const children = [
+              { path: `/branch/${slug}`,                     icon: '📋', label: 'Branch Overview' },
+              { path: `/branch/${slug}/finance`,             icon: '💵', label: 'Branch Finance' },
+              { path: `/branch/${slug}/account-statement`,   icon: '📄', label: 'Account Statement' },
+              { path: `/delivery-report/${slug}`,            icon: '💼', label: `Delivery Report` },
+              { path: `/receivable/${slug}`,                 icon: '📈', label: `A/C Receivable` },
+              { path: `/broker-ac/${slug}`,                  icon: '🤝', label: `Broker A/C` },
+            ];
+            const isOpen = openGroups[slug] !== false;
+            const isGroupActive = children.some(c => location.pathname === c.path);
+            return (
+              <div key={`grp-${slug}`} style={{ marginBottom: '2px' }}>
+                <div
+                  className={`nav-group-header${isGroupActive ? ' active' : ''}`}
+                  onClick={() => toggleGroup(slug)}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '15px' }}>🏢</span>
+                    <span style={{ fontWeight: 600 }}>{branch.name} Branch</span>
+                  </div>
+                  <span className={`nav-group-arrow${isOpen ? ' open' : ''}`}>▶</span>
+                </div>
+                {isOpen && (
+                  <div className="nav-sub-menu">
+                    {children.map(child => {
+                      const childActive = location.pathname === child.path;
+                      return (
+                        <Link
+                          key={child.path}
+                          to={child.path}
+                          className={`nav-sub-item${childActive ? ' active' : ''}`}
+                        >
+                          <i>{child.icon}</i>
+                          <span>{child.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         {/* User pill */}
@@ -363,6 +440,20 @@ export default function App() {
             <Route path="/broker-receivable-rawalpindi"            element={<BrokerReceivableRawalpindi />} />
             <Route path="/broker-ledger"                           element={<BrokerLedger />} />
             <Route path="/settings"                                element={<Settings />} />
+
+            {/* ── Dynamic Routes for Custom Branches ── */}
+            {customBranches.map(branch => {
+              const slug = branch.name.toLowerCase();
+              return [
+                <Route key={`${slug}-overview`}   path={`/branch/${slug}`}                   element={<BranchOffice branchName={branch.name} />} />,
+                <Route key={`${slug}-finance`}    path={`/branch/${slug}/finance`}           element={<BranchFinance branchName={branch.name} />} />,
+                <Route key={`${slug}-acstmt`}     path={`/branch/${slug}/account-statement`} element={<BranchAccountStatement branchName={branch.name} />} />,
+                <Route key={`${slug}-delivery`}   path={`/delivery-report/${slug}`}          element={<BranchDeliveryReport branchName={branch.name} />} />,
+                <Route key={`${slug}-receivable`} path={`/receivable/${slug}`}               element={<BranchReceivable branchName={branch.name} />} />,
+                <Route key={`${slug}-broker`}     path={`/broker-ac/${slug}`}                element={<BranchBrokerAC branchName={branch.name} />} />,
+              ];
+            })}
+
             <Route path="*" element={
               <div className="card">
                 <div className="card-header">
@@ -374,6 +465,7 @@ export default function App() {
               </div>
             } />
           </Routes>
+
         </Suspense>
       </main>
     </>

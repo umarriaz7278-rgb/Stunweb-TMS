@@ -1,6 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useSettings } from '../context/SettingsContext';
-import { Settings as SettingsIcon, Building, Image, RotateCcw, Save, CheckCircle, AlertCircle, Upload, Eye } from 'lucide-react';
+import { Settings as SettingsIcon, Building, Image, RotateCcw, Save, CheckCircle, AlertCircle, Upload, Eye, GitBranch, Plus, Trash2 } from 'lucide-react';
+import { supabase } from '../supabaseClient';
+
 
 export default function Settings() {
   const {
@@ -26,6 +28,63 @@ export default function Settings() {
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
+
+  // ── Branch Management State ──────────────────────────────────────────────────
+  const LOCKED_BRANCHES = ['islamabad', 'lahore', 'rawalpindi', 'karachi'];
+  const [branches, setBranches] = useState([]);
+  const [branchLoading, setBranchLoading] = useState(true);
+  const [newBranchName, setNewBranchName] = useState('');
+  const [branchSaving, setBranchSaving] = useState(false);
+  const [branchMsg, setBranchMsg] = useState({ text: '', type: '' });
+
+  const showBranchMsg = (text, type = 'success') => {
+    setBranchMsg({ text, type });
+    setTimeout(() => setBranchMsg({ text: '', type: '' }), 4000);
+  };
+
+  useEffect(() => {
+    fetchBranches();
+  }, []);
+
+  const fetchBranches = async () => {
+    setBranchLoading(true);
+    const { data, error } = await supabase.from('branches').select('*').order('name');
+    if (error) console.error('Error loading branches:', error.message);
+    if (data) setBranches(data);
+    setBranchLoading(false);
+  };
+
+  const handleCreateBranch = async (e) => {
+    e.preventDefault();
+    const trimmedName = newBranchName.trim();
+    if (!trimmedName) { showBranchMsg('Branch name required.', 'error'); return; }
+    if (LOCKED_BRANCHES.includes(trimmedName.toLowerCase())) {
+      showBranchMsg('This branch already exists as a built-in branch.', 'error'); return;
+    }
+    const exists = branches.some(b => b.name.toLowerCase() === trimmedName.toLowerCase());
+    if (exists) { showBranchMsg('A branch with this name already exists.', 'error'); return; }
+    setBranchSaving(true);
+    const { error } = await supabase.from('branches').insert([{ name: trimmedName }]);
+    setBranchSaving(false);
+    if (error) { showBranchMsg('Error creating branch: ' + error.message, 'error'); }
+    else {
+      showBranchMsg(`Branch "${trimmedName}" created! Page will refresh to update sidebar.`, 'success');
+      setNewBranchName('');
+      fetchBranches();
+      setTimeout(() => window.location.reload(), 2000);
+    }
+  };
+
+  const handleDeleteBranch = async (branch) => {
+    if (!window.confirm(`Delete "${branch.name}" branch?\n\nThis removes it from the sidebar and Bilty/Challan selection.\nExisting data in Supabase remains safe.`)) return;
+    const { error } = await supabase.from('branches').delete().eq('id', branch.id);
+    if (error) { showBranchMsg('Error deleting branch: ' + error.message, 'error'); }
+    else {
+      showBranchMsg(`Branch "${branch.name}" deleted. Page will refresh.`, 'success');
+      fetchBranches();
+      setTimeout(() => window.location.reload(), 2000);
+    }
+  };
 
   const biltyInputRef = useRef(null);
   const challanInputRef = useRef(null);
@@ -444,9 +503,98 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* ─── SECTION 4: Branch Management ─── */}
+      <div className="card" style={{ marginBottom: '24px', borderTop: '4px solid #7c3aed', padding: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+          <GitBranch size={22} color="#7c3aed" />
+          <h2 style={{ margin: 0, color: '#5b21b6', fontSize: '1.25rem', fontWeight: 800 }}>
+            4. Branch Management (برانچ مینجمنٹ)
+          </h2>
+        </div>
+        <p style={{ color: '#64748b', fontSize: '0.88rem', marginBottom: '18px' }}>
+          Create new branches or delete user-created branches. Built-in branches (Islamabad, Lahore, Rawalpindi) cannot be deleted.
+          When a new branch is created, it automatically gets its own sub-pages (Overview, Finance, Account Statement, Delivery Report, A/C Receivable, Broker A/C).
+        </p>
+
+        {/* Branch notification */}
+        {branchMsg.text && (
+          <div style={{ padding: '12px 18px', marginBottom: '16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px',
+            backgroundColor: branchMsg.type === 'error' ? '#fee2e2' : '#d1fae5',
+            color: branchMsg.type === 'error' ? '#991b1b' : '#065f46',
+            border: `1.5px solid ${branchMsg.type === 'error' ? '#fca5a5' : '#86efac'}`, fontWeight: 600 }}>
+            {branchMsg.type === 'error' ? <AlertCircle size={18} /> : <CheckCircle size={18} />}
+            <span>{branchMsg.text}</span>
+          </div>
+        )}
+
+        {/* Create new branch form */}
+        <form onSubmit={handleCreateBranch} style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div style={{ flex: 1, minWidth: '220px' }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#5b21b6', marginBottom: '6px' }}>
+              New Branch Name (نئی برانچ کا نام) *
+            </label>
+            <input
+              type="text"
+              value={newBranchName}
+              onChange={e => setNewBranchName(e.target.value)}
+              placeholder="e.g. Abbottabad, Peshawar, Quetta..."
+              required
+              style={{ width: '100%', height: '46px', padding: '10px 14px', fontSize: '1rem', fontWeight: 600, borderRadius: '8px', border: '1.5px solid #c4b5fd', boxSizing: 'border-box' }}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={branchSaving}
+            style={{ height: '46px', padding: '0 24px', fontSize: '0.95rem', fontWeight: 700, borderRadius: '8px', border: 'none', cursor: 'pointer', background: '#7c3aed', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+            <Plus size={18} />
+            {branchSaving ? 'Creating...' : 'Create Branch'}
+          </button>
+        </form>
+
+        {/* Branches list */}
+        <div>
+          <h3 style={{ margin: '0 0 12px', fontSize: '0.95rem', fontWeight: 700, color: '#374151' }}>All Branches:</h3>
+          {branchLoading ? (
+            <div style={{ padding: '16px', color: 'var(--text-muted)', fontSize: '0.88rem' }}>Loading branches...</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {branches.map(branch => {
+                const isLocked = LOCKED_BRANCHES.includes(branch.name.toLowerCase());
+                return (
+                  <div key={branch.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: '8px', border: `1.5px solid ${isLocked ? '#e5e7eb' : '#c4b5fd'}`, background: isLocked ? '#f9fafb' : '#f5f3ff' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '1.1rem' }}>{isLocked ? '🏛️' : '🏢'}</span>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '0.95rem', color: isLocked ? '#374151' : '#5b21b6' }}>{branch.name}</div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                          {isLocked ? 'Built-in Branch (cannot delete)' : 'Custom Branch'}
+                        </div>
+                      </div>
+                    </div>
+                    {!isLocked && (
+                      <button
+                        onClick={() => handleDeleteBranch(branch)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px', fontSize: '0.82rem', fontWeight: 700, border: '1.5px solid #ef4444', borderRadius: '8px', cursor: 'pointer', background: '#fff', color: '#ef4444' }}>
+                        <Trash2 size={14} /> Delete
+                      </button>
+                    )}
+                    {isLocked && (
+                      <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#6b7280', background: '#e5e7eb', padding: '4px 10px', borderRadius: '6px' }}>
+                        🔒 Protected
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Guide Card */}
       <div className="card" style={{ background: '#f8fafc', borderLeft: '4px solid #3b82f6', padding: '18px 24px' }}>
         <h3 style={{ margin: '0 0 8px 0', fontSize: '1rem', color: '#1e40af', fontWeight: 700 }}>
+
           💡 Header Design Guide (ہیڈر ڈیزائن ہدایات)
         </h3>
         <ul style={{ margin: 0, paddingLeft: '20px', color: '#475569', fontSize: '0.88rem', lineHeight: 1.6 }}>
