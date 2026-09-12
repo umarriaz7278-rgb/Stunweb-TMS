@@ -77,6 +77,7 @@ const NAV_ITEMS = [
   },
   { divider: true },
   { section: 'Operations' },
+  { path: '/vehicle-management',         icon: '🚛', label: 'Vehicle / Trailer Management' },
   { path: '/warehouse-rentals',          icon: '📦', label: 'Warehouse Rentals' },
   { path: '/local-freight-parties',      icon: '🚛', label: 'Local Freight Parties' },
   { path: '/container-transport-ftl',    icon: '🏗️', label: 'Container Transport (FTL)' },
@@ -84,8 +85,6 @@ const NAV_ITEMS = [
   { path: '/branches-audit',            icon: '🔍', label: 'Branches Audit' },
   { divider: true },
   { section: 'Admin' },
-  { path: '/vehicle-management',         icon: '🚗', label: 'Vehicle Management' },
-  { path: '/finance',                    icon: '💾', label: 'Finance Overview' },
   { path: '/settings',                   icon: '⚙️', label: 'Settings' },
 ];
 
@@ -109,7 +108,7 @@ const PAGE_TITLES = {
   '/container-transport-ftl':      'Container Transport (FTL)',
   '/claims':                       'Short Claims',
   '/branches-audit':               'Branches Audit',
-  '/vehicle-management':           'Vehicle Management',
+  '/vehicle-management':           'Vehicle / Trailer Management',
   '/finance':                      'Finance Overview',
   '/settings':                     'System Settings',
 };
