@@ -568,12 +568,13 @@ export default function BiltyCreate() {
           <div className="bilty-grid bilty-grid-5">
             <div className="form-group">
               <label>From Booking</label>
-              <input type="text" value="Karachi" readOnly style={{ backgroundColor: 'var(--bg-main)' }} />
+              <input type="text" value="Karachi" readOnly className="form-control" style={{ backgroundColor: 'var(--bg-main)' }} />
             </div>
             <div className="form-group">
               <label>Destination</label>
               <select 
                 name="destination_branch_id" 
+                className="form-control"
                 value={isManualDest ? 'manual' : (formData.destination_branch_id || '')} 
                 onChange={(e) => {
                   if (e.target.value === 'manual') {
@@ -598,16 +599,16 @@ export default function BiltyCreate() {
                 )}
               </select>
               {isManualDest && (
-                <input type="text" value={manualDestName} onChange={(e) => setManualDestName(e.target.value)} placeholder="Enter city name" style={{ marginTop: '6px' }} required />
+                <input type="text" className="form-control" value={manualDestName} onChange={(e) => setManualDestName(e.target.value)} placeholder="Enter city name" style={{ marginTop: '6px' }} required />
               )}
             </div>
             <div className="form-group">
               <label>Bilty Date</label>
-              <input type="date" name="bilty_date" value={formData.bilty_date} onChange={handleChange} style={{ backgroundColor: 'transparent' }} />
+              <input type="date" name="bilty_date" className="form-control" value={formData.bilty_date} onChange={handleChange} style={{ backgroundColor: 'transparent' }} />
             </div>
             <div className="form-group">
               <label>#Bilty Number {nextBiltyNumber && <span style={{ fontSize: '0.75rem', color: '#e85d04', fontWeight: 700 }}>(Next: {nextBiltyNumber})</span>}</label>
-              <input type="text" name="bilty_number" value={formData.bilty_number} onChange={handleChange} placeholder="Auto or Manual" />
+              <input type="text" name="bilty_number" className="form-control" value={formData.bilty_number} onChange={handleChange} placeholder="Auto or Manual" />
             </div>
 
           </div>
@@ -623,27 +624,27 @@ export default function BiltyCreate() {
             <div className="card bilty-section">
               <div className="sender-receiver-grid">
                 {/* Sender */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div className="sender-col">
                   <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--primary-color, #e85d04)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sender</div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Name</label>
-                    <input type="text" name="sender_name" value={formData.sender_name} onChange={handleChange} placeholder="Sender name" required style={{ padding: '9px 12px', fontSize: '0.98rem', height: '40px', width: '100%' }} />
+                    <input type="text" name="sender_name" className="form-control" value={formData.sender_name} onChange={handleChange} placeholder="Sender name" required />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Contact</label>
-                    <input type="text" name="sender_phone" value={formData.sender_phone} onChange={handleChange} placeholder="0321..." style={{ padding: '9px 12px', fontSize: '0.98rem', height: '40px', width: '100%' }} />
+                    <input type="text" name="sender_phone" className="form-control" value={formData.sender_phone} onChange={handleChange} placeholder="0321..." />
                   </div>
                 </div>
                 {/* Receiver */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', borderLeft: '1px solid var(--border)', paddingLeft: '14px' }}>
+                <div className="receiver-col">
                   <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--primary-color, #e85d04)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Receiver</div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Name</label>
-                    <input type="text" name="receiver_name" value={formData.receiver_name} onChange={handleChange} placeholder="Receiver name" required style={{ padding: '9px 12px', fontSize: '0.98rem', height: '40px', width: '100%' }} />
+                    <input type="text" name="receiver_name" className="form-control" value={formData.receiver_name} onChange={handleChange} placeholder="Receiver name" required />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Contact</label>
-                    <input type="text" name="receiver_phone" value={formData.receiver_phone} onChange={handleChange} placeholder="0333..." style={{ padding: '9px 12px', fontSize: '0.98rem', height: '40px', width: '100%' }} />
+                    <input type="text" name="receiver_phone" className="form-control" value={formData.receiver_phone} onChange={handleChange} placeholder="0333..." />
                   </div>
                 </div>
               </div>
@@ -651,27 +652,27 @@ export default function BiltyCreate() {
 
             {/* Goods Details */}
             <div className="card bilty-section">
-              <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                <table style={{ width: '100%', minWidth: '450px', borderCollapse: 'collapse' }}>
+              <div className="table-responsive">
+                <table className="bilty-goods-table" style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid var(--border)' }}>
                       <th style={{ textAlign: 'left', padding: '6px', fontSize: '0.75rem', fontWeight: 700, width: '30px' }}>#</th>
-                      <th style={{ textAlign: 'left', padding: '6px', fontSize: '0.75rem', fontWeight: 700, width: '90px' }}>QTY*</th>
+                      <th style={{ textAlign: 'left', padding: '6px', fontSize: '0.75rem', fontWeight: 700, width: '70px' }}>QTY*</th>
                       <th style={{ textAlign: 'left', padding: '6px', fontSize: '0.75rem', fontWeight: 700 }}>DESCRIPTION *</th>
-                      <th style={{ textAlign: 'left', padding: '6px', fontSize: '0.75rem', fontWeight: 700, width: '110px' }}>WT(KG)*</th>
+                      <th style={{ textAlign: 'left', padding: '6px', fontSize: '0.75rem', fontWeight: 700, width: '85px' }}>WT(KG)*</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                      <td style={{ padding: '6px', fontWeight: 600, fontSize: '0.85rem' }}>1</td>
-                      <td style={{ padding: '6px' }}>
-                        <input type="number" min="1" name="quantity" value={formData.quantity} onChange={handleChange} required style={{ width: '100%', padding: '8px 10px', fontSize: '0.95rem' }} />
+                      <td style={{ padding: '6px 4px', fontWeight: 600, fontSize: '0.85rem' }}>1</td>
+                      <td style={{ padding: '4px' }}>
+                        <input type="number" min="1" name="quantity" className="form-control" value={formData.quantity} onChange={handleChange} required style={{ padding: '6px 8px', fontSize: '0.9rem' }} />
                       </td>
-                      <td style={{ padding: '6px' }}>
-                        <input type="text" name="description" value={formData.description} onChange={handleChange} placeholder="e.g. Bags, Cartons" required style={{ width: '100%', padding: '8px 10px', fontSize: '0.95rem' }} />
+                      <td style={{ padding: '4px' }}>
+                        <input type="text" name="description" className="form-control" value={formData.description} onChange={handleChange} placeholder="e.g. Bags, Cartons" required style={{ padding: '6px 8px', fontSize: '0.9rem' }} />
                       </td>
-                      <td style={{ padding: '6px' }}>
-                        <input type="number" step="0.01" min="0" name="weight_kg" value={formData.weight_kg} onChange={handleChange} style={{ width: '100%', padding: '8px 10px', fontSize: '0.95rem' }} />
+                      <td style={{ padding: '4px' }}>
+                        <input type="number" step="0.01" min="0" name="weight_kg" className="form-control" value={formData.weight_kg} onChange={handleChange} style={{ padding: '6px 8px', fontSize: '0.9rem' }} />
                       </td>
                     </tr>
                   </tbody>
@@ -680,7 +681,7 @@ export default function BiltyCreate() {
               {/* Note Field */}
               <div className="form-group" style={{ margin: '12px 0 0 0' }}>
                 <label style={{ fontWeight: 700, fontSize: '0.78rem' }}>Note</label>
-                <input type="text" name="note" value={formData.note} onChange={handleChange} placeholder="Add a note for this bilty..." style={{ width: '100%', padding: '8px 10px', fontSize: '0.95rem', color: 'red', fontWeight: 600 }} />
+                <input type="text" name="note" className="form-control" value={formData.note} onChange={handleChange} placeholder="Add a note for this bilty..." style={{ color: 'red', fontWeight: 600 }} />
               </div>
             </div>
 
@@ -693,22 +694,22 @@ export default function BiltyCreate() {
 
               <div className="form-group" style={{ margin: 0 }}>
                 <label>Rent Amount</label>
-                <input type="number" min="0" step="0.01" name="custom_amount" value={formData.custom_amount} onChange={handleChange} style={{ fontSize: '0.95rem' }} />
+                <input type="number" min="0" step="0.01" name="custom_amount" className="form-control" value={formData.custom_amount} onChange={handleChange} />
               </div>
 
               <div className="form-group" style={{ margin: 0 }}>
                 <label>Loading</label>
-                <input type="number" min="0" step="0.01" name="labor_charges" value={formData.labor_charges} onChange={handleChange} required />
+                <input type="number" min="0" step="0.01" name="labor_charges" className="form-control" value={formData.labor_charges} onChange={handleChange} required />
               </div>
 
               <div className="form-group" style={{ margin: 0 }}>
                 <label>Local Fare</label>
-                <input type="number" min="0" step="0.01" name="local_freight" value={formData.local_freight} onChange={handleChange} required />
+                <input type="number" min="0" step="0.01" name="local_freight" className="form-control" value={formData.local_freight} onChange={handleChange} required />
               </div>
 
               <div className="form-group" style={{ margin: 0 }}>
                 <label>TT Expense</label>
-                <input type="number" min="0" step="0.01" name="tt_expense" value={formData.tt_expense} onChange={handleChange} />
+                <input type="number" min="0" step="0.01" name="tt_expense" className="form-control" value={formData.tt_expense} onChange={handleChange} />
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', padding: '8px', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderRadius: '6px' }}>
@@ -717,14 +718,12 @@ export default function BiltyCreate() {
                   id="excludeCharges"
                   checked={excludeChargesFromPrint}
                   onChange={(e) => setExcludeChargesFromPrint(e.target.checked)}
-                  style={{ width: 'auto', cursor: 'pointer', accentColor: 'var(--primary-color, #e85d04)' }}
+                  style={{ width: 'auto !important', cursor: 'pointer', accentColor: 'var(--primary-color, #e85d04)' }}
                 />
                 <label htmlFor="excludeCharges" style={{ marginBottom: 0, fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600, color: '#7f1d1d' }}>
                   ✓ Hide Charges from Print
                 </label>
               </div>
-
-
 
               <div style={{ borderTop: '2px solid var(--primary-color, #e85d04)', paddingTop: '12px', marginTop: '4px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -737,10 +736,10 @@ export default function BiltyCreate() {
 
               <div className="form-group" style={{ margin: 0 }}>
                 <label>Booking Clerk</label>
-                <input type="text" name="booking_clerk" value={formData.booking_clerk} onChange={handleChange} placeholder="Clerk name" style={{ fontSize: '0.95rem' }} />
+                <input type="text" name="booking_clerk" className="form-control" value={formData.booking_clerk} onChange={handleChange} placeholder="Clerk name" />
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
                 <input
                   type="checkbox"
                   id="addToAccount"
@@ -749,7 +748,7 @@ export default function BiltyCreate() {
                     setAddToAccount(e.target.checked);
                     if (!e.target.checked) setLocalFreightPartyName('');
                   }}
-                  style={{ width: 'auto', cursor: 'pointer' }}
+                  style={{ width: 'auto !important', cursor: 'pointer' }}
                 />
                 <label htmlFor="addToAccount" style={{ marginBottom: 0, fontSize: '0.8rem', cursor: 'pointer', fontWeight: 500, color: '#4b5563' }}>
                   Add to Local Freight Party Account
@@ -757,10 +756,11 @@ export default function BiltyCreate() {
                 {addToAccount && (
                   <input
                     type="text"
+                    className="form-control"
                     value={localFreightPartyName}
                     onChange={(e) => setLocalFreightPartyName(e.target.value)}
                     placeholder="Enter party name"
-                    style={{ fontSize: '0.8rem', padding: '4px 6px', borderRadius: '3px', border: '1px solid #ccc', marginLeft: 'auto', width: '180px' }}
+                    style={{ fontSize: '0.8rem', padding: '4px 6px', marginTop: '6px' }}
                   />
                 )}
               </div>

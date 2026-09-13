@@ -21,8 +21,14 @@
   box-shadow: var(--shadow-xs);
 }
 
-.bilty-page .form-group {
-  margin-bottom: 0;
+/* Ensure all form controls inside form-groups expand to 100% width */
+.form-group input,
+.form-group select,
+.form-group textarea,
+.form-control {
+  width: 100% !important;
+  display: block;
+  box-sizing: border-box;
 }
 
 /* ── Responsive Form Grids ── */
@@ -36,7 +42,21 @@
 .sender-receiver-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: 16px;
+}
+
+.sender-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.receiver-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-left: 1px solid var(--border);
+  padding-left: 16px;
 }
 
 .branch-select-grid {
@@ -65,7 +85,7 @@
   gap: 8px;
 }
 
-/* ── Mobile Responsive Breakpoints ── */
+/* ── Tablet Breakpoints (<= 900px) ── */
 @media (max-width: 900px) {
   .bilty-main-layout {
     grid-template-columns: 1fr !important;
@@ -75,19 +95,22 @@
   }
 }
 
-@media (max-width: 640px) {
+/* ── Mobile Breakpoints (<= 768px) ── */
+@media (max-width: 768px) {
   .sender-receiver-grid {
     grid-template-columns: 1fr !important;
-    gap: 12px;
+    gap: 14px !important;
   }
-  .sender-receiver-grid > div:last-child {
+  .receiver-col {
     border-left: none !important;
-    border-right: none !important;
     border-top: 1px solid var(--border);
     padding-left: 0 !important;
-    padding-top: 12px;
+    padding-top: 14px;
   }
-  .bilty-grid-5 {
+  .bilty-grid-5,
+  .bilty-grid-4,
+  .bilty-grid-3,
+  .bilty-grid-2 {
     grid-template-columns: 1fr !important;
     gap: 10px;
   }
@@ -99,7 +122,8 @@
   }
   .form-group input,
   .form-group select,
-  .form-group textarea {
+  .form-group textarea,
+  .form-control {
     font-size: 15px !important; /* Prevents auto-zoom on mobile iOS/Android */
     min-height: 42px;
   }
@@ -109,4 +133,18 @@
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
+  .bilty-goods-table {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .bilty-goods-table th,
+  .bilty-goods-table td {
+    padding: 6px 4px !important;
+  }
+  .bilty-goods-table input {
+    min-height: 38px !important;
+    padding: 4px 6px !important;
+    font-size: 14px !important;
+  }
 }
+
