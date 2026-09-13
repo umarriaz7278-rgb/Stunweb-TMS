@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
+import { getTenantItem, setTenantItem, getCurrentTenant, applyTenantFilter, withTenantId } from '../utils/tenantStorage';
 
 const SettingsContext = createContext();
 
@@ -11,46 +12,64 @@ const DEFAULT_SETTINGS = {
 };
 
 export const SettingsProvider = ({ children }) => {
+  const currentTenant = getCurrentTenant();
+  const initialCompanyName = currentTenant?.company_name || DEFAULT_SETTINGS.companyName;
+
   const [companyName, setCompanyName] = useState(() => {
-    return localStorage.getItem('app_settings_company_name') || DEFAULT_SETTINGS.companyName;
+    return getTenantItem('app_settings_company_name', initialCompanyName);
   });
 
   const [companySubtitle, setCompanySubtitle] = useState(() => {
-    return localStorage.getItem('app_settings_company_subtitle') || DEFAULT_SETTINGS.companySubtitle;
+    return getTenantItem('app_settings_company_subtitle', DEFAULT_SETTINGS.companySubtitle);
   });
 
   const [biltyHeaderUrl, setBiltyHeaderUrl] = useState(() => {
-    return localStorage.getItem('app_settings_bilty_header_url') || DEFAULT_SETTINGS.biltyHeaderUrl;
+    return getTenantItem('app_settings_bilty_header_url', DEFAULT_SETTINGS.biltyHeaderUrl);
   });
 
   const [challanHeaderUrl, setChallanHeaderUrl] = useState(() => {
-    return localStorage.getItem('app_settings_challan_header_url') || DEFAULT_SETTINGS.challanHeaderUrl;
+    return getTenantItem('app_settings_challan_header_url', DEFAULT_SETTINGS.challanHeaderUrl);
   });
 
   const [loading, setLoading] = useState(false);
+
+  // Sync settings whenever session changes
+  useEffect(() => {
+    const tenant = getCurrentTenant();
+    if (tenant?.company_name) {
+      setCompanyName(getTenantItem('app_settings_company_name', tenant.company_name));
+    } else {
+      setCompanyName(getTenantItem('app_settings_company_name', DEFAULT_SETTINGS.companyName));
+    }
+    setCompanySubtitle(getTenantItem('app_settings_company_subtitle', DEFAULT_SETTINGS.companySubtitle));
+    setBiltyHeaderUrl(getTenantItem('app_settings_bilty_header_url', DEFAULT_SETTINGS.biltyHeaderUrl));
+    setChallanHeaderUrl(getTenantItem('app_settings_challan_header_url', DEFAULT_SETTINGS.challanHeaderUrl));
+  }, []);
 
   // Load from Supabase on mount
   useEffect(() => {
     async function loadRemoteSettings() {
       try {
-        const { data, error } = await supabase.from('app_settings').select('*');
+        let query = supabase.from('app_settings').select('*');
+        query = applyTenantFilter(query);
+        const { data, error } = await query;
         if (!error && data && data.length > 0) {
           data.forEach(item => {
             if (item.key === 'company_name' && item.value) {
               setCompanyName(item.value);
-              localStorage.setItem('app_settings_company_name', item.value);
+              setTenantItem('app_settings_company_name', item.value);
             }
             if (item.key === 'company_subtitle' && item.value) {
               setCompanySubtitle(item.value);
-              localStorage.setItem('app_settings_company_subtitle', item.value);
+              setTenantItem('app_settings_company_subtitle', item.value);
             }
             if (item.key === 'bilty_header_url' && item.value) {
               setBiltyHeaderUrl(item.value);
-              localStorage.setItem('app_settings_bilty_header_url', item.value);
+              setTenantItem('app_settings_bilty_header_url', item.value);
             }
             if (item.key === 'challan_header_url' && item.value) {
               setChallanHeaderUrl(item.value);
-              localStorage.setItem('app_settings_challan_header_url', item.value);
+              setTenantItem('app_settings_challan_header_url', item.value);
             }
           });
         }
@@ -67,19 +86,19 @@ export const SettingsProvider = ({ children }) => {
     try {
       if (newSettings.companyName !== undefined) {
         setCompanyName(newSettings.companyName);
-        localStorage.setItem('app_settings_company_name', newSettings.companyName);
+        setTenantItem('app_settings_company_name', newSettings.companyName);
       }
       if (newSettings.companySubtitle !== undefined) {
         setCompanySubtitle(newSettings.companySubtitle);
-        localStorage.setItem('app_settings_company_subtitle', newSettings.companySubtitle);
+        setTenantItem('app_settings_company_subtitle', newSettings.companySubtitle);
       }
       if (newSettings.biltyHeaderUrl !== undefined) {
         setBiltyHeaderUrl(newSettings.biltyHeaderUrl);
-        localStorage.setItem('app_settings_bilty_header_url', newSettings.biltyHeaderUrl);
+        setTenantItem('app_settings_bilty_header_url', newSettings.biltyHeaderUrl);
       }
       if (newSettings.challanHeaderUrl !== undefined) {
         setChallanHeaderUrl(newSettings.challanHeaderUrl);
-        localStorage.setItem('app_settings_challan_header_url', newSettings.challanHeaderUrl);
+        setTenantItem('app_settings_challan_header_url', newSettings.challanHeaderUrl);
       }
 
       // Sync to Supabase app_settings table
@@ -98,7 +117,8 @@ export const SettingsProvider = ({ children }) => {
       }
 
       if (upsertList.length > 0) {
-        await supabase.from('app_settings').upsert(upsertList, { onConflict: 'key' });
+        const payload = withTenantId(upsertList);
+        await supabase.from('app_settings').upsert(payload, { onConflict: 'key' });
       }
 
       return { success: true };
@@ -145,11 +165,12 @@ export const SettingsProvider = ({ children }) => {
 export const useSettings = () => {
   const context = useContext(SettingsContext);
   if (!context) {
+    const currentTenant = getCurrentTenant();
     return {
-      companyName: localStorage.getItem('app_settings_company_name') || DEFAULT_SETTINGS.companyName,
-      companySubtitle: localStorage.getItem('app_settings_company_subtitle') || DEFAULT_SETTINGS.companySubtitle,
-      biltyHeaderUrl: localStorage.getItem('app_settings_bilty_header_url') || DEFAULT_SETTINGS.biltyHeaderUrl,
-      challanHeaderUrl: localStorage.getItem('app_settings_challan_header_url') || DEFAULT_SETTINGS.challanHeaderUrl,
+      companyName: getTenantItem('app_settings_company_name', currentTenant?.company_name || DEFAULT_SETTINGS.companyName),
+      companySubtitle: getTenantItem('app_settings_company_subtitle', DEFAULT_SETTINGS.companySubtitle),
+      biltyHeaderUrl: getTenantItem('app_settings_bilty_header_url', DEFAULT_SETTINGS.biltyHeaderUrl),
+      challanHeaderUrl: getTenantItem('app_settings_challan_header_url', DEFAULT_SETTINGS.challanHeaderUrl),
       loading: false,
       saveSettings: () => {},
       resetBiltyHeader: () => {},

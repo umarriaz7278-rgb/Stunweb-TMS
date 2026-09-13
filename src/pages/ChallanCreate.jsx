@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useSettings } from '../context/SettingsContext';
 import { Truck } from 'lucide-react';
+import { applyTenantFilter, withTenantId } from '../utils/tenantStorage';
 
 export default function ChallanCreate() {
   const { challanHeaderUrl } = useSettings();
@@ -49,9 +50,11 @@ export default function ChallanCreate() {
 
   useEffect(() => {
     async function fetchInventory() {
-      const { data } = await supabase
+      let q = supabase
         .from('pending_warehouse_inventory')
         .select('*');
+      q = applyTenantFilter(q);
+      const { data } = await q;
       if (data) {
         setInventory(data);
         // Fetch charges for each bilty from bilties table
@@ -179,7 +182,7 @@ export default function ChallanCreate() {
     // 1. Create Challan
     const { data: challanData, error: challanError } = await supabase
       .from('challans')
-      .insert([{
+      .insert([withTenantId({
         vehicle_number: formData.vehicle_number,
         route_number: formData.route_number,
         broker_name: formData.broker_name,
@@ -192,7 +195,7 @@ export default function ChallanCreate() {
         vehicle_freight: parseFloat(formData.vehicle_freight || 0),
         branch_deposit: branchDeposit,
         status: 'in_transit'
-      }])
+      })])
       .select();
 
     if (challanError) {

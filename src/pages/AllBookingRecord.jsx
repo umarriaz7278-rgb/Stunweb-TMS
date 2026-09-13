@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { BookOpen, Search, RefreshCw } from 'lucide-react';
+import { applyTenantFilter } from '../utils/tenantStorage';
 
 const STATUS_OPTIONS = [
   'Karachi Warehouse',
@@ -40,10 +41,12 @@ export default function AllBookingRecord() {
 
   async function fetchBilties() {
     setLoading(true);
-    const { data, error } = await supabase
+    let q = supabase
       .from('bilties')
       .select('*, branches(name)')
       .order('created_at', { ascending: false });
+    q = applyTenantFilter(q);
+    const { data, error } = await q;
     if (data) setBilties(data);
     setLoading(false);
   }

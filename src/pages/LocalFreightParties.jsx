@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { ArrowLeft, Plus, Save, Trash2, Calendar, CreditCard, User, History, Download, Lock } from 'lucide-react';
+import { applyTenantFilter, withTenantId } from '../utils/tenantStorage';
 
 export default function LocalFreightParties() {
   const [parties, setParties] = useState([]);
@@ -30,9 +31,11 @@ export default function LocalFreightParties() {
   const fetchParties = async () => {
     setLoading(true);
     // Fetch parties and their transaction totals
-    const { data: partiesData, error: pError } = await supabase
+    let q = supabase
       .from('local_freight_parties')
       .select('*');
+    q = applyTenantFilter(q);
+    const { data: partiesData, error: pError } = await q;
 
     if (pError) {
       console.error(pError);

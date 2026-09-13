@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Truck, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { applyTenantFilter } from '../utils/tenantStorage';
 
 export default function AllChallanRecord() {
   const [challans, setChallans] = useState([]);
@@ -22,10 +23,12 @@ export default function AllChallanRecord() {
 
   async function fetchChallans() {
     setLoading(true);
-    const { data, error } = await supabase
+    let q = supabase
       .from('challans')
       .select('*')
       .order('id', { ascending: false });
+    q = applyTenantFilter(q);
+    const { data, error } = await q;
     if (data) setChallans(data);
     if (error) {
       console.error('Error fetching challans:', error.message);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { DollarSign, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { applyTenantFilter, withTenantId } from '../utils/tenantStorage';
 
 export default function KarachiLedger() {
   const [ledgers, setLedgers] = useState([]);
@@ -21,7 +22,9 @@ export default function KarachiLedger() {
   }, []);
 
   async function fetchLedgers() {
-    const { data, error } = await supabase.from('karachi_ledgers').select('*').order('entry_date', { ascending: false }).order('created_at', { ascending: false });
+    let q = supabase.from('karachi_ledgers').select('*').order('entry_date', { ascending: false }).order('created_at', { ascending: false });
+    q = applyTenantFilter(q);
+    const { data, error } = await q;
     if (data) setLedgers(data);
   }
 
@@ -33,12 +36,12 @@ export default function KarachiLedger() {
     setLoading(true); setMessage('');
     
     const form = type === 'income' ? incomeForm : expenseForm;
-    const { error } = await supabase.from('karachi_ledgers').insert([{
+    const { error } = await supabase.from('karachi_ledgers').insert([withTenantId({
       entry_date: form.date,
       entry_type: type,
       description: form.description,
       amount: Number(form.amount) || 0
-    }]);
+    })]);
 
     if (!error) {
       if(type === 'income') setIncomeForm({ date: new Date().toISOString().split('T')[0], description: '', amount: '' });

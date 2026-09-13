@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { Package, Search, Scale, DollarSign, FileText, X } from 'lucide-react';
+import { applyTenantFilter } from '../utils/tenantStorage';
 
 export default function Warehouse() {
   const [inventory, setInventory] = useState([]);
@@ -9,10 +10,12 @@ export default function Warehouse() {
   const [selectedDestination, setSelectedDestination] = useState('all');
 
   async function fetchInventory() {
-    const { data, error } = await supabase
+    let q = supabase
       .from('pending_warehouse_inventory')
       .select('*')
       .order('bilty_number', { ascending: false });
+    q = applyTenantFilter(q);
+    const { data, error } = await q;
     if (error) {
       console.error("Error fetching inventory:", error);
     } else {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
+import { applyTenantFilter } from '../utils/tenantStorage';
 
 // ─── Stat Card Component ──────────────────────────────────────────────────────
 function StatCard({ icon, iconColor, value, label }) {
@@ -66,10 +67,18 @@ export default function Dashboard() {
     async function loadStats() {
       setLoading(true);
       try {
+        let biltiesQ = supabase.from('bilties').select('*', { count: 'exact', head: true });
+        let challansQ = supabase.from('challans').select('*', { count: 'exact', head: true });
+        let recentQ = supabase.from('bilties').select('id, bilty_number, sender_name, receiver_name, local_freight, bilty_date, destination_branch_id').order('created_at', { ascending: false }).limit(8);
+
+        biltiesQ = applyTenantFilter(biltiesQ);
+        challansQ = applyTenantFilter(challansQ);
+        recentQ = applyTenantFilter(recentQ);
+
         const [biltiesRes, challansRes, recentRes] = await Promise.all([
-          supabase.from('bilties').select('*', { count: 'exact', head: true }),
-          supabase.from('challans').select('*', { count: 'exact', head: true }),
-          supabase.from('bilties').select('id, bilty_number, sender_name, receiver_name, local_freight, bilty_date, destination_branch_id').order('created_at', { ascending: false }).limit(8),
+          biltiesQ,
+          challansQ,
+          recentQ,
         ]);
 
         setStats({

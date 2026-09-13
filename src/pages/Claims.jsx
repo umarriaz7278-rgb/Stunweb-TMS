@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { AlertCircle } from 'lucide-react';
+import { applyTenantFilter } from '../utils/tenantStorage';
 
 export default function Claims() {
   const [claims, setClaims] = useState([]);
@@ -12,13 +13,15 @@ export default function Claims() {
 
   async function fetchClaims() {
     // Fetch pending claims and join with bilty info
-    const { data, error } = await supabase
+    let q = supabase
       .from('short_claims')
       .select(`
         *,
         bilties ( bilty_number, description )
       `)
       .eq('status', 'pending');
+    q = applyTenantFilter(q);
+    const { data, error } = await q;
 
     if (data) setClaims(data);
   }

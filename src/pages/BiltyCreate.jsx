@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useSettings } from '../context/SettingsContext';
+import { withTenantId } from '../utils/tenantStorage';
 
 export default function BiltyCreate() {
   const { biltyHeaderUrl } = useSettings();
@@ -170,7 +171,7 @@ export default function BiltyCreate() {
 
     const { data, error } = await supabase
       .from('bilties')
-      .insert([insertData])
+      .insert([withTenantId(insertData)])
       .select();
 
     if (error) {
