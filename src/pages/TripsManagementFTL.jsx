@@ -1,30 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Truck, Plus, Trash2, X, Eye, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getTenantItem, setTenantItem } from '../utils/tenantStorage';
 
 const STORAGE_KEY = 'ftl_trips';
 const BROKERS_KEY = 'ftl_brokers';
 
 function loadTrips() {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch {
-    return [];
-  }
+  return getTenantItem(STORAGE_KEY, []);
 }
 
 function saveTrips(trips) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(trips));
+  setTenantItem(STORAGE_KEY, trips);
 }
 
 function loadBrokers() {
-  try {
-    const data = localStorage.getItem(BROKERS_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch {
-    return [];
-  }
+  return getTenantItem(BROKERS_KEY, []);
 }
 
 const emptyForm = {

@@ -159,7 +159,7 @@ export default function App() {
   const activeBranchName = primaryBranchName || 'Islamabad';
   const navItems = getNavItems(activeBranchName);
 
-  // Custom branches (user-created via Settings, excludes built-in ISB/Karachi)
+  // Custom branches (user-created via Settings, excludes built-in ISB/Karachi and active primary branch)
   const BUILTIN_BRANCHES = ['islamabad', 'karachi'];
   const [customBranches, setCustomBranches] = useState([]);
 
@@ -168,7 +168,11 @@ export default function App() {
       const { supabase: sb } = await import('./supabaseClient');
       const { data } = await sb.from('branches').select('*').order('name');
       if (data) {
-        const custom = data.filter(b => !BUILTIN_BRANCHES.includes(b.name.toLowerCase()));
+        const currentPrimary = (primaryBranchName || 'Islamabad').toLowerCase();
+        const custom = data.filter(b => 
+          !BUILTIN_BRANCHES.includes(b.name.toLowerCase()) && 
+          b.name.toLowerCase() !== currentPrimary
+        );
         setCustomBranches(custom);
         // Auto-expand newly added branch groups
         if (custom.length > 0) {
@@ -181,7 +185,7 @@ export default function App() {
       }
     }
     loadCustomBranches();
-  }, []);
+  }, [primaryBranchName]);
 
   const toggleGroup = (key) => {
     setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }));

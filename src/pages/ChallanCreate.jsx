@@ -75,12 +75,25 @@ export default function ChallanCreate() {
 
     async function fetchBranches() {
       const { data } = await supabase.from('branches').select('*').order('name');
+      const currentPrimary = (primaryBranchName || 'Islamabad').trim();
       if (data) {
         // Exclude Karachi (origin branch) from dispatch list
-        const dispatchBranches = data
+        let dispatchBranches = data
           .filter(b => b.name.toLowerCase() !== 'karachi')
-          .map(b => (b.name.toLowerCase() === 'islamabad' ? (primaryBranchName || 'Islamabad') : b.name));
-        if (dispatchBranches.length > 0) setAllBranches(dispatchBranches);
+          .map(b => (b.name.toLowerCase() === 'islamabad' ? currentPrimary : b.name));
+
+        if (!dispatchBranches.some(name => name.toLowerCase() === currentPrimary.toLowerCase())) {
+          dispatchBranches.unshift(currentPrimary);
+        }
+
+        const unique = Array.from(new Set(dispatchBranches));
+        unique.sort((a, b) => {
+          if (a.toLowerCase() === currentPrimary.toLowerCase()) return -1;
+          if (b.toLowerCase() === currentPrimary.toLowerCase()) return 1;
+          return a.localeCompare(b);
+        });
+
+        if (unique.length > 0) setAllBranches(unique);
       }
     }
 

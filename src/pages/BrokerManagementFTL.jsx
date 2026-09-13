@@ -1,20 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Truck, Plus, Edit, Trash2, X, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getTenantItem, setTenantItem } from '../utils/tenantStorage';
 
 const STORAGE_KEY = 'ftl_brokers';
 
 function loadBrokers() {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch {
-    return [];
-  }
+  return getTenantItem(STORAGE_KEY, []);
 }
 
 function saveBrokers(brokers) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(brokers));
+  setTenantItem(STORAGE_KEY, brokers);
 }
 
 export default function BrokerManagementFTL() {

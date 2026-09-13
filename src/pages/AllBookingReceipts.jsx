@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { FileText, Search, RefreshCw, Printer, Download, Trash2 } from 'lucide-react';
+import { applyTenantFilter, getTenantItem, setTenantItem } from '../utils/tenantStorage';
 
 export default function AllBookingReceipts() {
   const [receipts, setReceipts] = useState([]);
@@ -13,10 +14,12 @@ export default function AllBookingReceipts() {
 
   async function fetchReceipts() {
     setLoading(true);
-    const { data } = await supabase
+    let query = supabase
       .from('booking_receipts')
       .select('*')
       .order('id', { ascending: false });
+    query = applyTenantFilter(query);
+    const { data } = await query;
     if (data) setReceipts(data);
     setLoading(false);
   }
@@ -163,11 +166,11 @@ export default function AllBookingReceipts() {
       return;
     }
 
-    // Delete matching trip from localStorage
+    // Delete matching trip from tenant-scoped storage
     try {
-      const trips = JSON.parse(localStorage.getItem('ftl_trips') || '[]');
+      const trips = getTenantItem('ftl_trips', []);
       const updatedTrips = trips.filter(t => t.biltyNumber !== r.booking_number);
-      localStorage.setItem('ftl_trips', JSON.stringify(updatedTrips));
+      setTenantItem('ftl_trips', updatedTrips);
     } catch {}
 
     // Refresh list

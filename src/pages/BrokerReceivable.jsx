@@ -89,8 +89,12 @@ export default function BrokerReceivable() {
       return;
     }
 
+    const targetName = (branchName || 'Islamabad').toLowerCase();
     const islamabadChallanIds = (cbData || [])
-      .filter(cb => cb.bilties?.branches?.name === 'Islamabad')
+      .filter(cb => {
+        const n = cb.bilties?.branches?.name?.toLowerCase();
+        return n === targetName || n === 'islamabad';
+      })
       .map(cb => cb.challan_id);
 
     if (!islamabadChallanIds.length) {

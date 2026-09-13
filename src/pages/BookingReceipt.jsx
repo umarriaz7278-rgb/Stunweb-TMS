@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { FileText, Printer, MessageCircle, Save, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { applyTenantFilter, withTenantId, getTenantItem, setTenantItem } from '../utils/tenantStorage';
 
 function generateBookingNumber(lastNum) {
   const num = (lastNum || 1000) + 1;
@@ -18,11 +19,11 @@ export default function BookingReceipt() {
   const [message, setMessage] = useState({ text: '', type: '' });
   const [brokers, setBrokers] = useState([]);
 
-  // Load brokers from localStorage (shared with BrokerManagementFTL)
+  // Load brokers from tenant-scoped storage (shared with BrokerManagementFTL)
   useEffect(() => {
     try {
-      const data = localStorage.getItem('ftl_brokers');
-      if (data) setBrokers(JSON.parse(data));
+      const data = getTenantItem('ftl_brokers', []);
+      if (data) setBrokers(data);
     } catch {}
   }, []);
 
@@ -59,26 +60,40 @@ export default function BookingReceipt() {
     vehicle_mobile: '',
   });
 
-  // Auto-generate booking number on mount
-  useEffect(() => {
-    async function fetchLastBookingNumber() {
-      const { data, error } = await supabase
+  async function fetchLastBookingNumber() {
+    try {
+      let query = supabase
         .from('booking_receipts')
-        .select('booking_number')
-        .order('id', { ascending: false })
-        .limit(1);
+        .select('booking_number');
+      query = applyTenantFilter(query);
+
+      const { data, error } = await query;
 
       if (data && data.length > 0) {
-        const last = data[0].booking_number;
-        const lastNum = parseInt(last.replace('#', '')) || 1000;
-        const next = generateBookingNumber(lastNum);
+        let maxNum = 1000;
+        data.forEach(r => {
+          if (r.booking_number) {
+            const parsed = parseInt(String(r.booking_number).replace(/\D/g, ''), 10);
+            if (!isNaN(parsed) && parsed > maxNum) {
+              maxNum = parsed;
+            }
+          }
+        });
+        const next = generateBookingNumber(maxNum);
         setBookingNumber(next);
         setForm(prev => ({ ...prev, booking_number: next }));
       } else {
         setBookingNumber('#1001');
         setForm(prev => ({ ...prev, booking_number: '#1001' }));
       }
+    } catch (err) {
+      setBookingNumber('#1001');
+      setForm(prev => ({ ...prev, booking_number: '#1001' }));
     }
+  }
+
+  // Auto-generate booking number on mount
+  useEffect(() => {
     fetchLastBookingNumber();
   }, []);
 
@@ -99,7 +114,7 @@ export default function BookingReceipt() {
     setSaving(true);
     setMessage({ text: '', type: '' });
     const { broker_name, vehicle_fare, ...formWithoutBroker } = form;
-    const payload = {
+    let payload = {
       ...formWithoutBroker,
       booking_number: isManual ? form.booking_number : bookingNumber,
       qty: parseInt(form.qty) || 0,
@@ -113,14 +128,31 @@ export default function BookingReceipt() {
       total_freight: totalFreight,
     };
 
-    const { error } = await supabase.from('booking_receipts').insert([payload]);
+    payload = withTenantId(payload);
+
+    let { error } = await supabase.from('booking_receipts').insert([payload]);
+
+    // Fallback if tenant_id column doesn't exist in schema cache yet
+    if (error && error.message && error.message.includes('tenant_id')) {
+      const { tenant_id, ...fallbackPayload } = payload;
+      const retry = await supabase.from('booking_receipts').insert([fallbackPayload]);
+      error = retry.error;
+    }
+
     setSaving(false);
     if (error) {
-      setMessage({ text: 'Error saving: ' + error.message, type: 'error' });
+      if (error.message && error.message.includes('booking_receipts_booking_number_key')) {
+        setMessage({ 
+          text: 'Error: Duplicate Booking #! Supabase SQL Editor mein "FIX_BOOKING_RECEIPTS_SQL.sql" run karein taake constraint remove ho sake.', 
+          type: 'error' 
+        });
+      } else {
+        setMessage({ text: 'Error saving: ' + error.message, type: 'error' });
+      }
     } else {
-      // Auto-create trip in Trips Management
+      // Auto-create trip in Trips Management (tenant scoped)
       try {
-        const existingTrips = JSON.parse(localStorage.getItem('ftl_trips') || '[]');
+        const existingTrips = getTenantItem('ftl_trips', []);
         const newTrip = {
           id: Date.now().toString(),
           date: form.date,
@@ -137,9 +169,11 @@ export default function BookingReceipt() {
           brokerName: form.broker_name || '',
           createdAt: new Date().toISOString(),
         };
-        localStorage.setItem('ftl_trips', JSON.stringify([newTrip, ...existingTrips]));
+        setTenantItem('ftl_trips', [newTrip, ...existingTrips]);
       } catch {}
       setMessage({ text: 'Booking Receipt saved successfully!', type: 'success' });
+      // Fetch next available number
+      fetchLastBookingNumber();
     }
   };
 

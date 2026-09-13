@@ -68,28 +68,48 @@ export default function BiltyCreate() {
           const karachiBranch = data.find(b => b.name.toLowerCase() === 'karachi');
           if (karachiBranch) setKarachiBranchId(karachiBranch.id);
 
-          // Exclude Karachi (origin), include all other destination branches (both built-in and custom)
-          const destinationBranches = data
-            .filter(b => b.name.toLowerCase() !== 'karachi')
-            .map(b => {
-              if (b.name.toLowerCase() === 'islamabad') {
-                return { ...b, name: primaryBranchName || 'Islamabad' };
-              }
-              return b;
+          const currentPrimary = (primaryBranchName || 'Islamabad').trim();
+
+          // Exclude Karachi (origin)
+          let nonKarachi = data.filter(b => b.name.toLowerCase() !== 'karachi');
+
+          // Check if primary branch exists in list
+          const hasExactPrimary = nonKarachi.some(b => b.name.toLowerCase() === currentPrimary.toLowerCase());
+
+          let destinationBranches = nonKarachi.map(b => {
+            if (!hasExactPrimary && b.name.toLowerCase() === 'islamabad') {
+              return { ...b, name: currentPrimary };
+            }
+            return b;
+          });
+
+          // If still not present in the list (e.g. if Islamabad was renamed or deleted), find or create entry
+          if (!destinationBranches.some(b => b.name.toLowerCase() === currentPrimary.toLowerCase())) {
+            const isb = data.find(b => b.name.toLowerCase() === 'islamabad') || nonKarachi[0];
+            destinationBranches.unshift({
+              id: isb?.id || data[0]?.id,
+              name: currentPrimary,
             });
-          const priorityBranches = [(primaryBranchName || 'islamabad').toLowerCase(), 'islamabad'];
+          }
+
+          // Sort so currentPrimary (e.g. Abbottabad) is ALWAYS #1 at the top
           const sortedBranches = [...destinationBranches].sort((a, b) => {
-            const aIndex = priorityBranches.indexOf(a.name.toLowerCase());
-            const bIndex = priorityBranches.indexOf(b.name.toLowerCase());
-            if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
-            if (aIndex !== -1) return -1;
-            if (bIndex !== -1) return 1;
+            if (a.name.toLowerCase() === currentPrimary.toLowerCase()) return -1;
+            if (b.name.toLowerCase() === currentPrimary.toLowerCase()) return 1;
             return a.name.localeCompare(b.name);
           });
+
           setBranches(sortedBranches);
-          // Set first branch as default
+
+          // Set first branch (which is always currentPrimary) as default
           if (sortedBranches.length > 0) {
-            setFormData(prev => ({...prev, destination_branch_id: sortedBranches[0].id, bilty_date: getPakistanDate()}));
+            setFormData(prev => ({
+              ...prev, 
+              destination_branch_id: prev.destination_branch_id && sortedBranches.some(b => b.id === prev.destination_branch_id) 
+                ? prev.destination_branch_id 
+                : sortedBranches[0].id, 
+              bilty_date: getPakistanDate()
+            }));
           }
         } else {
           console.error('No branches found in database');

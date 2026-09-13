@@ -155,9 +155,24 @@ export default function Settings() {
       await saveSettings({
         primaryBranchName: cleanName,
       });
-      // Also update in Supabase branches table if exists
+      // Also update/sync in Supabase branches table
       try {
-        await supabase.from('branches').update({ name: cleanName }).eq('name', storedPrimaryBranchName || 'Islamabad');
+        const { data: allBranches } = await supabase.from('branches').select('*');
+        if (allBranches && allBranches.length > 0) {
+          const oldPrimary = (storedPrimaryBranchName || '').trim().toLowerCase();
+          const match = allBranches.find(b => 
+            b.name.toLowerCase() === oldPrimary || 
+            b.name.toLowerCase() === 'islamabad'
+          );
+          if (match) {
+            await supabase.from('branches').update({ name: cleanName }).eq('id', match.id);
+          } else {
+            const exists = allBranches.some(b => b.name.toLowerCase() === cleanName.toLowerCase());
+            if (!exists) {
+              await supabase.from('branches').insert([{ name: cleanName }]);
+            }
+          }
+        }
       } catch (err) {
         console.warn('Could not sync branch name to branches table:', err);
       }

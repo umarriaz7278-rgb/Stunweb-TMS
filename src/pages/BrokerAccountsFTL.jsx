@@ -1,22 +1,23 @@
 import { useState, useEffect } from 'react';
 import { Truck, Plus, Trash2, X, ArrowLeft, Eye, DollarSign, Printer, Filter, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getTenantItem, setTenantItem } from '../utils/tenantStorage';
 
 const TRIPS_KEY = 'ftl_trips';
 const BROKERS_KEY = 'ftl_brokers';
 const RECEIVABLES_KEY = 'ftl_broker_receivables';
 
 function loadTrips() {
-  try { return JSON.parse(localStorage.getItem(TRIPS_KEY)) || []; } catch { return []; }
+  return getTenantItem(TRIPS_KEY, []);
 }
 function loadBrokers() {
-  try { return JSON.parse(localStorage.getItem(BROKERS_KEY)) || []; } catch { return []; }
+  return getTenantItem(BROKERS_KEY, []);
 }
 function loadReceivables() {
-  try { return JSON.parse(localStorage.getItem(RECEIVABLES_KEY)) || []; } catch { return []; }
+  return getTenantItem(RECEIVABLES_KEY, []);
 }
 function saveReceivables(data) {
-  localStorage.setItem(RECEIVABLES_KEY, JSON.stringify(data));
+  setTenantItem(RECEIVABLES_KEY, data);
 }
 
 const formatCurrency = (val) => {
