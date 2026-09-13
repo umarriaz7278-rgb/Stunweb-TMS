@@ -176,10 +176,20 @@ export default function BiltyCreate() {
       insertData.bilty_number = formData.bilty_number.trim();
     }
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('bilties')
       .insert([withTenantId(insertData)])
       .select();
+
+    // Auto-fallback if tenant_id column does not exist yet in Supabase bilties table
+    if (error && error.message && error.message.includes('tenant_id')) {
+      const retry = await supabase
+        .from('bilties')
+        .insert([insertData])
+        .select();
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       console.error(error);

@@ -179,24 +179,34 @@ export default function ChallanCreate() {
     setLoading(true);
     setMessage('');
 
-    // 1. Create Challan
-    const { data: challanData, error: challanError } = await supabase
+    const challanPayload = {
+      vehicle_number: formData.vehicle_number,
+      route_number: formData.route_number,
+      broker_name: formData.broker_name,
+      driver_name: formData.driver_name,
+      challan_date: challanDate,
+      total_bilty_amount: calculatedTotalBiltyAmount,
+      labor_deduction: 0,
+      commission_deduction: commissionDeduction,
+      other_deduction: 0,
+      vehicle_freight: parseFloat(formData.vehicle_freight || 0),
+      branch_deposit: branchDeposit,
+      status: 'in_transit'
+    };
+
+    let { data: challanData, error: challanError } = await supabase
       .from('challans')
-      .insert([withTenantId({
-        vehicle_number: formData.vehicle_number,
-        route_number: formData.route_number,
-        broker_name: formData.broker_name,
-        driver_name: formData.driver_name,
-        challan_date: challanDate,
-        total_bilty_amount: calculatedTotalBiltyAmount,
-        labor_deduction: 0,
-        commission_deduction: commissionDeduction,
-        other_deduction: 0,
-        vehicle_freight: parseFloat(formData.vehicle_freight || 0),
-        branch_deposit: branchDeposit,
-        status: 'in_transit'
-      })])
+      .insert([withTenantId(challanPayload)])
       .select();
+
+    if (challanError && challanError.message && challanError.message.includes('tenant_id')) {
+      const retry = await supabase
+        .from('challans')
+        .insert([challanPayload])
+        .select();
+      challanData = retry.data;
+      challanError = retry.error;
+    }
 
     if (challanError) {
       setMessage(`Error creating challan: ${challanError.message}`);
