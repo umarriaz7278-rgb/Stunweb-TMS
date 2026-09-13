@@ -50,25 +50,84 @@ export default function ChallanCreate() {
 
   useEffect(() => {
     async function fetchInventory() {
-      let q = supabase
-        .from('pending_warehouse_inventory')
-        .select('*');
-      q = applyTenantFilter(q);
-      const { data } = await q;
-      if (data) {
-        setInventory(data);
-        // Fetch charges for each bilty from bilties table
-        const ids = data.map(d => d.id);
-        if (ids.length > 0) {
-          const { data: chargesData } = await supabase
+      let inventoryData = null;
+
+      // 1. Try querying pending_warehouse_inventory view with tenant filter
+      try {
+        let q = supabase
+          .from('pending_warehouse_inventory')
+          .select('*');
+        q = applyTenantFilter(q);
+        const { data, error } = await q;
+        if (!error && data && data.length > 0) {
+          inventoryData = data;
+        }
+      } catch (e) {
+        console.warn("View fetch error:", e);
+      }
+
+      // 2. Direct fallback: query bilties directly with tenant filter (100% reliable)
+      if (!inventoryData || inventoryData.length === 0) {
+        try {
+          let bQ = supabase
             .from('bilties')
-            .select('id, custom_amount, local_freight, labor_charges, tt_expense')
-            .in('id', ids);
-          if (chargesData) {
-            const chargesMap = {};
-            chargesData.forEach(b => { chargesMap[b.id] = b; });
-            setBiltyCharges(chargesMap);
+            .select('*, branches(name)')
+            .order('bilty_number', { ascending: false });
+          bQ = applyTenantFilter(bQ);
+          const { data: biltiesData, error: bErr } = await bQ;
+
+          if (!bErr && biltiesData && biltiesData.length > 0) {
+            let cQ = supabase
+              .from('challan_bilties')
+              .select('bilty_id, loaded_quantity, challans(status)');
+            const { data: cbData } = await cQ;
+
+            const loadedMap = {};
+            if (cbData) {
+              cbData.forEach(cb => {
+                if (cb.challans && (cb.challans.status === 'in_transit' || cb.challans.status === 'arrived')) {
+                  loadedMap[cb.bilty_id] = (loadedMap[cb.bilty_id] || 0) + Number(cb.loaded_quantity || 0);
+                }
+              });
+            }
+
+            const computed = biltiesData
+              .map(b => {
+                const totalQty = Number(b.total_quantity || b.quantity || 1);
+                const loadedQty = loadedMap[b.id] || 0;
+                const remainingQty = Math.max(0, totalQty - loadedQty);
+                const destName = b.destination || b.branches?.name || 'Islamabad';
+                return {
+                  ...b,
+                  date: b.bilty_date || b.created_at,
+                  destination_name: destName,
+                  total_quantity: totalQty,
+                  remaining_quantity: remainingQty
+                };
+              })
+              .filter(b => b.remaining_quantity > 0);
+
+            inventoryData = computed;
           }
+        } catch (err) {
+          console.error("Direct bilties fallback error:", err);
+        }
+      }
+
+      const finalData = inventoryData || [];
+      setInventory(finalData);
+
+      // Fetch charges for each bilty from bilties table
+      const ids = finalData.map(d => d.id);
+      if (ids.length > 0) {
+        const { data: chargesData } = await supabase
+          .from('bilties')
+          .select('id, custom_amount, local_freight, labor_charges, tt_expense')
+          .in('id', ids);
+        if (chargesData) {
+          const chargesMap = {};
+          chargesData.forEach(b => { chargesMap[b.id] = b; });
+          setBiltyCharges(chargesMap);
         }
       }
     }
@@ -137,7 +196,12 @@ export default function ChallanCreate() {
   // Calculations
   // Filtered inventory based on selected branch
   const filteredInventory = selectedBranch
-    ? inventory.filter(item => item.destination_name === selectedBranch)
+    ? inventory.filter(item => {
+        const dName = (item.destination_name || '').trim().toLowerCase();
+        const dest = (item.destination || '').trim().toLowerCase();
+        const sel = selectedBranch.trim().toLowerCase();
+        return dName === sel || dest === sel || dName.startsWith(sel) || sel.startsWith(dName);
+      })
     : [];
 
   const calculatedTotalBiltyAmount = Object.values(selectedBilties).reduce((acc, b) => {

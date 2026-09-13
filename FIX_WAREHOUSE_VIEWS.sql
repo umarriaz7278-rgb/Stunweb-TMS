@@ -9,6 +9,7 @@
 CREATE OR REPLACE VIEW pending_warehouse_inventory AS
 SELECT
   b.id,
+  b.tenant_id,
   b.bilty_number,
   b.bilty_date AS date,
   b.total_quantity,
@@ -70,6 +71,7 @@ GRANT SELECT ON pending_warehouse_inventory TO anon, authenticated;
 CREATE OR REPLACE VIEW branch_warehouse_inventory AS
 SELECT
   cb.id AS challan_bilty_id,
+  b.tenant_id,
   cb.bilty_id,
   cb.challan_id,
   cb.loaded_quantity,
@@ -99,11 +101,11 @@ SELECT
     0
   ) AS remaining_quantity
 FROM challan_bilties cb
-INNER JOIN challans c ON cb.challan_id = c.id AND c.status = 'arrived'
-INNER JOIN bilties b ON cb.bilty_id = b.id
+JOIN bilties b ON b.id = cb.bilty_id
+JOIN challans c ON c.id = cb.challan_id
 LEFT JOIN branches br_dest ON br_dest.id = b.destination_branch_id
-WHERE
-  GREATEST(
+WHERE c.status = 'arrived'
+  AND GREATEST(
     cb.loaded_quantity - COALESCE(
       (SELECT SUM(d.delivered_qty)
        FROM deliveries d
