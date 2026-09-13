@@ -7,6 +7,7 @@ const SettingsContext = createContext();
 const DEFAULT_SETTINGS = {
   companyName: 'ABID MEHMOOD',
   companySubtitle: 'Goods Transport System',
+  primaryBranchName: 'Islamabad',
   biltyHeaderUrl: '/bilty-header.jpg',
   challanHeaderUrl: '/challan-header.jpg',
 };
@@ -21,6 +22,10 @@ export const SettingsProvider = ({ children }) => {
 
   const [companySubtitle, setCompanySubtitle] = useState(() => {
     return getTenantItem('app_settings_company_subtitle', DEFAULT_SETTINGS.companySubtitle);
+  });
+
+  const [primaryBranchName, setPrimaryBranchName] = useState(() => {
+    return getTenantItem('app_settings_primary_branch_name', DEFAULT_SETTINGS.primaryBranchName);
   });
 
   const [biltyHeaderUrl, setBiltyHeaderUrl] = useState(() => {
@@ -42,6 +47,7 @@ export const SettingsProvider = ({ children }) => {
       setCompanyName(getTenantItem('app_settings_company_name', DEFAULT_SETTINGS.companyName));
     }
     setCompanySubtitle(getTenantItem('app_settings_company_subtitle', DEFAULT_SETTINGS.companySubtitle));
+    setPrimaryBranchName(getTenantItem('app_settings_primary_branch_name', DEFAULT_SETTINGS.primaryBranchName));
     setBiltyHeaderUrl(getTenantItem('app_settings_bilty_header_url', DEFAULT_SETTINGS.biltyHeaderUrl));
     setChallanHeaderUrl(getTenantItem('app_settings_challan_header_url', DEFAULT_SETTINGS.challanHeaderUrl));
   }, []);
@@ -62,6 +68,10 @@ export const SettingsProvider = ({ children }) => {
             if (item.key === 'company_subtitle' && item.value) {
               setCompanySubtitle(item.value);
               setTenantItem('app_settings_company_subtitle', item.value);
+            }
+            if (item.key === 'primary_branch_name' && item.value) {
+              setPrimaryBranchName(item.value);
+              setTenantItem('app_settings_primary_branch_name', item.value);
             }
             if (item.key === 'bilty_header_url' && item.value) {
               setBiltyHeaderUrl(item.value);
@@ -92,6 +102,10 @@ export const SettingsProvider = ({ children }) => {
         setCompanySubtitle(newSettings.companySubtitle);
         setTenantItem('app_settings_company_subtitle', newSettings.companySubtitle);
       }
+      if (newSettings.primaryBranchName !== undefined) {
+        setPrimaryBranchName(newSettings.primaryBranchName);
+        setTenantItem('app_settings_primary_branch_name', newSettings.primaryBranchName);
+      }
       if (newSettings.biltyHeaderUrl !== undefined) {
         setBiltyHeaderUrl(newSettings.biltyHeaderUrl);
         setTenantItem('app_settings_bilty_header_url', newSettings.biltyHeaderUrl);
@@ -108,6 +122,9 @@ export const SettingsProvider = ({ children }) => {
       }
       if (newSettings.companySubtitle !== undefined) {
         upsertList.push({ key: 'company_subtitle', value: newSettings.companySubtitle, updated_at: new Date().toISOString() });
+      }
+      if (newSettings.primaryBranchName !== undefined) {
+        upsertList.push({ key: 'primary_branch_name', value: newSettings.primaryBranchName, updated_at: new Date().toISOString() });
       }
       if (newSettings.biltyHeaderUrl !== undefined) {
         upsertList.push({ key: 'bilty_header_url', value: newSettings.biltyHeaderUrl, updated_at: new Date().toISOString() });
@@ -147,6 +164,7 @@ export const SettingsProvider = ({ children }) => {
       value={{
         companyName,
         companySubtitle,
+        primaryBranchName,
         biltyHeaderUrl,
         challanHeaderUrl,
         loading,
@@ -169,6 +187,7 @@ export const useSettings = () => {
     return {
       companyName: getTenantItem('app_settings_company_name', currentTenant?.company_name || DEFAULT_SETTINGS.companyName),
       companySubtitle: getTenantItem('app_settings_company_subtitle', DEFAULT_SETTINGS.companySubtitle),
+      primaryBranchName: getTenantItem('app_settings_primary_branch_name', DEFAULT_SETTINGS.primaryBranchName),
       biltyHeaderUrl: getTenantItem('app_settings_bilty_header_url', DEFAULT_SETTINGS.biltyHeaderUrl),
       challanHeaderUrl: getTenantItem('app_settings_challan_header_url', DEFAULT_SETTINGS.challanHeaderUrl),
       loading: false,

@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { TrendingUp, Plus, X, Lock, Unlock } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 
 export default function ProfitReportIslamabad() {
+  const { primaryBranchName } = useSettings();
+  const branchName = primaryBranchName || 'Islamabad';
   const [activeTab, setActiveTab] = useState('ledger');
   const [filterMonth, setFilterMonth] = useState(new Date().toISOString().slice(0, 7));
 
@@ -146,11 +149,11 @@ export default function ProfitReportIslamabad() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px', flexWrap: 'wrap', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <TrendingUp size={26} color="var(--primary-color)" />
-          <h1 className="page-title" style={{ marginBottom: 0 }}>A/C Receivable — Islamabad</h1>
+          <h1 className="page-title" style={{ marginBottom: 0 }}>A/C Receivable — {branchName}</h1>
         </div>
       </div>
       <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '20px' }}>
-        Track Islamabad branch challan A/C receivable and received payments.
+        Track {branchName} branch challan A/C receivable and received payments.
       </p>
 
       {/* Month Filter + Close */}

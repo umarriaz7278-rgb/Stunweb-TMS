@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { MapPin, Plus, ArrowLeft, Save, Search, DollarSign, Users, X, Wallet } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 
 const ACCOUNTS_KEY = 'islamabad_account_statement_accounts';
 const TRANSACTIONS_KEY = 'islamabad_account_statement_transactions';
@@ -46,6 +47,8 @@ function clearPendingLink() {
 }
 
 export default function IslamabadAccountStatement() {
+  const { primaryBranchName } = useSettings();
+  const branchName = primaryBranchName || 'Islamabad';
   const [accounts, setAccounts] = useState(loadAccounts);
   const [transactions, setTransactions] = useState(loadTransactions);
   const [selectedAccount, setSelectedAccount] = useState(null);
@@ -480,7 +483,7 @@ export default function IslamabadAccountStatement() {
           <MapPin size={28} color="#2563eb" />
         </div>
         <div>
-          <h1 className="page-title" style={{ marginBottom: 0, color: '#1e293b', fontWeight: 800 }}>Islamabad Account Statement</h1>
+          <h1 className="page-title" style={{ marginBottom: 0, color: '#1e293b', fontWeight: 800 }}>{branchName} Account Statement</h1>
         </div>
       </div>
 

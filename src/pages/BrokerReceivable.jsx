@@ -1,6 +1,7 @@
 import { useState, useEffect, Fragment } from 'react';
 import { supabase } from '../supabaseClient';
 import { TrendingUp, Plus, X, Lock, Unlock, Users, Phone, MapPin, Search, Edit2, Trash2, Save, UserCheck, ChevronDown, ChevronUp, FileText, CheckCircle2, DollarSign, Eye } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 
 const BROKERS_STORAGE_KEY = 'islamabad_broker_accounts';
 
@@ -14,6 +15,8 @@ function loadInitialBrokers() {
 }
 
 export default function BrokerReceivable() {
+  const { primaryBranchName } = useSettings();
+  const branchName = primaryBranchName || 'Islamabad';
   const [activeTab, setActiveTab] = useState('ledger');
   const [filterMonth, setFilterMonth] = useState(new Date().toISOString().slice(0, 7));
 
@@ -322,11 +325,11 @@ export default function BrokerReceivable() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px', flexWrap: 'wrap', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <TrendingUp size={28} color="#2563eb" />
-          <h1 className="page-title" style={{ marginBottom: 0, color: '#1e40af', fontWeight: 800 }}>A/C Receivable Broker — Islamabad</h1>
+          <h1 className="page-title" style={{ marginBottom: 0, color: '#1e40af', fontWeight: 800 }}>A/C Receivable Broker — {branchName}</h1>
         </div>
       </div>
       <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '20px' }}>
-        Track Islamabad branch challan broker receivables, payments received, and manage broker accounts list.
+        Track {branchName} branch challan broker receivables, payments received, and manage broker accounts list.
       </p>
 
       {/* Month Filter + Close (Only for ledger and received tabs) */}

@@ -4,7 +4,7 @@ import { useSettings } from '../context/SettingsContext';
 import { withTenantId } from '../utils/tenantStorage';
 
 export default function BiltyCreate() {
-  const { biltyHeaderUrl } = useSettings();
+  const { biltyHeaderUrl, primaryBranchName } = useSettings();
   const [branches, setBranches] = useState([]);
   
   // Function to get Pakistan timezone date (UTC+5)
@@ -69,8 +69,15 @@ export default function BiltyCreate() {
           if (karachiBranch) setKarachiBranchId(karachiBranch.id);
 
           // Exclude Karachi (origin), include all other destination branches (both built-in and custom)
-          const destinationBranches = data.filter(b => b.name.toLowerCase() !== 'karachi');
-          const priorityBranches = ['islamabad'];
+          const destinationBranches = data
+            .filter(b => b.name.toLowerCase() !== 'karachi')
+            .map(b => {
+              if (b.name.toLowerCase() === 'islamabad') {
+                return { ...b, name: primaryBranchName || 'Islamabad' };
+              }
+              return b;
+            });
+          const priorityBranches = [(primaryBranchName || 'islamabad').toLowerCase(), 'islamabad'];
           const sortedBranches = [...destinationBranches].sort((a, b) => {
             const aIndex = priorityBranches.indexOf(a.name.toLowerCase());
             const bIndex = priorityBranches.indexOf(b.name.toLowerCase());
@@ -95,7 +102,7 @@ export default function BiltyCreate() {
     }
     loadBranches();
     fetchNextBiltyNumber();
-  }, []);
+  }, [primaryBranchName]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

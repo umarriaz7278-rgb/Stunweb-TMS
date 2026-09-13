@@ -53,43 +53,45 @@ function PageLoader() {
   );
 }
 
-// ─── Sidebar nav definition ──────────────────────────────────────────────────
-const NAV_ITEMS = [
-  { path: '/',                    icon: '📊', label: 'Dashboard' },
-  { path: '/bilty',               icon: '📝', label: 'Bilty Booking' },
-  { path: '/bilty/all-records',   icon: '📋', label: 'All Booking Records' },
-  { path: '/warehouse',           icon: '🏬', label: 'Karachi Warehouse' },
-  { path: '/challan',             icon: '🚚', label: 'Challan Management' },
-  { path: '/challan/all-records', icon: '📜', label: 'Challan History' },
-  { divider: true },
-  { path: '/karachi-office',      icon: '💵', label: 'Income/Expense Ledger' },
-  { divider: true },
-  { section: 'Branches & Accounts' },
-  {
-    key: 'islamabad',
-    label: 'Islamabad Branch',
-    icon: '🏛️',
-    children: [
-      { path: '/branch/islamabad',                   icon: '📋', label: 'Branch Overview' },
-      { path: '/branch/islamabad/finance',           icon: '💵', label: 'Branch Finance' },
-      { path: '/branch/islamabad/account-statement', icon: '📄', label: 'Account Statement' },
-      { path: '/commission-report-islamabad',        icon: '💼', label: 'Delivery Report ISB' },
-      { path: '/profit-report-islamabad',            icon: '📈', label: 'A/C Receivable ISB' },
-      { path: '/broker-receivable',                  icon: '🤝', label: 'Broker A/C ISB' },
-    ]
-  },
-  { divider: true },
-  { section: 'Operations' },
-  { path: '/vehicle-management',         icon: '🚛', label: 'Vehicle / Trailer Management' },
-  { path: '/warehouse-rentals',          icon: '📦', label: 'Warehouse Rentals' },
-  { path: '/local-freight-parties',      icon: '🚛', label: 'Local Freight Parties' },
-  { path: '/container-transport-ftl',    icon: '🏗️', label: 'Container Transport (FTL)' },
-  { path: '/claims',                     icon: '⚠️', label: 'Short Claims' },
-  { path: '/branches-audit',            icon: '🔍', label: 'Branches Audit' },
-  { divider: true },
-  { section: 'Admin' },
-  { path: '/settings',                   icon: '⚙️', label: 'Settings' },
-];
+// ─── Sidebar nav definition generator ─────────────────────────────────────────
+function getNavItems(primaryBranch = 'Islamabad') {
+  return [
+    { path: '/',                    icon: '📊', label: 'Dashboard' },
+    { path: '/bilty',               icon: '📝', label: 'Bilty Booking' },
+    { path: '/bilty/all-records',   icon: '📋', label: 'All Booking Records' },
+    { path: '/warehouse',           icon: '🏬', label: 'Karachi Warehouse' },
+    { path: '/challan',             icon: '🚚', label: 'Challan Management' },
+    { path: '/challan/all-records', icon: '📜', label: 'Challan History' },
+    { divider: true },
+    { path: '/karachi-office',      icon: '💵', label: 'Income/Expense Ledger' },
+    { divider: true },
+    { section: 'Branches & Accounts' },
+    {
+      key: 'islamabad',
+      label: `${primaryBranch} Branch`,
+      icon: '🏛️',
+      children: [
+        { path: '/branch/islamabad',                   icon: '📋', label: 'Branch Overview' },
+        { path: '/branch/islamabad/finance',           icon: '💵', label: 'Branch Finance' },
+        { path: '/branch/islamabad/account-statement', icon: '📄', label: 'Account Statement' },
+        { path: '/commission-report-islamabad',        icon: '💼', label: `Delivery Report ${primaryBranch}` },
+        { path: '/profit-report-islamabad',            icon: '📈', label: `A/C Receivable ${primaryBranch}` },
+        { path: '/broker-receivable',                  icon: '🤝', label: `Broker A/C ${primaryBranch}` },
+      ]
+    },
+    { divider: true },
+    { section: 'Operations' },
+    { path: '/vehicle-management',         icon: '🚛', label: 'Vehicle / Trailer Management' },
+    { path: '/warehouse-rentals',          icon: '📦', label: 'Warehouse Rentals' },
+    { path: '/local-freight-parties',      icon: '🚛', label: 'Local Freight Parties' },
+    { path: '/container-transport-ftl',    icon: '🏗️', label: 'Container Transport (FTL)' },
+    { path: '/claims',                     icon: '⚠️', label: 'Short Claims' },
+    { path: '/branches-audit',            icon: '🔍', label: 'Branches Audit' },
+    { divider: true },
+    { section: 'Admin' },
+    { path: '/settings',                   icon: '⚙️', label: 'Settings' },
+  ];
+}
 
 // ─── Page title map ──────────────────────────────────────────────────────────
 const PAGE_TITLES = {
@@ -102,12 +104,12 @@ const PAGE_TITLES = {
   '/challan':                      'Challan Management',
   '/challan/all-records':          'Challan History',
   '/karachi-office':               'Income / Expense Ledger',
-  '/branch/islamabad':             'Islamabad Branch Overview',
-  '/branch/islamabad/finance':     'Islamabad Branch Finance',
-  '/branch/islamabad/account-statement': 'Islamabad Account Statement',
-  '/profit-report-islamabad':      'A/C Receivable — Islamabad',
-  '/commission-report-islamabad':  'Delivery Report — Islamabad',
-  '/broker-receivable':            'Broker A/C — Islamabad',
+  '/branch/islamabad':             'Branch Overview',
+  '/branch/islamabad/finance':     'Branch Finance',
+  '/branch/islamabad/account-statement': 'Account Statement',
+  '/profit-report-islamabad':      'A/C Receivable',
+  '/commission-report-islamabad':  'Delivery Report',
+  '/broker-receivable':            'Broker A/C',
   '/warehouse-rentals':            'Warehouse Rentals',
   '/local-freight-parties':        'Local Freight Parties',
   '/container-transport-ftl':      'Container Transport (FTL)',
@@ -118,7 +120,16 @@ const PAGE_TITLES = {
   '/settings':                     'System Settings',
 };
 
-function getPageTitle(pathname, defaultCompany = 'ABID MEHMOOD') {
+function getPageTitle(pathname, defaultCompany = 'ABID MEHMOOD', primaryBranch = 'Islamabad') {
+  const dynamicTitles = {
+    '/branch/islamabad': `${primaryBranch} Branch Overview`,
+    '/branch/islamabad/finance': `${primaryBranch} Branch Finance`,
+    '/branch/islamabad/account-statement': `${primaryBranch} Account Statement`,
+    '/profit-report-islamabad': `A/C Receivable — ${primaryBranch}`,
+    '/commission-report-islamabad': `Delivery Report — ${primaryBranch}`,
+    '/broker-receivable': `Broker A/C — ${primaryBranch}`,
+  };
+  if (dynamicTitles[pathname]) return dynamicTitles[pathname];
   if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
   for (const [key, val] of Object.entries(PAGE_TITLES)) {
     if (key !== '/' && pathname.startsWith(key)) return val;
@@ -138,12 +149,15 @@ function formatDate(date) {
 // ─── App ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const location = useLocation();
-  const { companyName, companySubtitle } = useSettings();
+  const { companyName, companySubtitle, primaryBranchName } = useSettings();
   const { currentUser, isAuthenticated, isSuperAdmin, tenant, logout, loading: authLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState({
     islamabad: true,
   });
+
+  const activeBranchName = primaryBranchName || 'Islamabad';
+  const navItems = getNavItems(activeBranchName);
 
   // Custom branches (user-created via Settings, excludes built-in ISB/Karachi)
   const BUILTIN_BRANCHES = ['islamabad', 'karachi'];
@@ -180,7 +194,7 @@ export default function App() {
 
   // Auto expand group if child is active
   useEffect(() => {
-    NAV_ITEMS.forEach(item => {
+    navItems.forEach(item => {
       if (item.children) {
         const hasActive = item.children.some(c => location.pathname === c.path);
         if (hasActive) {
@@ -188,7 +202,7 @@ export default function App() {
         }
       }
     });
-  }, [location.pathname]);
+  }, [location.pathname, activeBranchName]);
 
   // Toggle body scroll lock when sidebar is open on mobile
   useEffect(() => {
@@ -236,7 +250,7 @@ export default function App() {
   }
 
   const displayCompanyName = tenant?.company_name || companyName;
-  const pageTitle = getPageTitle(location.pathname, displayCompanyName);
+  const pageTitle = getPageTitle(location.pathname, displayCompanyName, activeBranchName);
 
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/';
@@ -253,7 +267,7 @@ export default function App() {
         </div>
 
         <nav className="sidebar-nav">
-          {NAV_ITEMS.map((item, idx) => {
+          {navItems.map((item, idx) => {
             if (item.divider) {
               return <div key={`div-${idx}`} className="nav-divider" />;
             }
@@ -486,8 +500,8 @@ export default function App() {
             <Route path="/challan/all-records"                     element={<AllChallanRecord />} />
             <Route path="/branch/lahore"                           element={<BranchOffice branchName="Lahore" />} />
             <Route path="/branch/lahore/finance"                   element={<BranchFinance branchName="Lahore" />} />
-            <Route path="/branch/islamabad"                        element={<BranchOffice branchName="Islamabad" />} />
-            <Route path="/branch/islamabad/finance"                element={<BranchFinance branchName="Islamabad" />} />
+            <Route path="/branch/islamabad"                        element={<BranchOffice branchName={activeBranchName} />} />
+            <Route path="/branch/islamabad/finance"                element={<BranchFinance branchName={activeBranchName} />} />
             <Route path="/branch/islamabad/account-statement"      element={<IslamabadAccountStatement />} />
             <Route path="/branch/rawalpindi"                       element={<BranchOffice branchName="Rawalpindi" />} />
             <Route path="/branch/rawalpindi/finance"               element={<BranchFinance branchName="Rawalpindi" />} />

@@ -5,7 +5,7 @@ import { Truck } from 'lucide-react';
 import { applyTenantFilter, withTenantId } from '../utils/tenantStorage';
 
 export default function ChallanCreate() {
-  const { challanHeaderUrl } = useSettings();
+  const { challanHeaderUrl, primaryBranchName } = useSettings();
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -46,7 +46,7 @@ export default function ChallanCreate() {
   const [biltyCharges, setBiltyCharges] = useState({});
 
   // All dispatch branches (loaded from Supabase, excluding Karachi)
-  const [allBranches, setAllBranches] = useState(['Islamabad']);
+  const [allBranches, setAllBranches] = useState([primaryBranchName || 'Islamabad']);
 
   useEffect(() => {
     async function fetchInventory() {
@@ -79,14 +79,14 @@ export default function ChallanCreate() {
         // Exclude Karachi (origin branch) from dispatch list
         const dispatchBranches = data
           .filter(b => b.name.toLowerCase() !== 'karachi')
-          .map(b => b.name);
+          .map(b => (b.name.toLowerCase() === 'islamabad' ? (primaryBranchName || 'Islamabad') : b.name));
         if (dispatchBranches.length > 0) setAllBranches(dispatchBranches);
       }
     }
 
     fetchInventory();
     fetchBranches();
-  }, []);
+  }, [primaryBranchName]);
 
 
   const handleFormChange = (e) => {

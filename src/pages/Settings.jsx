@@ -8,6 +8,7 @@ export default function Settings() {
   const {
     companyName: storedCompanyName,
     companySubtitle: storedCompanySubtitle,
+    primaryBranchName: storedPrimaryBranchName,
     biltyHeaderUrl: storedBiltyHeaderUrl,
     challanHeaderUrl: storedChallanHeaderUrl,
     saveSettings,
@@ -19,6 +20,7 @@ export default function Settings() {
 
   const [companyName, setCompanyName] = useState(storedCompanyName);
   const [companySubtitle, setCompanySubtitle] = useState(storedCompanySubtitle);
+  const [primaryBranchName, setPrimaryBranchName] = useState(storedPrimaryBranchName || 'Islamabad');
 
   const [biltyPreview, setBiltyPreview] = useState(storedBiltyHeaderUrl);
   const [challanPreview, setChallanPreview] = useState(storedChallanHeaderUrl);
@@ -136,6 +138,33 @@ export default function Settings() {
       showNotification('Company Name and Subtitle updated successfully!', 'success');
     } catch (err) {
       showNotification('Failed to update company settings: ' + err.message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSavePrimaryBranch = async (e) => {
+    e.preventDefault();
+    const cleanName = primaryBranchName.trim();
+    if (!cleanName) {
+      showNotification('Branch name cannot be empty.', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      await saveSettings({
+        primaryBranchName: cleanName,
+      });
+      // Also update in Supabase branches table if exists
+      try {
+        await supabase.from('branches').update({ name: cleanName }).eq('name', storedPrimaryBranchName || 'Islamabad');
+      } catch (err) {
+        console.warn('Could not sync branch name to branches table:', err);
+      }
+      showNotification(`Main Branch renamed to "${cleanName}"! Sidebar, reports, bilty and challan updated.`, 'success');
+      fetchBranches();
+    } catch (err) {
+      showNotification('Failed to update branch name: ' + err.message, 'error');
     } finally {
       setSaving(false);
     }
@@ -337,13 +366,73 @@ export default function Settings() {
         </form>
       </div>
 
-      {/* ─── SECTION 2: Bilty Booking Print Header ─── */}
+      {/* ─── SECTION 2: Primary Branch Settings (Rename Islamabad Branch) ─── */}
+      <div className="card" style={{ marginBottom: '24px', borderTop: '4px solid #7c3aed', padding: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+          <GitBranch size={22} color="#7c3aed" />
+          <h2 style={{ margin: 0, color: '#5b21b6', fontSize: '1.25rem', fontWeight: 800 }}>
+            2. Main / Destination Branch Rename (مین برانچ کا نام)
+          </h2>
+        </div>
+        <p style={{ color: '#64748b', fontSize: '0.88rem', marginBottom: '18px', lineHeight: 1.5 }}>
+          Yahan se aap default <b>Islamabad Branch</b> ka naam tabdeel karke koi bhi doosra shahar (e.g. <b>Lahore, Peshawar, Faisalabad, Multan, Quetta</b>) rakh sakte hain. Is se sidebar ke tamam sub-pages, delivery reports, A/C receivables, broker accounts, bilty destinations aur challan dispatch me yeh naya naam khud-ba-khud active ho jayega.
+        </p>
+
+        <form onSubmit={handleSavePrimaryBranch}>
+          <div style={{ maxWidth: '480px', marginBottom: '18px' }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#5b21b6', marginBottom: '6px' }}>
+              Primary Branch Name (مین برانچ کا نام) *
+            </label>
+            <input
+              type="text"
+              value={primaryBranchName}
+              onChange={(e) => setPrimaryBranchName(e.target.value)}
+              placeholder="e.g. Lahore ya Islamabad ya Peshawar"
+              required
+              style={{
+                width: '100%',
+                height: '46px',
+                padding: '10px 14px',
+                fontSize: '1.05rem',
+                fontWeight: 700,
+                borderRadius: '8px',
+                border: '1.5px solid #c4b5fd',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+            <button
+              type="submit"
+              disabled={saving}
+              className="btn btn-primary"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 24px',
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                borderRadius: '8px',
+                backgroundColor: '#7c3aed',
+                borderColor: '#6d28d9',
+              }}
+            >
+              <Save size={18} />
+              {saving ? 'Saving...' : 'Save & Update Branch Name (نام تبدیل کریں)'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* ─── SECTION 3: Bilty Booking Print Header ─── */}
       <div className="card" style={{ marginBottom: '24px', borderTop: '4px solid #059669', padding: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Image size={22} color="#059669" />
             <h2 style={{ margin: 0, color: '#065f46', fontSize: '1.25rem', fontWeight: 800 }}>
-              2. Bilty Booking Print Header (بلٹی پرنٹ ہیڈر)
+              3. Bilty Booking Print Header (بلٹی پرنٹ ہیڈر)
             </h2>
           </div>
           <span style={{ fontSize: '0.8rem', background: '#d1fae5', color: '#065f46', padding: '4px 10px', borderRadius: '20px', fontWeight: 700 }}>
