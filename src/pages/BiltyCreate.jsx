@@ -58,68 +58,86 @@ export default function BiltyCreate() {
   useEffect(() => {
     async function loadBranches() {
       try {
-        const { data, error } = await supabase.from('branches').select('*');
+        const currentPrimary = (primaryBranchName || 'Islamabad').trim();
+        let { data, error } = await supabase.from('branches').select('*').order('name');
+        
         if (error) {
           console.error('Error loading branches:', error);
           setMessage('Error loading branches: ' + error.message);
           return;
         }
-        if (data && data.length > 0) {
-          const karachiBranch = data.find(b => b.name.toLowerCase() === 'karachi');
-          if (karachiBranch) setKarachiBranchId(karachiBranch.id);
 
-          const currentPrimary = (primaryBranchName || 'Islamabad').trim();
+        if (!data) data = [];
 
-          // Exclude Karachi (origin)
-          let nonKarachi = data.filter(b => b.name.toLowerCase() !== 'karachi');
+        // Identify Karachi (origin)
+        let karachiBranch = data.find(b => b.name.toLowerCase() === 'karachi');
+        if (karachiBranch) setKarachiBranchId(karachiBranch.id);
 
-          // Check if primary branch exists in list
-          const hasExactPrimary = nonKarachi.some(b => b.name.toLowerCase() === currentPrimary.toLowerCase());
+        // Find if currentPrimary already exists in DB
+        let primaryBranch = data.find(b => b.name.toLowerCase() === currentPrimary.toLowerCase());
 
-          let destinationBranches = nonKarachi.map(b => {
-            if (!hasExactPrimary && b.name.toLowerCase() === 'islamabad') {
-              return { ...b, name: currentPrimary };
+        // If primary branch does not exist in DB branches table, insert it automatically
+        if (!primaryBranch && currentPrimary) {
+          try {
+            const { data: inserted } = await supabase
+              .from('branches')
+              .insert([{ name: currentPrimary }])
+              .select();
+            if (inserted && inserted.length > 0) {
+              primaryBranch = inserted[0];
+              data.push(primaryBranch);
             }
-            return b;
-          });
-
-          // If still not present in the list (e.g. if Islamabad was renamed or deleted), find or create entry
-          if (!destinationBranches.some(b => b.name.toLowerCase() === currentPrimary.toLowerCase())) {
-            const isb = data.find(b => b.name.toLowerCase() === 'islamabad') || nonKarachi[0];
-            destinationBranches.unshift({
-              id: isb?.id || data[0]?.id,
-              name: currentPrimary,
-            });
+          } catch (e) {
+            console.warn('Could not auto-insert primary branch into branches table:', e);
           }
+        }
 
-          // Sort so currentPrimary (e.g. Abbottabad) is ALWAYS #1 at the top
-          const sortedBranches = [...destinationBranches].sort((a, b) => {
-            if (a.name.toLowerCase() === currentPrimary.toLowerCase()) return -1;
-            if (b.name.toLowerCase() === currentPrimary.toLowerCase()) return 1;
-            return a.name.localeCompare(b.name);
-          });
+        // Local fallback if remote insert was not possible
+        if (!primaryBranch && currentPrimary) {
+          primaryBranch = {
+            id: 'primary-' + currentPrimary.toLowerCase(),
+            name: currentPrimary,
+          };
+          data.push(primaryBranch);
+        }
 
-          setBranches(sortedBranches);
+        // Exclude Karachi from destination list
+        let destinationBranches = data.filter(b => b.name.toLowerCase() !== 'karachi');
 
-          // Set first branch (which is always currentPrimary) as default
-          if (sortedBranches.length > 0) {
-            setFormData(prev => ({
-              ...prev, 
-              destination_branch_id: prev.destination_branch_id && sortedBranches.some(b => b.id === prev.destination_branch_id) 
-                ? prev.destination_branch_id 
-                : sortedBranches[0].id, 
-              bilty_date: getPakistanDate()
-            }));
+        // Deduplicate branches by name (case-insensitive)
+        const seenNames = new Set();
+        const uniqueBranches = [];
+        for (const b of destinationBranches) {
+          const lower = b.name.toLowerCase();
+          if (!seenNames.has(lower)) {
+            seenNames.add(lower);
+            uniqueBranches.push(b);
           }
-        } else {
-          console.error('No branches found in database');
-          setMessage('No branches found. Please add branches first.');
+        }
+
+        // Sort so primaryBranch is ALWAYS FIRST (#1) at the top of the destination dropdown
+        uniqueBranches.sort((a, b) => {
+          if (a.name.toLowerCase() === currentPrimary.toLowerCase()) return -1;
+          if (b.name.toLowerCase() === currentPrimary.toLowerCase()) return 1;
+          return a.name.localeCompare(b.name);
+        });
+
+        setBranches(uniqueBranches);
+
+        // Automatically set primary branch as default selected destination
+        if (uniqueBranches.length > 0) {
+          setFormData(prev => ({
+            ...prev,
+            destination_branch_id: uniqueBranches[0].id,
+            bilty_date: getPakistanDate(),
+          }));
         }
       } catch (err) {
         console.error('Exception loading branches:', err);
         setMessage('Exception: ' + err.message);
       }
     }
+
     loadBranches();
     fetchNextBiltyNumber();
   }, [primaryBranchName]);
@@ -151,11 +169,15 @@ export default function BiltyCreate() {
 
     // Validate destination_branch_id
     let destBranchId = formData.destination_branch_id;
+    let selectedBranchObj = branches.find(b => String(b.id) === String(destBranchId));
+
     if (isManualDest) {
+      destBranchId = karachiBranchId || branches[0]?.id;
+    } else if (String(destBranchId).startsWith('primary-')) {
       destBranchId = karachiBranchId || branches[0]?.id;
     }
     
-    if (!destBranchId || destBranchId.trim() === '') {
+    if (!destBranchId || String(destBranchId).trim() === '') {
       setMessage('Error: Please select a valid destination branch');
       return;
     }
@@ -168,6 +190,7 @@ export default function BiltyCreate() {
 
     const insertData = {
       destination_branch_id: destBranchId,
+      destination: isManual ? (manualDest || 'Manual') : (selectedBranchObj?.name || primaryBranchName || 'hydrabad'),
       sender_name: formData.sender_name,
       sender_phone: formData.sender_phone,
       receiver_name: formData.receiver_name,
@@ -189,9 +212,6 @@ export default function BiltyCreate() {
       exclude_charges_from_print: excludeChargesFromPrint,
       bilty_date: formData.bilty_date,
     };
-    if (isManual && manualDest) {
-      insertData.destination = manualDest;
-    }
     if (formData.bilty_number.trim()) {
       insertData.bilty_number = formData.bilty_number.trim();
     }
