@@ -367,8 +367,8 @@ export default function BookingReceipt() {
         </div>
 
         {/* Row 1: Loading Points, Destination, Date, Booking No */}
-        <div className="card" style={{ padding: '10px 16px', marginBottom: '6px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1.2fr', gap: '8px', alignItems: 'end' }}>
+        <div className="card" style={{ padding: '10px 16px', marginBottom: '10px' }}>
+          <div className="receipt-header-grid">
             <div className="form-group" style={{ margin: 0 }}>
               <label style={{ fontSize: '0.75rem' }}>Loading Points *</label>
               <input type="text" name="loading_points" value={form.loading_points} onChange={handleChange} style={{ padding: '4px 8px', fontSize: '0.82rem' }} />
@@ -407,16 +407,16 @@ export default function BookingReceipt() {
         </div>
 
         {/* Two-column layout: LEFT (Sender/Receiver + Goods + Note) | RIGHT (Charges/Freight) */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '8px', alignItems: 'start', marginBottom: '6px' }}>
+        <div className="bilty-main-layout" style={{ marginBottom: '10px' }}>
 
           {/* LEFT COLUMN */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
             {/* Sender & Receiver */}
             <div className="card" style={{ padding: '10px 14px' }}>
               <div style={{ fontSize: '0.78rem', fontWeight: 700, marginBottom: '8px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>Sender & Receiver</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0' }}>
-                <div style={{ paddingRight: '12px', borderRight: '1px solid var(--border)' }}>
+              <div className="sender-receiver-grid">
+                <div style={{ paddingRight: '12px' }}>
                   <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--primary-color, #e85d04)', textTransform: 'uppercase', marginBottom: '6px' }}>Sender</div>
                   <div className="form-group" style={{ margin: 0, marginBottom: '6px' }}>
                     <label style={{ fontSize: '0.68rem' }}>Name</label>
@@ -444,34 +444,36 @@ export default function BookingReceipt() {
             {/* Goods Details + Note */}
             <div className="card" style={{ padding: '10px 14px' }}>
               <div style={{ fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>Goods Details</div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-                <thead>
-                  <tr style={{ borderBottom: '2px solid var(--border)' }}>
-                    <th style={{ textAlign: 'left', padding: '3px 4px', fontSize: '0.7rem', fontWeight: 700, width: '24px' }}>#</th>
-                    <th style={{ textAlign: 'left', padding: '3px 4px', fontSize: '0.7rem', fontWeight: 700 }}>DESCRIPTION</th>
-                    <th style={{ textAlign: 'left', padding: '3px 4px', fontSize: '0.7rem', fontWeight: 700, width: '70px' }}>QTY</th>
-                    <th style={{ textAlign: 'left', padding: '3px 4px', fontSize: '0.7rem', fontWeight: 700, width: '85px' }}>WT(KG)</th>
-                    <th style={{ textAlign: 'left', padding: '3px 4px', fontSize: '0.7rem', fontWeight: 700, width: '85px' }}>SEAL NO</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td style={{ padding: '3px 4px', fontWeight: 600, fontSize: '0.82rem' }}>1</td>
-                    <td style={{ padding: '3px 4px' }}>
-                      <input type="text" name="description" value={form.description} onChange={handleChange} placeholder="e.g. Bags, Cartons" style={{ width: '100%', padding: '4px 6px', fontSize: '0.82rem' }} />
-                    </td>
-                    <td style={{ padding: '3px 4px' }}>
-                      <input type="number" name="qty" value={form.qty} onChange={handleChange} min="0" style={{ width: '100%', padding: '4px 6px', fontSize: '0.82rem' }} />
-                    </td>
-                    <td style={{ padding: '3px 4px' }}>
-                      <input type="number" name="weight_kg" value={form.weight_kg} onChange={handleChange} min="0" step="0.01" style={{ width: '100%', padding: '4px 6px', fontSize: '0.82rem' }} />
-                    </td>
-                    <td style={{ padding: '3px 4px' }}>
-                      <input type="text" name="cbm" value={form.cbm} onChange={handleChange} placeholder="Seal #" style={{ width: '100%', padding: '4px 6px', fontSize: '0.82rem' }} />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <div className="table-responsive">
+                <table style={{ width: '100%', minWidth: '420px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid var(--border)' }}>
+                      <th style={{ textAlign: 'left', padding: '3px 4px', fontSize: '0.7rem', fontWeight: 700, width: '24px' }}>#</th>
+                      <th style={{ textAlign: 'left', padding: '3px 4px', fontSize: '0.7rem', fontWeight: 700 }}>DESCRIPTION</th>
+                      <th style={{ textAlign: 'left', padding: '3px 4px', fontSize: '0.7rem', fontWeight: 700, width: '70px' }}>QTY</th>
+                      <th style={{ textAlign: 'left', padding: '3px 4px', fontSize: '0.7rem', fontWeight: 700, width: '85px' }}>WT(KG)</th>
+                      <th style={{ textAlign: 'left', padding: '3px 4px', fontSize: '0.7rem', fontWeight: 700, width: '85px' }}>SEAL NO</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style={{ padding: '3px 4px', fontWeight: 600, fontSize: '0.82rem' }}>1</td>
+                      <td style={{ padding: '3px 4px' }}>
+                        <input type="text" name="description" value={form.description} onChange={handleChange} placeholder="e.g. Bags, Cartons" style={{ width: '100%', padding: '4px 6px', fontSize: '0.82rem' }} />
+                      </td>
+                      <td style={{ padding: '3px 4px' }}>
+                        <input type="number" name="qty" value={form.qty} onChange={handleChange} min="0" style={{ width: '100%', padding: '4px 6px', fontSize: '0.82rem' }} />
+                      </td>
+                      <td style={{ padding: '3px 4px' }}>
+                        <input type="number" name="weight_kg" value={form.weight_kg} onChange={handleChange} min="0" step="0.01" style={{ width: '100%', padding: '4px 6px', fontSize: '0.82rem' }} />
+                      </td>
+                      <td style={{ padding: '3px 4px' }}>
+                        <input type="text" name="cbm" value={form.cbm} onChange={handleChange} placeholder="Seal #" style={{ width: '100%', padding: '4px 6px', fontSize: '0.82rem' }} />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
               <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid var(--border)' }}>
                 <label style={{ fontSize: '0.7rem', fontWeight: 700, color: '#dc2626' }}>Note</label>
                 <textarea
@@ -488,7 +490,7 @@ export default function BookingReceipt() {
           </div>
 
           {/* RIGHT COLUMN - Charges */}
-          <div className="card" style={{ padding: '12px 14px' }}>
+          <div className="card bilty-charges-card" style={{ padding: '12px 14px' }}>
             <div style={{ fontSize: '0.78rem', fontWeight: 700, marginBottom: '8px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>Charges</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div className="form-group" style={{ margin: 0 }}>
@@ -532,7 +534,7 @@ export default function BookingReceipt() {
         {/* Row 4: Container & Reference full width */}
         <div className="card" style={{ padding: '10px 14px', marginBottom: '6px' }}>
           <div style={{ fontSize: '0.75rem', fontWeight: 700, marginBottom: '4px', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>Container & Reference</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+          <div className="container-ref-grid">
             <div className="form-group" style={{ margin: 0 }}>
               <label style={{ fontSize: '0.65rem' }}>Local Container Number</label>
               <input type="text" name="lc_number" value={form.lc_number} onChange={handleChange} style={{ padding: '4px 5px', fontSize: '0.78rem' }} />

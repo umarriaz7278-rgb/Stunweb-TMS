@@ -460,25 +460,27 @@ export default function ChallanCreate() {
       )}
 
       <form onSubmit={(e) => e.preventDefault()}>
-        <div className="card no-print" style={{ marginBottom: '24px' }}>
+        <div className="card no-print" style={{ marginBottom: '20px' }}>
           <h3 style={{ color: '#2563eb', fontWeight: 800, fontSize: '1.05rem', margin: 0 }}>📍 Step 1: Select Destination Branch</h3>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '8px 0 12px 0' }}>Choose the branch to filter bilties by destination.</p>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <div className="branch-select-grid">
             {allBranches.map(branch => (
               <button
                 key={branch}
                 type="button"
                 onClick={() => { setSelectedBranch(branch); setSelectedBilties({}); }}
                 style={{
-                  padding: '10px 28px',
-                  fontSize: '1rem',
+                  padding: '9px 14px',
+                  fontSize: '0.92rem',
                   fontWeight: 700,
                   borderRadius: '8px',
                   cursor: 'pointer',
                   border: selectedBranch === branch ? '2px solid var(--primary-color)' : '2px solid var(--border-color)',
                   background: selectedBranch === branch ? 'var(--primary-color)' : '#fff',
                   color: selectedBranch === branch ? '#fff' : 'var(--text-color)',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  textAlign: 'center',
+                  minHeight: '40px'
                 }}
               >
                 {branch}
@@ -487,9 +489,9 @@ export default function ChallanCreate() {
           </div>
         </div>
 
-        <div className="card" style={{ marginBottom: '24px' }}>
+        <div className="card" style={{ marginBottom: '20px' }}>
           <h3 style={{ color: '#d97706', fontWeight: 800, fontSize: '1.05rem', margin: 0 }}>🚛 Vehicle & Driver Details</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginTop: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginTop: '14px' }}>
             <div className="form-group" style={{ margin: 0 }}>
               <label style={{ fontSize: '0.82rem', fontWeight: 600 }}>Vehicle Number</label>
               <input type="text" name="vehicle_number" value={formData.vehicle_number} onChange={handleFormChange} placeholder="e.g. TLA-123" required style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
@@ -535,66 +537,68 @@ export default function ChallanCreate() {
         </div>
 
 
-        <div className="card" style={{ marginBottom: '24px' }}>
+        <div className="card" style={{ marginBottom: '20px' }}>
           <h3 style={{ color: '#7c3aed', fontWeight: 800, fontSize: '1.05rem', margin: 0 }}>📦 Step 2: Select Bilties from Warehouse</h3>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '8px 0 16px 0' }}>Select bilties and specify how many packages you are loading. You can dispatch partial quantities.</p>
           
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.95rem' }}>
-            <thead>
-              <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
-                <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Select</th>
-                <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bilty #</th>
-                <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Destination</th>
-                <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Available Qty</th>
-                <th style={{ padding: '10px 8px', color: '#c0392b', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Rent Amount</th>
-                <th style={{ padding: '10px 8px', color: '#059669', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Local Fare</th>
-                <th style={{ padding: '10px 8px', color: '#d97706', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Loading</th>
-                <th style={{ padding: '10px 8px', color: '#2563eb', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>TT Expense</th>
-                <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Load Qty</th>
-              </tr>
-            </thead>
-            <tbody>
-              {!selectedBranch && <tr><td colSpan="9" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 600 }}>Please select a destination branch above to view bilties.</td></tr>}
-              {filteredInventory.map(item => {
-                const charges = biltyCharges[item.id] || {};
-                return (
-                <tr key={item.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={{ padding: '8px' }}>
-                    <input 
-                      type="checkbox" 
-                      onChange={(e) => handleSelection(item, e.target.checked)}
-                      checked={!!selectedBilties[item.id]}
-                    />
-                  </td>
-                  <td style={{ padding: '8px', fontWeight: 600 }}>{item.bilty_number}</td>
-                  <td style={{ padding: '8px' }}>{item.destination_name}</td>
-                  <td style={{ padding: '8px' }}>{item.remaining_quantity}</td>
-                  <td style={{ padding: '8px', color: '#c0392b', fontWeight: 600 }}>{Number(charges.custom_amount || 0).toLocaleString()}</td>
-                  <td style={{ padding: '8px' }}>{Number(charges.local_freight || 0).toLocaleString()}</td>
-                  <td style={{ padding: '8px' }}>{Number(charges.labor_charges || 0).toLocaleString()}</td>
-                  <td style={{ padding: '8px' }}>{Number(charges.tt_expense || 0).toLocaleString()}</td>
-                  <td style={{ padding: '8px' }}>
-                     <input 
-                        type="number" 
-                        min="1" 
-                        max={item.remaining_quantity}
-                        value={selectedBilties[item.id]?.loaded_quantity || ''}
-                        disabled={!selectedBilties[item.id]}
-                        onChange={(e) => handleQuantityChange(item.id, e.target.value)}
-                        style={{ width: '80px', padding: '4px 8px' }}
-                     />
-                  </td>
+          <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+            <table style={{ width: '100%', minWidth: '650px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+              <thead>
+                <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
+                  <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Select</th>
+                  <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bilty #</th>
+                  <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Destination</th>
+                  <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Available Qty</th>
+                  <th style={{ padding: '10px 8px', color: '#c0392b', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Rent Amount</th>
+                  <th style={{ padding: '10px 8px', color: '#059669', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Local Fare</th>
+                  <th style={{ padding: '10px 8px', color: '#d97706', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Loading</th>
+                  <th style={{ padding: '10px 8px', color: '#2563eb', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>TT Expense</th>
+                  <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Load Qty</th>
                 </tr>
-                );
-              })}
-              {selectedBranch && filteredInventory.length === 0 && <tr><td colSpan="9" style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)' }}>No bilties found for {selectedBranch}.</td></tr>}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {!selectedBranch && <tr><td colSpan="9" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 600 }}>Please select a destination branch above to view bilties.</td></tr>}
+                {filteredInventory.map(item => {
+                  const charges = biltyCharges[item.id] || {};
+                  return (
+                  <tr key={item.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                    <td style={{ padding: '8px' }}>
+                      <input 
+                        type="checkbox" 
+                        onChange={(e) => handleSelection(item, e.target.checked)}
+                        checked={!!selectedBilties[item.id]}
+                      />
+                    </td>
+                    <td style={{ padding: '8px', fontWeight: 600 }}>{item.bilty_number}</td>
+                    <td style={{ padding: '8px' }}>{item.destination_name}</td>
+                    <td style={{ padding: '8px' }}>{item.remaining_quantity}</td>
+                    <td style={{ padding: '8px', color: '#c0392b', fontWeight: 600 }}>{Number(charges.custom_amount || 0).toLocaleString()}</td>
+                    <td style={{ padding: '8px' }}>{Number(charges.local_freight || 0).toLocaleString()}</td>
+                    <td style={{ padding: '8px' }}>{Number(charges.labor_charges || 0).toLocaleString()}</td>
+                    <td style={{ padding: '8px' }}>{Number(charges.tt_expense || 0).toLocaleString()}</td>
+                    <td style={{ padding: '8px' }}>
+                       <input 
+                          type="number" 
+                          min="1" 
+                          max={item.remaining_quantity}
+                          value={selectedBilties[item.id]?.loaded_quantity || ''}
+                          disabled={!selectedBilties[item.id]}
+                          onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                          style={{ width: '80px', padding: '4px 8px' }}
+                       />
+                    </td>
+                  </tr>
+                  );
+                })}
+                {selectedBranch && filteredInventory.length === 0 && <tr><td colSpan="9" style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)' }}>No bilties found for {selectedBranch}.</td></tr>}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <div className="card" style={{ marginBottom: '24px' }}>
+        <div className="card" style={{ marginBottom: '20px' }}>
           <h3 style={{ color: '#059669', fontWeight: 800, fontSize: '1.05rem', margin: 0 }}>💰 Step 3: Financial Calculations</h3>
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap', marginTop: '16px' }}>
+          <div className="challan-fin-calc-grid" style={{ marginTop: '14px' }}>
             <div className="form-group" style={{ margin: 0 }}>
               <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>Delivery (%)</label>
               <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
@@ -611,7 +615,7 @@ export default function ChallanCreate() {
                     const calcAmt = (netRentAmount * (parseFloat(pct) || 0)) / 100;
                     setFormData(prev => ({ ...prev, commission_deduction: parseFloat(calcAmt.toFixed(2)) }));
                   }}
-                  style={{ width: '70px', padding: '9px 10px', fontSize: '0.98rem', height: '42px' }}
+                  style={{ width: '65px', padding: '8px', fontSize: '0.95rem', height: '42px', flexShrink: 0 }}
                 />
                 <span style={{ fontWeight: 700, color: '#64748b' }}>%</span>
                 <input
@@ -625,7 +629,7 @@ export default function ChallanCreate() {
                     handleFormChange(e);
                   }}
                   placeholder="Amount"
-                  style={{ width: '150px', padding: '9px 10px', fontSize: '0.98rem', height: '42px' }}
+                  style={{ flex: 1, minWidth: '100px', padding: '8px 10px', fontSize: '0.95rem', height: '42px' }}
                 />
               </div>
             </div>
@@ -640,7 +644,7 @@ export default function ChallanCreate() {
                 value={formData.vehicle_freight} 
                 onChange={handleFormChange} 
                 placeholder="0"
-                style={{ width: '180px', padding: '9px 12px', fontSize: '0.98rem', height: '42px' }}
+                style={{ width: '100%', padding: '9px 12px', fontSize: '0.98rem', height: '42px' }}
               />
             </div>
           </div>

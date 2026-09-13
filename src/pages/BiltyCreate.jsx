@@ -614,14 +614,14 @@ export default function BiltyCreate() {
         </div>
 
         {/* Two-column layout: Left (Sender/Receiver + Goods) | Right (Payments) */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '14px', alignItems: 'start' }}>
+        <div className="bilty-main-layout">
 
           {/* LEFT COLUMN */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
             {/* Sender & Receiver */}
             <div className="card bilty-section">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div className="sender-receiver-grid">
                 {/* Sender */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--primary-color, #e85d04)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sender</div>
@@ -651,14 +651,14 @@ export default function BiltyCreate() {
 
             {/* Goods Details */}
             <div className="card bilty-section">
-              <div>
-                <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+              <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table style={{ width: '100%', minWidth: '450px', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid var(--border)' }}>
                       <th style={{ textAlign: 'left', padding: '6px', fontSize: '0.75rem', fontWeight: 700, width: '30px' }}>#</th>
-                      <th style={{ textAlign: 'left', padding: '6px', fontSize: '0.75rem', fontWeight: 700, width: '100px' }}>QTY*</th>
+                      <th style={{ textAlign: 'left', padding: '6px', fontSize: '0.75rem', fontWeight: 700, width: '90px' }}>QTY*</th>
                       <th style={{ textAlign: 'left', padding: '6px', fontSize: '0.75rem', fontWeight: 700 }}>DESCRIPTION *</th>
-                      <th style={{ textAlign: 'left', padding: '6px', fontSize: '0.75rem', fontWeight: 700, width: '120px' }}>WT(KG)*</th>
+                      <th style={{ textAlign: 'left', padding: '6px', fontSize: '0.75rem', fontWeight: 700, width: '110px' }}>WT(KG)*</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -687,7 +687,7 @@ export default function BiltyCreate() {
           </div>
 
           {/* RIGHT COLUMN - Payments */}
-          <div className="card bilty-section" style={{ position: 'sticky', top: '14px' }}>
+          <div className="card bilty-section bilty-charges-card">
             <h3 className="bilty-section-title">Charges</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 

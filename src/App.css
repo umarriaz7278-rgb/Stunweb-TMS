@@ -1,7 +1,4 @@
-/* App.css — bilty-grid utilities & legacy overrides cleared */
-
-/* All global design tokens are in index.css */
-/* This file only holds page-specific grid helpers */
+/* App.css — Responsive Layouts & Mobile Optimizations */
 
 .bilty-page {
   max-width: 100%;
@@ -26,4 +23,90 @@
 
 .bilty-page .form-group {
   margin-bottom: 0;
+}
+
+/* ── Responsive Form Grids ── */
+.bilty-main-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 14px;
+  align-items: start;
+}
+
+.sender-receiver-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.branch-select-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+.challan-fin-calc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  align-items: flex-end;
+}
+
+.receipt-header-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  align-items: end;
+}
+
+.container-ref-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+/* ── Mobile Responsive Breakpoints ── */
+@media (max-width: 900px) {
+  .bilty-main-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .bilty-charges-card {
+    position: static !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .sender-receiver-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+  .sender-receiver-grid > div:last-child {
+    border-left: none !important;
+    border-right: none !important;
+    border-top: 1px solid var(--border);
+    padding-left: 0 !important;
+    padding-top: 12px;
+  }
+  .bilty-grid-5 {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+  }
+  .receipt-header-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .container-ref-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 15px !important; /* Prevents auto-zoom on mobile iOS/Android */
+    min-height: 42px;
+  }
+  .table-responsive {
+    margin: 0 -8px;
+    padding: 0 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
