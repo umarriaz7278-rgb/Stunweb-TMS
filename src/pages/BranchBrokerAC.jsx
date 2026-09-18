@@ -85,7 +85,7 @@ export default function BranchBrokerAC({ branchName }) {
 
     let query = supabase
       .from('challans')
-      .select('id, challan_number, challan_date, vehicle_number, total_bilty_amount, commission_deduction, branch_deposit, broker_name')
+      .select('id, challan_number, challan_date, vehicle_number, total_bilty_amount, commission_deduction, vehicle_freight, branch_deposit, broker_name')
       .in('id', branchChallanIds)
       .order('id', { ascending: false });
 
@@ -95,6 +95,15 @@ export default function BranchBrokerAC({ branchName }) {
     if (data) setChallans(data);
     setLoadingChallans(false);
   }
+
+  // Receivable from Broker = Rent - Commission (Delivery) - Vehicle Freight - Branch Deposit
+  const calcBrokerReceivable = (ch) => {
+    const rent = parseFloat(ch.total_bilty_amount) || 0;
+    const commission = parseFloat(ch.commission_deduction) || 0;
+    const freight = parseFloat(ch.vehicle_freight) || 0;
+    const deposit = parseFloat(ch.branch_deposit) || 0;
+    return rent - commission - freight - deposit;
+  };
 
   async function fetchReceived() {
     setLoadingReceived(true);
@@ -202,7 +211,7 @@ export default function BranchBrokerAC({ branchName }) {
     return r.date?.slice(0, 7) === filterMonth;
   });
 
-  const totalReceivable = monthChallans.reduce((s, ch) => s + (parseFloat(ch.branch_deposit) || 0), 0);
+  const totalReceivable = monthChallans.reduce((s, ch) => s + calcBrokerReceivable(ch), 0);
   const totalReceived = monthReceived.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
   const balance = totalReceivable - totalReceived;
 
@@ -276,7 +285,7 @@ export default function BranchBrokerAC({ branchName }) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
                 <thead>
                   <tr style={{ background: 'var(--bg-secondary)', borderBottom: '2px solid var(--border)' }}>
-                    {['#', 'Challan No', 'Date', 'Vehicle', 'Broker', 'Branch Deposit'].map(h => (
+                    {['#', 'Challan No', 'Date', 'Vehicle', 'Broker', 'Receivable from Broker'].map(h => (
                       <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontWeight: 700, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
@@ -291,14 +300,14 @@ export default function BranchBrokerAC({ branchName }) {
                       <td style={{ padding: '10px 14px' }}>{ch.challan_date ? new Date(ch.challan_date + 'T00:00:00').toLocaleDateString('en-PK') : '—'}</td>
                       <td style={{ padding: '10px 14px' }}>{ch.vehicle_number || '—'}</td>
                       <td style={{ padding: '10px 14px' }}>{ch.broker_name || '—'}</td>
-                      <td style={{ padding: '10px 14px', fontWeight: 700, color: '#16a34a' }}>Rs. {(parseFloat(ch.branch_deposit) || 0).toLocaleString('en-PK')}</td>
+                      <td style={{ padding: '10px 14px', fontWeight: 700, color: '#6366f1' }}>Rs. {calcBrokerReceivable(ch).toLocaleString('en-PK')}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr style={{ background: 'var(--bg-secondary)', borderTop: '2px solid var(--border)', fontWeight: 700 }}>
                     <td colSpan={5} style={{ padding: '10px 14px' }}>Monthly Total Receivable</td>
-                    <td style={{ padding: '10px 14px', color: '#16a34a', fontSize: '0.95rem' }}>Rs. {totalReceivable.toLocaleString('en-PK')}</td>
+                    <td style={{ padding: '10px 14px', color: '#6366f1', fontSize: '0.95rem' }}>Rs. {totalReceivable.toLocaleString('en-PK')}</td>
                   </tr>
                 </tfoot>
               </table>
@@ -418,7 +427,7 @@ export default function BranchBrokerAC({ branchName }) {
               {brokers.map(broker => {
                 const bChallans = getBrokerChallans(broker.name);
                 const bReceived = getBrokerReceived(broker.name);
-                const bReceivable = bChallans.reduce((s, ch) => s + (parseFloat(ch.branch_deposit) || 0), 0);
+                const bReceivable = bChallans.reduce((s, ch) => s + calcBrokerReceivable(ch), 0);
                 const bReceivedTotal = bReceived.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
                 const bBalance = bReceivable - bReceivedTotal;
                 const isExpanded = expandedBroker === broker.id;
@@ -492,7 +501,7 @@ export default function BranchBrokerAC({ branchName }) {
                                         <td style={{ padding: '7px 10px' }}>{ch.challan_date ? new Date(ch.challan_date + 'T00:00:00').toLocaleDateString('en-PK') : '—'}</td>
                                         <td style={{ padding: '7px 10px', fontWeight: 700, color: 'var(--primary-color)' }}>#{ch.challan_number}</td>
                                         <td style={{ padding: '7px 10px' }}>{ch.vehicle_number || '—'}</td>
-                                        <td style={{ padding: '7px 10px', textAlign: 'right', fontWeight: 700, color: '#d97706' }}>Rs. {(parseFloat(ch.branch_deposit) || 0).toLocaleString('en-PK')}</td>
+                                        <td style={{ padding: '7px 10px', textAlign: 'right', fontWeight: 700, color: '#d97706' }}>Rs. {calcBrokerReceivable(ch).toLocaleString('en-PK')}</td>
                                       </tr>
                                     ))}
                                   </tbody>
