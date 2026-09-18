@@ -46,7 +46,7 @@ export default function BranchReceivable({ branchName }) {
     setLoadingChallans(true);
     const { data: cbData, error: cbError } = await supabase
       .from('challan_bilties')
-      .select('challan_id, bilties(destination, destination_branch_id, branches(name))');
+      .select('challan_id, bilties(destination, destination_branch_id, branches:destination_branch_id(name))');
 
     if (cbError) {
       console.error('challan_bilties error:', cbError.message);

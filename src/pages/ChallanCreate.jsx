@@ -406,12 +406,9 @@ export default function ChallanCreate() {
           local_freight: effectiveLocalFare,
           labor_charges: effectiveLoading,
           total_quantity: 1,
-          quantity: 1,
-          item_name: 'Manual Challan Shipment',
-          description: `Direct Manual Challan #${challanNum}`,
+          description: `Manual Challan #${challanNum} Dispatch`,
           sender_name: 'Direct Dispatch',
           receiver_name: selectedBranch,
-          status: 'dispatched',
           bilty_date: challanDate
         };
 

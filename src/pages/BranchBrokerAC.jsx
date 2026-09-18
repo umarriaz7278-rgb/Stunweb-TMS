@@ -49,9 +49,15 @@ export default function BranchBrokerAC({ branchName }) {
 
   async function fetchChallans() {
     setLoadingChallans(true);
-    const { data: cbData } = await supabase
+    const { data: cbData, error: cbError } = await supabase
       .from('challan_bilties')
-      .select('challan_id, bilties(destination, destination_branch_id, branches(name))');
+      .select('challan_id, bilties(destination, destination_branch_id, branches:destination_branch_id(name))');
+
+    if (cbError) {
+      console.error('challan_bilties error:', cbError.message);
+      setLoadingChallans(false);
+      return;
+    }
 
     const bTarget = (branchName || '').trim().toLowerCase();
     const branchChallanIds = (cbData || [])
