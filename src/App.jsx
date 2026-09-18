@@ -42,6 +42,7 @@ const Login                    = lazy(() => import('./pages/Login'));
 const SuperAdminDashboard      = lazy(() => import('./pages/SuperAdminDashboard'));
 import { useSettings } from './context/SettingsContext';
 import { useAuth } from './context/AuthContext';
+import { applyTenantFilter } from './utils/tenantStorage';
 
 
 // ─── Page Loader ─────────────────────────────────────────────────────────────
@@ -178,7 +179,9 @@ export default function App() {
   useEffect(() => {
     async function loadCustomBranches() {
       const { supabase: sb } = await import('./supabaseClient');
-      const { data } = await sb.from('branches').select('*').order('name');
+      let q = sb.from('branches').select('*').order('name');
+      q = applyTenantFilter(q);
+      const { data } = await q;
       if (data) {
         const currentPrimary = (primaryBranchName || 'Islamabad').toLowerCase();
         const custom = data.filter(b => 

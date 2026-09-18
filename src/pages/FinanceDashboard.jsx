@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { FileText } from 'lucide-react';
+import { applyTenantFilter, withTenantId } from '../utils/tenantStorage';
 
 export default function FinanceDashboard() {
   const [finance, setFinance] = useState({
@@ -23,9 +24,48 @@ export default function FinanceDashboard() {
   }, []);
 
   async function fetchFinance() {
-    const { data } = await supabase.from('finance_overview').select('*');
-    if (data && data.length > 0) {
-      setFinance(data[0]);
+    try {
+      let qLedgers = supabase.from('branch_ledgers').select('entry_type, amount');
+      qLedgers = applyTenantFilter(qLedgers);
+      const { data: lData } = await qLedgers;
+
+      let income = 0;
+      let exp = 0;
+      if (lData) {
+        lData.forEach(l => {
+          if (l.entry_type === 'income') income += Number(l.amount || 0);
+          else if (l.entry_type === 'expense') exp += Number(l.amount || 0);
+        });
+      }
+
+      let qExp = supabase.from('branch_expenses').select('amount');
+      qExp = applyTenantFilter(qExp);
+      const { data: expData } = await qExp;
+      if (expData) {
+        expData.forEach(e => { exp += Number(e.amount || 0); });
+      }
+
+      let qBroker = supabase.from('broker_ledgers').select('transaction_type, amount');
+      qBroker = applyTenantFilter(qBroker);
+      const { data: brkData } = await qBroker;
+      let brokerFreight = 0;
+      let brokerSettled = 0;
+      if (brkData) {
+        brkData.forEach(b => {
+          if (b.transaction_type === 'freight_payable') brokerFreight += Number(b.amount || 0);
+          else brokerSettled += Number(b.amount || 0);
+        });
+      }
+
+      setFinance({
+        total_branch_income: income,
+        total_branch_expenses: exp,
+        total_branch_receivables: 0,
+        total_broker_freight: brokerFreight,
+        broker_settled: brokerSettled
+      });
+    } catch (e) {
+      console.error('Error fetching finance overview:', e);
     }
   }
 
@@ -37,11 +77,12 @@ export default function FinanceDashboard() {
   const submitExpense = async (e) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.from('branch_expenses').insert([{
+    const payload = withTenantId({
       vehicle_number: expenseForm.vehicle_number,
       description: expenseForm.description,
       amount: parseFloat(expenseForm.amount)
-    }]);
+    });
+    const { error } = await supabase.from('branch_expenses').insert([payload]);
 
     if (!error) {
       setExpenseForm({ vehicle_number: '', description: '', amount: '' });

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Truck } from 'lucide-react';
+import { applyTenantFilter, withTenantId } from '../utils/tenantStorage';
 
 export default function BrokerLedger() {
   const [ledgers, setLedgers] = useState([]);
@@ -19,7 +20,9 @@ export default function BrokerLedger() {
   }, []);
 
   async function fetchLedgers() {
-    const { data, error } = await supabase.from('broker_ledgers').select('*').order('created_at', { ascending: false });
+    let q = supabase.from('broker_ledgers').select('*').order('created_at', { ascending: false });
+    q = applyTenantFilter(q);
+    const { data, error } = await q;
     if (data) {
       setLedgers(data);
       
@@ -45,12 +48,13 @@ export default function BrokerLedger() {
   const submitPayment = async (e) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.from('broker_ledgers').insert([{
+    const payload = withTenantId({
       broker_name: paymentForm.broker_name,
       transaction_type: paymentForm.transaction_type,
       amount: parseFloat(paymentForm.amount),
       description: paymentForm.description
-    }]);
+    });
+    const { error } = await supabase.from('broker_ledgers').insert([payload]);
 
     if (!error) {
       setPaymentForm({ broker_name: '', amount: '', transaction_type: 'paid_to_broker', description: '' });

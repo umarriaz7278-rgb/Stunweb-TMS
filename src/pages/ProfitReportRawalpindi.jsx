@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { TrendingUp, Plus, X, Lock, Unlock } from 'lucide-react';
+import { applyTenantFilter, withTenantId, getScopedKey, getCurrentTenantId } from '../utils/tenantStorage';
 
 export default function ProfitReportRawalpindi() {
   const [activeTab, setActiveTab] = useState('ledger');
@@ -20,9 +21,16 @@ export default function ProfitReportRawalpindi() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
 
+  const rawClosedKey = 'profit_rawalpindi_closed';
+  const isTenantActive = () => {
+    const t = getCurrentTenantId();
+    return t && t !== 'master' && t !== 'guest';
+  };
+  const closedKey = isTenantActive() ? getScopedKey(rawClosedKey) : rawClosedKey;
+
   // Closed months
   const [closedMonths, setClosedMonths] = useState(() => {
-    const s = localStorage.getItem('profit_rawalpindi_closed');
+    const s = localStorage.getItem(closedKey);
     return s ? JSON.parse(s) : [];
   });
 
@@ -33,7 +41,7 @@ export default function ProfitReportRawalpindi() {
       ? closedMonths.filter(m => m !== filterMonth)
       : [...closedMonths, filterMonth];
     setClosedMonths(updated);
-    localStorage.setItem('profit_rawalpindi_closed', JSON.stringify(updated));
+    localStorage.setItem(closedKey, JSON.stringify(updated));
   };
 
   useEffect(() => {
@@ -69,11 +77,14 @@ export default function ProfitReportRawalpindi() {
     }
 
     // Step 2: Fetch those challans with all financial fields
-    const { data, error } = await supabase
+    let q = supabase
       .from('challans')
       .select('id, challan_number, challan_date, vehicle_number, total_bilty_amount, labor_deduction, commission_deduction, other_deduction, vehicle_freight, branch_deposit')
       .in('id', rawalpindiChallanIds)
       .order('id', { ascending: false });
+    q = applyTenantFilter(q);
+
+    const { data, error } = await q;
 
     if (error) console.error('challans error:', error.message);
     if (data) setChallans(data);
@@ -82,10 +93,13 @@ export default function ProfitReportRawalpindi() {
 
   async function fetchReceived() {
     setLoadingReceived(true);
-    const { data, error } = await supabase
+    let q = supabase
       .from('profit_received_rawalpindi')
       .select('*')
       .order('id', { ascending: false });
+    q = applyTenantFilter(q);
+
+    const { data, error } = await q;
     if (error) console.error('profit_received error:', error.message);
     if (data) setReceived(data);
     setLoadingReceived(false);
@@ -100,12 +114,13 @@ export default function ProfitReportRawalpindi() {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from('profit_received_rawalpindi').insert([{
+    const payload = withTenantId({
       date: form.date,
       description: form.description,
       vehicle_number: form.vehicle_number,
       amount: parseFloat(form.amount),
-    }]);
+    });
+    const { error } = await supabase.from('profit_received_rawalpindi').insert([payload]);
     setSaving(false);
     if (error) {
       setMsg({ text: 'Error: ' + error.message, type: 'error' });

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { DollarSign, TrendingUp, TrendingDown, Wallet, Calendar, Filter } from 'lucide-react';
+import { applyTenantFilter, withTenantId } from '../utils/tenantStorage';
 
 export default function BranchFinance({ branchName }) {
   const [ledgers, setLedgers] = useState([]);
@@ -29,12 +30,15 @@ export default function BranchFinance({ branchName }) {
   async function fetchLedgers() {
     setLoading(true);
     // Fetch all records for the specific branch
-    const { data, error } = await supabase
+    let q = supabase
       .from('branch_ledgers')
       .select('*')
       .eq('branch_name', branchName)
       .order('entry_date', { ascending: false })
       .order('created_at', { ascending: false });
+
+    q = applyTenantFilter(q);
+    const { data, error } = await q;
 
     if (data) setLedgers(data);
     if (error) console.error('Error fetching ledgers:', error);
@@ -49,13 +53,14 @@ export default function BranchFinance({ branchName }) {
     setLoading(true); setMessage('');
     
     const form = type === 'income' ? incomeForm : expenseForm;
-    const { error } = await supabase.from('branch_ledgers').insert([{
+    const payload = withTenantId({
       branch_name: branchName,
       entry_date: form.date,
       entry_type: type,
       description: form.description,
       amount: Number(form.amount) || 0
-    }]);
+    });
+    const { error } = await supabase.from('branch_ledgers').insert([payload]);
 
     if (!error) {
       if(type === 'income') setIncomeForm({ date: new Date().toISOString().split('T')[0], description: '', amount: '' });

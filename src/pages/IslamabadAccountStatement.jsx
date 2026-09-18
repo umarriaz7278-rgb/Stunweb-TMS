@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { MapPin, Plus, ArrowLeft, Save, Search, DollarSign, Users, X, Wallet } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
-import { getScopedKey } from '../utils/tenantStorage';
+import { getScopedKey, getCurrentTenantId } from '../utils/tenantStorage';
 
 export default function IslamabadAccountStatement({ branchName: propBranchName }) {
   const { primaryBranchName } = useSettings();
@@ -14,13 +14,19 @@ export default function IslamabadAccountStatement({ branchName: propBranchName }
   const TRANSACTIONS_KEY = `${bClean}_account_statement_transactions`;
   const PENDING_LINK_KEY = `${bClean}_account_statement_pending_link`;
 
+  const isTenantActive = () => {
+    const t = getCurrentTenantId();
+    return t && t !== 'master' && t !== 'guest';
+  };
+
   const loadAccounts = () => {
     try {
-      const k1 = getScopedKey ? getScopedKey(ACCOUNTS_KEY) : null;
-      let data = (k1 ? localStorage.getItem(k1) : null) || localStorage.getItem(ACCOUNTS_KEY);
-      if (!data && isPrimary) {
-        data = (getScopedKey ? localStorage.getItem(getScopedKey('islamabad_account_statement_accounts')) : null) || localStorage.getItem('islamabad_account_statement_accounts');
+      if (isTenantActive()) {
+        const k = getScopedKey(ACCOUNTS_KEY);
+        const data = localStorage.getItem(k);
+        return data ? JSON.parse(data) : [];
       }
+      const data = localStorage.getItem(ACCOUNTS_KEY);
       return data ? JSON.parse(data) : [];
     } catch {
       return [];
@@ -29,11 +35,12 @@ export default function IslamabadAccountStatement({ branchName: propBranchName }
 
   const loadTransactions = () => {
     try {
-      const k1 = getScopedKey ? getScopedKey(TRANSACTIONS_KEY) : null;
-      let data = (k1 ? localStorage.getItem(k1) : null) || localStorage.getItem(TRANSACTIONS_KEY);
-      if (!data && isPrimary) {
-        data = (getScopedKey ? localStorage.getItem(getScopedKey('islamabad_account_statement_transactions')) : null) || localStorage.getItem('islamabad_account_statement_transactions');
+      if (isTenantActive()) {
+        const k = getScopedKey(TRANSACTIONS_KEY);
+        const data = localStorage.getItem(k);
+        return data ? JSON.parse(data) : [];
       }
+      const data = localStorage.getItem(TRANSACTIONS_KEY);
       return data ? JSON.parse(data) : [];
     } catch {
       return [];
@@ -42,11 +49,12 @@ export default function IslamabadAccountStatement({ branchName: propBranchName }
 
   const loadPendingLink = () => {
     try {
-      const k1 = getScopedKey ? getScopedKey(PENDING_LINK_KEY) : null;
-      let data = (k1 ? localStorage.getItem(k1) : null) || localStorage.getItem(PENDING_LINK_KEY);
-      if (!data && isPrimary) {
-        data = (getScopedKey ? localStorage.getItem(getScopedKey('islamabad_account_statement_pending_link')) : null) || localStorage.getItem('islamabad_account_statement_pending_link');
+      if (isTenantActive()) {
+        const k = getScopedKey(PENDING_LINK_KEY);
+        const data = localStorage.getItem(k);
+        return data ? JSON.parse(data) : null;
       }
+      const data = localStorage.getItem(PENDING_LINK_KEY);
       return data ? JSON.parse(data) : null;
     } catch {
       return null;
@@ -55,12 +63,13 @@ export default function IslamabadAccountStatement({ branchName: propBranchName }
 
   const clearPendingLink = () => {
     try {
-      const k1 = getScopedKey ? getScopedKey(PENDING_LINK_KEY) : null;
-      if (k1) localStorage.removeItem(k1);
-      localStorage.removeItem(PENDING_LINK_KEY);
-      if (isPrimary) {
-        localStorage.removeItem('islamabad_account_statement_pending_link');
-        if (getScopedKey) localStorage.removeItem(getScopedKey('islamabad_account_statement_pending_link'));
+      if (isTenantActive()) {
+        localStorage.removeItem(getScopedKey(PENDING_LINK_KEY));
+      } else {
+        localStorage.removeItem(PENDING_LINK_KEY);
+        if (isPrimary) {
+          localStorage.removeItem('islamabad_account_statement_pending_link');
+        }
       }
     } catch {}
   };
@@ -102,22 +111,26 @@ export default function IslamabadAccountStatement({ branchName: propBranchName }
 
   useEffect(() => {
     try {
-      localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
-      if (getScopedKey) localStorage.setItem(getScopedKey(ACCOUNTS_KEY), JSON.stringify(accounts));
-      if (isPrimary) {
-        localStorage.setItem('islamabad_account_statement_accounts', JSON.stringify(accounts));
-        if (getScopedKey) localStorage.setItem(getScopedKey('islamabad_account_statement_accounts'), JSON.stringify(accounts));
+      if (isTenantActive()) {
+        localStorage.setItem(getScopedKey(ACCOUNTS_KEY), JSON.stringify(accounts));
+      } else {
+        localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+        if (isPrimary) {
+          localStorage.setItem('islamabad_account_statement_accounts', JSON.stringify(accounts));
+        }
       }
     } catch {}
   }, [accounts, branchName]);
 
   useEffect(() => {
     try {
-      localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(transactions));
-      if (getScopedKey) localStorage.setItem(getScopedKey(TRANSACTIONS_KEY), JSON.stringify(transactions));
-      if (isPrimary) {
-        localStorage.setItem('islamabad_account_statement_transactions', JSON.stringify(transactions));
-        if (getScopedKey) localStorage.setItem(getScopedKey('islamabad_account_statement_transactions'), JSON.stringify(transactions));
+      if (isTenantActive()) {
+        localStorage.setItem(getScopedKey(TRANSACTIONS_KEY), JSON.stringify(transactions));
+      } else {
+        localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(transactions));
+        if (isPrimary) {
+          localStorage.setItem('islamabad_account_statement_transactions', JSON.stringify(transactions));
+        }
       }
     } catch {}
   }, [transactions, branchName]);

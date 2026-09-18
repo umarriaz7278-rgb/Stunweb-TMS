@@ -11,70 +11,52 @@ export default function Warehouse() {
 
   async function fetchInventory() {
     setLoading(true);
-    let inventoryData = null;
+    let inventoryData = [];
 
-    // 1. Try querying pending_warehouse_inventory view with tenant filter
     try {
-      let q = supabase
-        .from('pending_warehouse_inventory')
-        .select('*')
+      let bQ = supabase
+        .from('bilties')
+        .select('*, branches(name)')
         .order('bilty_number', { ascending: false });
-      q = applyTenantFilter(q);
-      const { data, error } = await q;
-      if (!error && data && data.length > 0) {
-        inventoryData = data;
-      }
-    } catch (e) {
-      console.warn("View fetch error:", e);
-    }
+      bQ = applyTenantFilter(bQ);
+      const { data: biltiesData, error: bErr } = await bQ;
 
-    // 2. Direct fallback: query bilties directly with tenant filter (100% reliable)
-    if (!inventoryData || inventoryData.length === 0) {
-      try {
-        let bQ = supabase
-          .from('bilties')
-          .select('*, branches(name)')
-          .order('bilty_number', { ascending: false });
-        bQ = applyTenantFilter(bQ);
-        const { data: biltiesData, error: bErr } = await bQ;
+      if (!bErr && biltiesData && biltiesData.length > 0) {
+        // Fetch challan bilties to calculate loaded/dispatched quantity
+        let cQ = supabase
+          .from('challan_bilties')
+          .select('bilty_id, loaded_quantity, challans(status)');
+        const { data: cbData } = await cQ;
 
-        if (!bErr && biltiesData && biltiesData.length > 0) {
-          // Fetch challan bilties to calculate loaded/dispatched quantity
-          let cQ = supabase
-            .from('challan_bilties')
-            .select('bilty_id, loaded_quantity, challans(status)');
-          const { data: cbData } = await cQ;
-
-          const loadedMap = {};
-          if (cbData) {
-            cbData.forEach(cb => {
-              if (cb.challans && (cb.challans.status === 'in_transit' || cb.challans.status === 'arrived')) {
-                loadedMap[cb.bilty_id] = (loadedMap[cb.bilty_id] || 0) + Number(cb.loaded_quantity || 0);
-              }
-            });
-          }
-
-          const computed = biltiesData
-            .map(b => {
-              const totalQty = Number(b.total_quantity || b.quantity || 1);
-              const loadedQty = loadedMap[b.id] || 0;
-              const remainingQty = Math.max(0, totalQty - loadedQty);
-              const destName = b.destination || b.branches?.name || 'Islamabad';
-              return {
-                ...b,
-                date: b.bilty_date || b.created_at,
-                destination_name: destName,
-                total_quantity: totalQty,
-                remaining_quantity: remainingQty
-              };
-            })
-            .filter(b => b.remaining_quantity > 0);
-
-          inventoryData = computed;
+        const loadedMap = {};
+        if (cbData) {
+          cbData.forEach(cb => {
+            if (cb.challans && (cb.challans.status === 'in_transit' || cb.challans.status === 'arrived')) {
+              loadedMap[cb.bilty_id] = (loadedMap[cb.bilty_id] || 0) + Number(cb.loaded_quantity || 0);
+            }
+          });
         }
-      } catch (err) {
-        console.error("Direct bilties fallback error:", err);
+
+        const computed = biltiesData
+          .map(b => {
+            const totalQty = Number(b.total_quantity || b.quantity || 1);
+            const loadedQty = loadedMap[b.id] || 0;
+            const remainingQty = Math.max(0, totalQty - loadedQty);
+            const destName = b.destination || b.branches?.name || 'Islamabad';
+            return {
+              ...b,
+              date: b.bilty_date || b.created_at,
+              destination_name: destName,
+              total_quantity: totalQty,
+              remaining_quantity: remainingQty
+            };
+          })
+          .filter(b => b.remaining_quantity > 0);
+
+        inventoryData = computed;
       }
+    } catch (err) {
+      console.error("Direct bilties fetch error:", err);
     }
 
     setInventory(inventoryData || []);

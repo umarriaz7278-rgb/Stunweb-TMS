@@ -2,12 +2,23 @@ import { useState, useEffect, Fragment } from 'react';
 import { supabase } from '../supabaseClient';
 import { TrendingUp, Plus, X, Lock, Unlock, Users, Phone, MapPin, Search, Edit2, Trash2, Save, UserCheck, ChevronDown, ChevronUp, FileText, CheckCircle2, DollarSign, Eye } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
+import { applyTenantFilter, withTenantId, getScopedKey, getCurrentTenantId } from '../utils/tenantStorage';
 
 const BROKERS_STORAGE_KEY = 'islamabad_broker_accounts';
 
+const isTenantActive = () => {
+  const t = getCurrentTenantId();
+  return t && t !== 'master' && t !== 'guest';
+};
+
+const getEffectiveBrokerKey = () => {
+  return isTenantActive() ? getScopedKey(BROKERS_STORAGE_KEY) : BROKERS_STORAGE_KEY;
+};
+
 function loadInitialBrokers() {
   try {
-    const s = localStorage.getItem(BROKERS_STORAGE_KEY);
+    const key = getEffectiveBrokerKey();
+    const s = localStorage.getItem(key);
     return s ? JSON.parse(s) : [];
   } catch {
     return [];
@@ -54,9 +65,12 @@ export default function BrokerReceivable() {
   const [showBrokerPayForm, setShowBrokerPayForm] = useState(false);
   const [savingBrokerPay, setSavingBrokerPay] = useState(false);
 
+  const rawClosedKey = 'broker_receivable_closed';
+  const closedKey = isTenantActive() ? getScopedKey(rawClosedKey) : rawClosedKey;
+
   // Closed months
   const [closedMonths, setClosedMonths] = useState(() => {
-    const s = localStorage.getItem('broker_receivable_closed');
+    const s = localStorage.getItem(closedKey);
     return s ? JSON.parse(s) : [];
   });
 
@@ -67,7 +81,7 @@ export default function BrokerReceivable() {
       ? closedMonths.filter(m => m !== filterMonth)
       : [...closedMonths, filterMonth];
     setClosedMonths(updated);
-    localStorage.setItem('broker_receivable_closed', JSON.stringify(updated));
+    localStorage.setItem(closedKey, JSON.stringify(updated));
   };
 
   useEffect(() => {
@@ -104,11 +118,14 @@ export default function BrokerReceivable() {
     }
 
     // Step 2: Fetch those challans with all financial fields
-    const { data, error } = await supabase
+    let q = supabase
       .from('challans')
       .select('id, challan_number, challan_date, vehicle_number, total_bilty_amount, commission_deduction, vehicle_freight, branch_deposit, broker_name')
       .in('id', islamabadChallanIds)
       .order('id', { ascending: false });
+    q = applyTenantFilter(q);
+
+    const { data, error } = await q;
 
     if (error) console.error('challans error:', error.message);
     if (data) setChallans(data);
@@ -117,10 +134,13 @@ export default function BrokerReceivable() {
 
   async function fetchReceived() {
     setLoadingReceived(true);
-    const { data, error } = await supabase
+    let q = supabase
       .from('broker_received_islamabad')
       .select('*')
       .order('id', { ascending: false });
+    q = applyTenantFilter(q);
+
+    const { data, error } = await q;
     if (error) console.error('broker_received error:', error.message);
     if (data) setReceived(data);
     setLoadingReceived(false);
@@ -128,10 +148,12 @@ export default function BrokerReceivable() {
 
   async function fetchBrokers() {
     try {
-      const { data, error } = await supabase.from('islamabad_brokers').select('*').order('name');
-      if (!error && data && data.length > 0) {
+      let q = supabase.from('islamabad_brokers').select('*').order('name');
+      q = applyTenantFilter(q);
+      const { data, error } = await q;
+      if (!error && data) {
         setBrokers(data);
-        localStorage.setItem(BROKERS_STORAGE_KEY, JSON.stringify(data));
+        localStorage.setItem(getEffectiveBrokerKey(), JSON.stringify(data));
       }
     } catch (err) {
       console.warn('Could not fetch brokers from Supabase, using local:', err);
@@ -151,12 +173,14 @@ export default function BrokerReceivable() {
       ? `[${form.broker_name}] ${form.description || ''}`.trim()
       : form.description;
 
-    const { error } = await supabase.from('broker_received_islamabad').insert([{
+    const payload = withTenantId({
       date: form.date,
       description: descWithBroker,
       vehicle_number: form.vehicle_number,
       amount: parseFloat(form.amount),
-    }]);
+    });
+
+    const { error } = await supabase.from('broker_received_islamabad').insert([payload]);
     setSaving(false);
     if (error) {
       setMsg({ text: 'Error: ' + error.message, type: 'error' });
@@ -197,11 +221,11 @@ export default function BrokerReceivable() {
     }
 
     setBrokers(updatedBrokers);
-    localStorage.setItem(BROKERS_STORAGE_KEY, JSON.stringify(updatedBrokers));
+    localStorage.setItem(getEffectiveBrokerKey(), JSON.stringify(updatedBrokers));
 
     // Supabase sync
     try {
-      await supabase.from('islamabad_brokers').upsert([newBroker]);
+      await supabase.from('islamabad_brokers').upsert([withTenantId(newBroker)]);
     } catch {}
 
     setMsg({ text: `Broker account "${newBroker.name}" ${editingBrokerId ? 'updated' : 'created'} successfully!`, type: 'success' });
@@ -225,7 +249,7 @@ export default function BrokerReceivable() {
     if (window.confirm('Are you sure you want to delete this broker account?')) {
       const updated = brokers.filter(b => b.id !== id);
       setBrokers(updated);
-      localStorage.setItem(BROKERS_STORAGE_KEY, JSON.stringify(updated));
+      localStorage.setItem(getEffectiveBrokerKey(), JSON.stringify(updated));
       try {
         await supabase.from('islamabad_brokers').delete().eq('id', id);
       } catch {}

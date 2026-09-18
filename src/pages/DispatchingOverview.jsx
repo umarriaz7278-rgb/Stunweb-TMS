@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useSettings } from '../context/SettingsContext';
-import { getTenantItem, setTenantItem, getScopedKey } from '../utils/tenantStorage';
+import { getTenantItem, setTenantItem, getScopedKey, withTenantId } from '../utils/tenantStorage';
 
 const DISPATCH_STOCK_KEY = 'dispatching_manual_inventory';
 const DISPATCH_DELIVERIES_KEY = 'dispatching_delivery_history';
@@ -369,7 +369,7 @@ export default function DispatchingOverview() {
           description: `Delivery collected - Bilty #${selectedStock.bilty_number} (${deliveryFormData.customer_name || selectedStock.receiver_name || 'Customer'})`,
           amount: totalIncome
         };
-        const { error: ledgerError } = await supabase.from('branch_ledgers').insert([incomeEntry]);
+        const { error: ledgerError } = await supabase.from('branch_ledgers').insert([withTenantId(incomeEntry)]);
         if (ledgerError) console.warn('Ledger sync warning:', ledgerError);
       }
 

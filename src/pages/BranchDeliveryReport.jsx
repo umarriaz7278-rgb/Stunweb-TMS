@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { DollarSign, Plus, X, Lock, Unlock } from 'lucide-react';
+import { applyTenantFilter, withTenantId, getScopedKey, getCurrentTenantId } from '../utils/tenantStorage';
 
 // Generic Delivery / Commission Report for any branch
 // Receives branchName as a prop from App.jsx route
@@ -19,7 +20,13 @@ export default function BranchDeliveryReport({ branchName }) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
 
-  const closedKey = `commission_${branchName?.toLowerCase()}_closed`;
+  const rawClosedKey = `commission_${branchName?.toLowerCase()}_closed`;
+  const isTenantActive = () => {
+    const t = getCurrentTenantId();
+    return t && t !== 'master' && t !== 'guest';
+  };
+  const closedKey = isTenantActive() ? getScopedKey(rawClosedKey) : rawClosedKey;
+
   const [closedMonths, setClosedMonths] = useState(() => {
     const s = localStorage.getItem(closedKey);
     return s ? JSON.parse(s) : [];
@@ -44,9 +51,11 @@ export default function BranchDeliveryReport({ branchName }) {
 
   async function fetchChallans() {
     setLoadingChallans(true);
-    const { data: cbData, error: cbError } = await supabase
+    let qCb = supabase
       .from('challan_bilties')
       .select('challan_id, bilties(destination, destination_branch_id, branches(name))');
+
+    const { data: cbData, error: cbError } = await qCb;
 
     if (cbError) {
       console.error('challan_bilties error:', cbError.message);
@@ -70,11 +79,14 @@ export default function BranchDeliveryReport({ branchName }) {
       return;
     }
 
-    const { data, error } = await supabase
+    let qChallans = supabase
       .from('challans')
       .select('id, challan_number, challan_date, vehicle_number, commission_deduction')
       .in('id', branchChallanIds)
       .order('id', { ascending: false });
+    qChallans = applyTenantFilter(qChallans);
+
+    const { data, error } = await qChallans;
 
     if (error) console.error('challans error:', error.message);
     if (data) setChallans(data);
@@ -83,11 +95,13 @@ export default function BranchDeliveryReport({ branchName }) {
 
   async function fetchReceived() {
     setLoadingReceived(true);
-    const { data, error } = await supabase
+    let qRec = supabase
       .from('branch_commission_received')
       .select('*')
       .eq('branch_name', branchName)
       .order('id', { ascending: false });
+    qRec = applyTenantFilter(qRec);
+    const { data, error } = await qRec;
     if (error) console.error('branch_commission_received error:', error.message);
     if (data) setReceived(data);
     setLoadingReceived(false);
@@ -102,13 +116,14 @@ export default function BranchDeliveryReport({ branchName }) {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from('branch_commission_received').insert([{
+    const payload = withTenantId({
       branch_name: branchName,
       date: form.date,
       description: form.description,
       vehicle_number: form.vehicle_number,
       amount: parseFloat(form.amount),
-    }]);
+    });
+    const { error } = await supabase.from('branch_commission_received').insert([payload]);
     setSaving(false);
     if (error) {
       setMsg({ text: 'Error: ' + error.message, type: 'error' });

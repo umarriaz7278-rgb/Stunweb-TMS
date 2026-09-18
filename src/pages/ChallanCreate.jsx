@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useSettings } from '../context/SettingsContext';
 import { Truck } from 'lucide-react';
-import { applyTenantFilter, withTenantId, getScopedKey } from '../utils/tenantStorage';
+import { applyTenantFilter, withTenantId, getScopedKey, getCurrentTenantId } from '../utils/tenantStorage';
 
 export default function ChallanCreate() {
   const { challanHeaderUrl, primaryBranchName } = useSettings();
@@ -66,6 +66,10 @@ export default function ChallanCreate() {
   const getBranchBrokers = (branch) => {
     const list = [];
     const bTarget = (branch || '').trim().toLowerCase();
+    const isTenantActive = () => {
+      const t = getCurrentTenantId();
+      return t && t !== 'master' && t !== 'guest';
+    };
 
     const loadFromKey = (k) => {
       try {
@@ -78,24 +82,36 @@ export default function ChallanCreate() {
     };
 
     if (bTarget) {
-      if (getScopedKey) loadFromKey(getScopedKey(`${bTarget}_broker_accounts`));
-      loadFromKey(`${bTarget}_broker_accounts`);
+      if (isTenantActive()) {
+        loadFromKey(getScopedKey(`${bTarget}_broker_accounts`));
+      } else {
+        loadFromKey(`${bTarget}_broker_accounts`);
+      }
 
       const prim = (primaryBranchName || 'Islamabad').trim().toLowerCase();
       if (bTarget === prim || bTarget === 'islamabad') {
-        if (getScopedKey) loadFromKey(getScopedKey('islamabad_broker_accounts'));
-        loadFromKey('islamabad_broker_accounts');
+        if (isTenantActive()) {
+          loadFromKey(getScopedKey('islamabad_broker_accounts'));
+        } else {
+          loadFromKey('islamabad_broker_accounts');
+        }
         if (dbBrokers && dbBrokers.length > 0) list.push(...dbBrokers);
       }
     } else {
-      if (getScopedKey) loadFromKey(getScopedKey('islamabad_broker_accounts'));
-      loadFromKey('islamabad_broker_accounts');
+      if (isTenantActive()) {
+        loadFromKey(getScopedKey('islamabad_broker_accounts'));
+      } else {
+        loadFromKey('islamabad_broker_accounts');
+      }
       if (dbBrokers && dbBrokers.length > 0) list.push(...dbBrokers);
       allBranches.forEach(b => {
         if (b && b.trim()) {
           const bName = b.trim().toLowerCase();
-          if (getScopedKey) loadFromKey(getScopedKey(`${bName}_broker_accounts`));
-          loadFromKey(`${bName}_broker_accounts`);
+          if (isTenantActive()) {
+            loadFromKey(getScopedKey(`${bName}_broker_accounts`));
+          } else {
+            loadFromKey(`${bName}_broker_accounts`);
+          }
         }
       });
     }

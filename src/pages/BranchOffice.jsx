@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { MapPin, PackageOpen } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
-import { getScopedKey } from '../utils/tenantStorage';
+import { getScopedKey, applyTenantFilter, withTenantId } from '../utils/tenantStorage';
 
 export default function BranchOffice({ branchName }) {
   const navigate = useNavigate();
@@ -47,18 +47,20 @@ export default function BranchOffice({ branchName }) {
   }, [branchName]);
 
   async function fetchBranchData() {
-    // 1. Fetch In-Transit vehicles. 
-    // Filter locally to ensure we only grab vehicles sent to THIS branch.
-    const { data: challansData } = await supabase
+    // 1. Fetch In-Transit vehicles for THIS tenant
+    let challansQ = supabase
       .from('challans')
       .select(`
         *,
         challan_bilties (
           id, loaded_quantity, bilty_id,
-          bilties ( bilty_number, description, sender_name, receiver_name, total_quantity, total_amount, local_freight, labor_charges, branches(name) )
+          bilties ( id, bilty_number, description, sender_name, receiver_name, receiver_phone, total_quantity, total_amount, local_freight, labor_charges, branches(name) )
         )
       `)
       .eq('status', 'in_transit');
+    
+    challansQ = applyTenantFilter(challansQ);
+    const { data: challansData } = await challansQ;
 
     if (challansData) {
       const bTarget = (branchName || '').trim().toLowerCase();
@@ -73,13 +75,74 @@ export default function BranchOffice({ branchName }) {
       setIncomingChallans(filteredChallans);
     }
 
-    // 2. Fetch Branch Warehouse Inventory for Handover
-    const { data: inventoryData } = await supabase
-      .from('branch_warehouse_inventory')
-      .select('*')
-      .ilike('destination_name', (branchName || '').trim());
+    // 2. Fetch Arrived vehicles for THIS tenant to compute stock ready inventory
+    let arrivedQ = supabase
+      .from('challans')
+      .select(`
+        id, challan_number, challan_date, vehicle_number,
+        challan_bilties (
+          id, loaded_quantity, bilty_id,
+          bilties ( id, bilty_number, description, sender_name, receiver_name, receiver_phone, total_quantity, total_amount, local_freight, labor_charges, branches(name) )
+        )
+      `)
+      .eq('status', 'arrived');
+    arrivedQ = applyTenantFilter(arrivedQ);
+    const { data: arrivedChallans } = await arrivedQ;
 
-    if (inventoryData) setWarehouseInventory(inventoryData);
+    // Also fetch deliveries for this tenant to subtract delivered items
+    let deliveriesQ = supabase.from('deliveries').select('bilty_id, delivered_qty');
+    deliveriesQ = applyTenantFilter(deliveriesQ);
+    const { data: deliveriesData } = await deliveriesQ;
+
+    const deliveredMap = {};
+    if (deliveriesData) {
+      deliveriesData.forEach(d => {
+        deliveredMap[d.bilty_id] = (deliveredMap[d.bilty_id] || 0) + (parseInt(d.delivered_qty) || 0);
+      });
+    }
+
+    const bTarget = (branchName || '').trim().toLowerCase();
+    const invList = [];
+
+    if (arrivedChallans) {
+      arrivedChallans.forEach(ch => {
+        if (ch.challan_bilties) {
+          ch.challan_bilties.forEach(cb => {
+            const b = cb.bilties;
+            if (!b) return;
+            const bName = (b.branches?.name || '').trim().toLowerCase();
+            const bDest = (b.destination || '').trim().toLowerCase();
+            if ((bName && bName === bTarget) || (bDest && bDest === bTarget)) {
+              const loaded = parseInt(cb.loaded_quantity) || 0;
+              const delivered = deliveredMap[cb.bilty_id] || 0;
+              const remaining = Math.max(0, loaded - delivered);
+              if (remaining > 0) {
+                invList.push({
+                  challan_bilty_id: cb.id,
+                  bilty_id: cb.bilty_id,
+                  challan_id: ch.id,
+                  bilty_number: b.bilty_number,
+                  sender_name: b.sender_name,
+                  receiver_name: b.receiver_name,
+                  receiver_phone: b.receiver_phone,
+                  description: b.description,
+                  total_amount: b.total_amount,
+                  local_freight: b.local_freight,
+                  labor_charges: b.labor_charges,
+                  branch_available_qty: remaining,
+                  loaded_quantity: loaded,
+                  total_quantity: b.total_quantity,
+                  destination_name: branchName,
+                  vehicle_number: ch.vehicle_number,
+                  challan_number: ch.challan_number,
+                });
+              }
+            }
+          });
+        }
+      });
+    }
+    setWarehouseInventory(invList);
   }
 
   /* ------------------------------------------------------------- 
@@ -415,18 +478,18 @@ export default function BranchOffice({ branchName }) {
         extra_labor: parseFloat(deliveryFormData.extra_labor || 0), extra_unloading: parseFloat(deliveryFormData.extra_unloading || 0), local_fare: parseFloat(deliveryFormData.local_fare || 0), extra_other: parseFloat(deliveryFormData.extra_other || 0)
       };
 
-      const { data, error } = await supabase.from('deliveries').insert([payload]).select().single();
+      const { data, error } = await supabase.from('deliveries').insert([withTenantId(payload)]).select().single();
       if (error) throw error;
 
       // Automatically add income entry to branch_ledgers if total income > 0
       if (totalIncome > 0) {
-        const incomeEntry = {
+        const incomeEntry = withTenantId({
           branch_name: branchName,
           entry_date: new Date().toISOString().split('T')[0],
           entry_type: 'income',
           description: `Delivery collected - Bilty #${selectedBilty?.bilty_number || 'N/A'}`,
           amount: totalIncome
-        };
+        });
         const { error: incomeError } = await supabase.from('branch_ledgers').insert([incomeEntry]);
         if (incomeError) console.error('Warning: Failed to add income entry to ledger:', incomeError);
       }

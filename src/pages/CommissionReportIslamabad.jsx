@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { DollarSign, Plus, X, Lock, Unlock } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
+import { applyTenantFilter, withTenantId, getScopedKey, getCurrentTenantId } from '../utils/tenantStorage';
 
 export default function CommissionReportIslamabad() {
   const { primaryBranchName } = useSettings();
@@ -23,9 +24,16 @@ export default function CommissionReportIslamabad() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
 
+  const rawClosedKey = 'commission_islamabad_closed';
+  const isTenantActive = () => {
+    const t = getCurrentTenantId();
+    return t && t !== 'master' && t !== 'guest';
+  };
+  const closedKey = isTenantActive() ? getScopedKey(rawClosedKey) : rawClosedKey;
+
   // Closed months
   const [closedMonths, setClosedMonths] = useState(() => {
-    const s = localStorage.getItem('commission_islamabad_closed');
+    const s = localStorage.getItem(closedKey);
     return s ? JSON.parse(s) : [];
   });
 
@@ -36,7 +44,7 @@ export default function CommissionReportIslamabad() {
       ? closedMonths.filter(m => m !== filterMonth)
       : [...closedMonths, filterMonth];
     setClosedMonths(updated);
-    localStorage.setItem('commission_islamabad_closed', JSON.stringify(updated));
+    localStorage.setItem(closedKey, JSON.stringify(updated));
   };
 
   useEffect(() => {
@@ -72,11 +80,14 @@ export default function CommissionReportIslamabad() {
     }
 
     // Step 2: Fetch those challans
-    const { data, error } = await supabase
+    let q = supabase
       .from('challans')
       .select('id, challan_number, challan_date, vehicle_number, commission_deduction')
       .in('id', islamabadChallanIds)
       .order('id', { ascending: false });
+    q = applyTenantFilter(q);
+
+    const { data, error } = await q;
 
     if (error) console.error('challans error:', error.message);
     if (data) setChallans(data);
@@ -85,10 +96,13 @@ export default function CommissionReportIslamabad() {
 
   async function fetchReceived() {
     setLoadingReceived(true);
-    const { data, error } = await supabase
+    let q = supabase
       .from('commission_received_islamabad')
       .select('*')
       .order('id', { ascending: false });
+    q = applyTenantFilter(q);
+
+    const { data, error } = await q;
     if (error) console.error('commission_received error:', error.message);
     if (data) setReceived(data);
     setLoadingReceived(false);
@@ -103,12 +117,13 @@ export default function CommissionReportIslamabad() {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from('commission_received_islamabad').insert([{
+    const payload = withTenantId({
       date: form.date,
       description: form.description,
       vehicle_number: form.vehicle_number,
       amount: parseFloat(form.amount),
-    }]);
+    });
+    const { error } = await supabase.from('commission_received_islamabad').insert([payload]);
     setSaving(false);
     if (error) {
       setMsg({ text: 'Error: ' + error.message, type: 'error' });
