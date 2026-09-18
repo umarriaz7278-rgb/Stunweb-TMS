@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { TrendingUp, Plus, X, Lock, Unlock } from 'lucide-react';
+import { applyTenantFilter, withTenantId, getScopedKey } from '../utils/tenantStorage';
 
 // Generic A/C Receivable page for any branch
 // Receives branchName as a prop from App.jsx route
@@ -19,7 +20,7 @@ export default function BranchReceivable({ branchName }) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
 
-  const closedKey = `profit_${branchName?.toLowerCase()}_closed`;
+  const closedKey = getScopedKey ? getScopedKey(`profit_${branchName?.toLowerCase()}_closed`) : `profit_${branchName?.toLowerCase()}_closed`;
   const [closedMonths, setClosedMonths] = useState(() => {
     const s = localStorage.getItem(closedKey);
     return s ? JSON.parse(s) : [];
@@ -70,11 +71,14 @@ export default function BranchReceivable({ branchName }) {
       return;
     }
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('challans')
       .select('id, challan_number, challan_date, vehicle_number, total_bilty_amount, labor_deduction, commission_deduction, other_deduction, vehicle_freight, branch_deposit')
       .in('id', branchChallanIds)
       .order('id', { ascending: false });
+
+    query = applyTenantFilter(query);
+    const { data, error } = await query;
 
     if (error) console.error('challans error:', error.message);
     if (data) setChallans(data);
@@ -83,11 +87,15 @@ export default function BranchReceivable({ branchName }) {
 
   async function fetchReceived() {
     setLoadingReceived(true);
-    const { data, error } = await supabase
+    let query = supabase
       .from('branch_profit_received')
       .select('*')
       .eq('branch_name', branchName)
       .order('id', { ascending: false });
+
+    query = applyTenantFilter(query);
+    const { data, error } = await query;
+
     if (error) console.error('branch_profit_received error:', error.message);
     if (data) setReceived(data);
     setLoadingReceived(false);
@@ -102,13 +110,18 @@ export default function BranchReceivable({ branchName }) {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from('branch_profit_received').insert([{
+    const payload = {
       branch_name: branchName,
       date: form.date,
       description: form.description,
       vehicle_number: form.vehicle_number,
       amount: parseFloat(form.amount),
-    }]);
+    };
+    let { error } = await supabase.from('branch_profit_received').insert([withTenantId(payload)]);
+    if (error && error.message && error.message.includes('tenant_id')) {
+      const retry = await supabase.from('branch_profit_received').insert([payload]);
+      error = retry.error;
+    }
     setSaving(false);
     if (error) {
       setMsg({ text: 'Error: ' + error.message, type: 'error' });

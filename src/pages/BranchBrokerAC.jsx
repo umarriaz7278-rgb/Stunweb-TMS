@@ -1,6 +1,7 @@
 import { useState, useEffect, Fragment } from 'react';
 import { supabase } from '../supabaseClient';
 import { Users, Plus, Trash2, X, ChevronDown, ChevronUp, FileText, DollarSign } from 'lucide-react';
+import { applyTenantFilter, withTenantId, getScopedKey } from '../utils/tenantStorage';
 
 // Generic Broker A/C page for any branch
 // Receives branchName as a prop from App.jsx route
@@ -20,7 +21,7 @@ export default function BranchBrokerAC({ branchName }) {
   const [savingReceived, setSavingReceived] = useState(false);
 
   // Broker list tab
-  const brokerKey = `${branchName?.toLowerCase()}_broker_accounts`;
+  const brokerKey = getScopedKey ? getScopedKey(`${branchName?.toLowerCase()}_broker_accounts`) : `${branchName?.toLowerCase()}_broker_accounts`;
   const [brokers, setBrokers] = useState(() => {
     try { return JSON.parse(localStorage.getItem(brokerKey) || '[]'); } catch { return []; }
   });
@@ -71,11 +72,14 @@ export default function BranchBrokerAC({ branchName }) {
 
     if (!branchChallanIds.length) { setChallans([]); setLoadingChallans(false); return; }
 
-    const { data } = await supabase
+    let query = supabase
       .from('challans')
       .select('id, challan_number, challan_date, vehicle_number, total_bilty_amount, commission_deduction, branch_deposit, broker_name')
       .in('id', branchChallanIds)
       .order('id', { ascending: false });
+
+    query = applyTenantFilter(query);
+    const { data } = await query;
 
     if (data) setChallans(data);
     setLoadingChallans(false);
@@ -83,11 +87,14 @@ export default function BranchBrokerAC({ branchName }) {
 
   async function fetchReceived() {
     setLoadingReceived(true);
-    const { data } = await supabase
+    let query = supabase
       .from('branch_broker_received')
       .select('*')
       .eq('branch_name', branchName)
       .order('id', { ascending: false });
+
+    query = applyTenantFilter(query);
+    const { data } = await query;
     if (data) setReceived(data);
     setLoadingReceived(false);
   }
@@ -98,13 +105,18 @@ export default function BranchBrokerAC({ branchName }) {
       showMsg('Amount required.', 'error'); return;
     }
     setSavingReceived(true);
-    const { error } = await supabase.from('branch_broker_received').insert([{
+    const payload = {
       branch_name: branchName,
       broker_name: '',
       date: receivedForm.date,
       description: receivedForm.description,
       amount: parseFloat(receivedForm.amount),
-    }]);
+    };
+    let { error } = await supabase.from('branch_broker_received').insert([withTenantId(payload)]);
+    if (error && error.message && error.message.includes('tenant_id')) {
+      const retry = await supabase.from('branch_broker_received').insert([payload]);
+      error = retry.error;
+    }
     setSavingReceived(false);
     if (error) { showMsg('Error: ' + error.message, 'error'); }
     else { showMsg('Entry added!'); setReceivedForm({ date: new Date().toISOString().split('T')[0], description: '', amount: '' }); setShowReceivedForm(false); fetchReceived(); }
@@ -150,13 +162,18 @@ export default function BranchBrokerAC({ branchName }) {
       showMsg('Amount required.', 'error'); return;
     }
     setSavingBrokerPay(true);
-    const { error } = await supabase.from('branch_broker_received').insert([{
+    const payload = {
       branch_name: branchName,
       broker_name: broker.name,
       date: brokerPayForm.date,
       description: brokerPayForm.description || `Payment from ${broker.name}`,
       amount: parseFloat(brokerPayForm.amount),
-    }]);
+    };
+    let { error } = await supabase.from('branch_broker_received').insert([withTenantId(payload)]);
+    if (error && error.message && error.message.includes('tenant_id')) {
+      const retry = await supabase.from('branch_broker_received').insert([payload]);
+      error = retry.error;
+    }
     setSavingBrokerPay(false);
     if (error) { showMsg('Error: ' + error.message, 'error'); }
     else { showMsg('Payment saved!'); setBrokerPayForm({ date: new Date().toISOString().split('T')[0], description: '', amount: '' }); setShowBrokerPayForm(false); fetchReceived(); }
