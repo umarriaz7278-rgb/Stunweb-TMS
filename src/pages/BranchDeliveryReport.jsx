@@ -46,7 +46,7 @@ export default function BranchDeliveryReport({ branchName }) {
     setLoadingChallans(true);
     const { data: cbData, error: cbError } = await supabase
       .from('challan_bilties')
-      .select('challan_id, bilties(destination_branch_id, branches(name))');
+      .select('challan_id, bilties(destination, destination_branch_id, branches(name))');
 
     if (cbError) {
       console.error('challan_bilties error:', cbError.message);
@@ -54,8 +54,14 @@ export default function BranchDeliveryReport({ branchName }) {
       return;
     }
 
+    const bTarget = (branchName || '').trim().toLowerCase();
     const branchChallanIds = (cbData || [])
-      .filter(cb => cb.bilties?.branches?.name === branchName)
+      .filter(cb => {
+        if (!bTarget) return false;
+        const bName = (cb.bilties?.branches?.name || '').trim().toLowerCase();
+        const bDest = (cb.bilties?.destination || '').trim().toLowerCase();
+        return (bName && bName === bTarget) || (bDest && bDest === bTarget);
+      })
       .map(cb => cb.challan_id);
 
     if (!branchChallanIds.length) {

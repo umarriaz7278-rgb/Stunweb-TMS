@@ -57,9 +57,10 @@ export default function BranchReceivable({ branchName }) {
     const bTarget = (branchName || '').trim().toLowerCase();
     const branchChallanIds = (cbData || [])
       .filter(cb => {
+        if (!bTarget) return false;
         const bName = (cb.bilties?.branches?.name || '').trim().toLowerCase();
         const bDest = (cb.bilties?.destination || '').trim().toLowerCase();
-        return bName === bTarget || bDest === bTarget || bName.startsWith(bTarget) || bTarget.startsWith(bName);
+        return (bName && bName === bTarget) || (bDest && bDest === bTarget);
       })
       .map(cb => cb.challan_id);
 

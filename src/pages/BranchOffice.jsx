@@ -58,10 +58,14 @@ export default function BranchOffice({ branchName }) {
       .eq('status', 'in_transit');
 
     if (challansData) {
+      const bTarget = (branchName || '').trim().toLowerCase();
       const filteredChallans = challansData.filter(ch => {
          if (!ch.challan_bilties || ch.challan_bilties.length === 0) return false;
-         // Check the branch of the first bilty (vehicles are branch-specific)
-         return ch.challan_bilties[0].bilties.branches?.name === branchName;
+         return ch.challan_bilties.some(cb => {
+           const bName = (cb.bilties?.branches?.name || '').trim().toLowerCase();
+           const bDest = (cb.bilties?.destination || '').trim().toLowerCase();
+           return (bName && bName === bTarget) || (bDest && bDest === bTarget);
+         });
       });
       setIncomingChallans(filteredChallans);
     }
@@ -70,7 +74,7 @@ export default function BranchOffice({ branchName }) {
     const { data: inventoryData } = await supabase
       .from('branch_warehouse_inventory')
       .select('*')
-      .eq('destination_name', branchName);
+      .ilike('destination_name', (branchName || '').trim());
 
     if (inventoryData) setWarehouseInventory(inventoryData);
   }
