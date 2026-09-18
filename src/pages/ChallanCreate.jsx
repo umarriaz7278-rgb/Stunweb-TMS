@@ -630,63 +630,74 @@ export default function ChallanCreate() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Truck size={28} color="var(--primary-color)" />
           <h1 className="page-title" style={{ marginBottom: 0 }}>Create Challan (Dispatch)</h1>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* Top Mode Selector: Auto vs Manual */}
-          <div style={{ display: 'flex', alignItems: 'center', background: '#f1f5f9', padding: '4px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }}>
-            <button
-              type="button"
-              onClick={() => setIsManualMode(false)}
-              style={{
-                padding: '7px 16px',
-                borderRadius: '7px',
-                border: 'none',
-                cursor: 'pointer',
-                fontWeight: 700,
-                fontSize: '0.88rem',
-                background: !isManualMode ? 'var(--primary-color)' : 'transparent',
-                color: !isManualMode ? '#fff' : '#475569',
-                boxShadow: !isManualMode ? '0 2px 4px rgba(0,0,0,0.12)' : 'none',
-                transition: 'all 0.2s'
-              }}
-            >
-              📦 Auto (Warehouse)
+        {savedChallan && (
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button type="button" onClick={handlePrint} style={{ padding: '7px 16px', fontSize: '0.85rem', fontWeight: 700, border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', background: '#f1f5f9', color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              🖨️ Print Challan #{savedChallan.challan_number}
             </button>
-            <button
-              type="button"
-              onClick={() => setIsManualMode(true)}
-              style={{
-                padding: '7px 16px',
-                borderRadius: '7px',
-                border: 'none',
-                cursor: 'pointer',
-                fontWeight: 700,
-                fontSize: '0.88rem',
-                background: isManualMode ? '#7c3aed' : 'transparent',
-                color: isManualMode ? '#fff' : '#475569',
-                boxShadow: isManualMode ? '0 2px 4px rgba(124,58,237,0.25)' : 'none',
-                transition: 'all 0.2s'
-              }}
-            >
-              ✍️ Manual Challan
+            <button type="button" onClick={handleWhatsApp} style={{ padding: '7px 16px', fontSize: '0.85rem', fontWeight: 700, border: 'none', borderRadius: '8px', cursor: 'pointer', background: '#25D366', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              💬 WhatsApp
             </button>
           </div>
+        )}
+      </div>
 
-          {savedChallan && (
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button type="button" onClick={handlePrint} style={{ padding: '7px 16px', fontSize: '0.85rem', fontWeight: 700, border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', background: '#f1f5f9', color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                🖨️ Print Challan #{savedChallan.challan_number}
-              </button>
-              <button type="button" onClick={handleWhatsApp} style={{ padding: '7px 16px', fontSize: '0.85rem', fontWeight: 700, border: 'none', borderRadius: '8px', cursor: 'pointer', background: '#25D366', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                💬 WhatsApp
-              </button>
-            </div>
-          )}
+      {/* Prominent Mode Selection Banner */}
+      <div className="card no-print" style={{ marginBottom: '18px', padding: '12px 16px', background: isManualMode ? '#f5f3ff' : '#eff6ff', border: isManualMode ? '2px solid #8b5cf6' : '2px solid #3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: isManualMode ? '#6d28d9' : '#1d4ed8' }}>
+            {isManualMode ? '✍️ Manual Challan Mode Active' : '📦 Automatic (Warehouse) Mode Active'}
+          </h3>
+          <p style={{ margin: '4px 0 0 0', fontSize: '0.83rem', color: isManualMode ? '#5b21b6' : '#1e40af' }}>
+            {isManualMode 
+              ? 'Warehouse bilties bypassed. Step 3 me amounts direct enter kar sakte hain.' 
+              : 'Warehouse se bilties select karein jo load karni hain.'}
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '6px', background: '#fff', padding: '4px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }}>
+          <button
+            type="button"
+            onClick={() => setIsManualMode(false)}
+            style={{
+              padding: '8px 18px',
+              borderRadius: '7px',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: 800,
+              fontSize: '0.9rem',
+              background: !isManualMode ? '#2563eb' : 'transparent',
+              color: !isManualMode ? '#fff' : '#64748b',
+              boxShadow: !isManualMode ? '0 2px 5px rgba(37,99,235,0.3)' : 'none',
+              transition: 'all 0.2s'
+            }}
+          >
+            📦 Auto (Warehouse)
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsManualMode(true)}
+            style={{
+              padding: '8px 18px',
+              borderRadius: '7px',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: 800,
+              fontSize: '0.9rem',
+              background: isManualMode ? '#7c3aed' : 'transparent',
+              color: isManualMode ? '#fff' : '#64748b',
+              boxShadow: isManualMode ? '0 2px 5px rgba(124,58,237,0.3)' : 'none',
+              transition: 'all 0.2s'
+            }}
+          >
+            ✍️ Manual Challan
+          </button>
         </div>
       </div>
 
