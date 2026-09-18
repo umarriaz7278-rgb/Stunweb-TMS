@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { MapPin, PackageOpen } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
+import { getScopedKey } from '../utils/tenantStorage';
 
 export default function BranchOffice({ branchName }) {
   const navigate = useNavigate();
+  const { primaryBranchName } = useSettings();
   // --------- shared states ---------
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -331,13 +334,22 @@ export default function BranchOffice({ branchName }) {
   };
 
   const savePendingLink = (link) => {
-    localStorage.setItem('islamabad_account_statement_pending_link', JSON.stringify(link));
+    const bClean = (branchName || 'Islamabad').trim().toLowerCase();
+    const key1 = `${bClean}_account_statement_pending_link`;
+    const key2 = 'islamabad_account_statement_pending_link';
+    localStorage.setItem(key1, JSON.stringify(link));
+    if (getScopedKey) localStorage.setItem(getScopedKey(key1), JSON.stringify(link));
+    const prim = (primaryBranchName || 'Islamabad').trim().toLowerCase();
+    if (bClean === 'islamabad' || bClean === prim) {
+      localStorage.setItem(key2, JSON.stringify(link));
+      if (getScopedKey) localStorage.setItem(getScopedKey(key2), JSON.stringify(link));
+    }
   };
 
   const handleLinkAccountStatement = () => {
     const confirmed = window.confirm(
       `Before linking this bill to a customer account, please confirm permission.\n\n` +
-      `This will create a debit entry on the Islamabad Account Statement page for the total bill amount.`
+      `This will create a debit entry on the ${branchName} Account Statement page for the total bill amount (Rs. ${deliveryTotal.toLocaleString('en-PK')}).`
     );
     if (!confirmed) {
       setMessage('Linking canceled.');
@@ -357,7 +369,14 @@ export default function BranchOffice({ branchName }) {
     };
     savePendingLink(pendingLink);
     setMessage('Pending bill saved. Open Account Statement to assign it to a customer account.');
-    navigate('/branch/islamabad/account-statement');
+
+    const bClean = (branchName || 'Islamabad').trim().toLowerCase();
+    const prim = (primaryBranchName || 'Islamabad').trim().toLowerCase();
+    if (bClean === 'islamabad' || bClean === prim) {
+      navigate('/branch/islamabad/account-statement');
+    } else {
+      navigate(`/branch/${bClean}/account-statement`);
+    }
   };
 
   const submitDelivery = async (e, printAfter = false) => {
@@ -779,11 +798,9 @@ export default function BranchOffice({ branchName }) {
               <button type="button" className="btn btn-secondary" style={{ flex: 1, minWidth: '180px', padding: '12px 18px', fontWeight: 800, fontSize: '0.98rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} disabled={loading} onClick={(e) => submitDelivery(e, true)}>
                 {loading ? 'Processing...' : '🖨️ Confirm & Print'}
               </button>
-              {branchName === 'Islamabad' && (
-                <button type="button" className="btn btn-secondary" style={{ flex: 1, minWidth: '180px', padding: '12px 18px', backgroundColor: '#f59e0b', color: '#fff', border: 'none', fontWeight: 800, fontSize: '0.98rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} disabled={loading} onClick={handleLinkAccountStatement}>
-                  {loading ? 'Processing...' : '🔗 Link Account Statement'}
-                </button>
-              )}
+              <button type="button" className="btn btn-secondary" style={{ flex: 1, minWidth: '180px', padding: '12px 18px', backgroundColor: '#f59e0b', color: '#fff', border: 'none', fontWeight: 800, fontSize: '0.98rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} disabled={loading} onClick={handleLinkAccountStatement}>
+                {loading ? 'Processing...' : '🔗 Link Account Statement'}
+              </button>
             </div>
           </form>
         </div>

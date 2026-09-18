@@ -501,11 +501,13 @@ export default function App() {
             <Route path="/challan/all-records"                     element={<AllChallanRecord />} />
             <Route path="/branch/lahore"                           element={<BranchOffice branchName="Lahore" />} />
             <Route path="/branch/lahore/finance"                   element={<BranchFinance branchName="Lahore" />} />
+            <Route path="/branch/lahore/account-statement"         element={<IslamabadAccountStatement branchName="Lahore" />} />
             <Route path="/branch/islamabad"                        element={<BranchOffice branchName={activeBranchName} />} />
             <Route path="/branch/islamabad/finance"                element={<BranchFinance branchName={activeBranchName} />} />
-            <Route path="/branch/islamabad/account-statement"      element={<IslamabadAccountStatement />} />
+            <Route path="/branch/islamabad/account-statement"      element={<IslamabadAccountStatement branchName={activeBranchName} />} />
             <Route path="/branch/rawalpindi"                       element={<BranchOffice branchName="Rawalpindi" />} />
             <Route path="/branch/rawalpindi/finance"               element={<BranchFinance branchName="Rawalpindi" />} />
+            <Route path="/branch/rawalpindi/account-statement"     element={<IslamabadAccountStatement branchName="Rawalpindi" />} />
             <Route path="/claims"                                  element={<Claims />} />
             <Route path="/karachi-office"                          element={<KarachiLedger />} />
             <Route path="/finance"                                 element={<FinanceDashboard />} />
@@ -534,7 +536,7 @@ export default function App() {
               return [
                 <Route key={`${slug}-overview`}   path={`/branch/${slug}`}                   element={<BranchOffice branchName={branch.name} />} />,
                 <Route key={`${slug}-finance`}    path={`/branch/${slug}/finance`}           element={<BranchFinance branchName={branch.name} />} />,
-                <Route key={`${slug}-acstmt`}     path={`/branch/${slug}/account-statement`} element={<BranchAccountStatement branchName={branch.name} />} />,
+                <Route key={`${slug}-acstmt`}     path={`/branch/${slug}/account-statement`} element={<IslamabadAccountStatement branchName={branch.name} />} />,
                 <Route key={`${slug}-delivery`}   path={`/delivery-report/${slug}`}          element={<BranchDeliveryReport branchName={branch.name} />} />,
                 <Route key={`${slug}-receivable`} path={`/receivable/${slug}`}               element={<BranchReceivable branchName={branch.name} />} />,
                 <Route key={`${slug}-broker`}     path={`/broker-ac/${slug}`}                element={<BranchBrokerAC branchName={branch.name} />} />,
