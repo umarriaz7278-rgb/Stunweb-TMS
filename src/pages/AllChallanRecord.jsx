@@ -37,11 +37,11 @@ export default function AllChallanRecord() {
     // Fetch destinations for all challans
     const { data: cbData } = await supabase
       .from('challan_bilties')
-      .select('challan_id, bilties(destination_branch_id, branches:destination_branch_id(name))');
+      .select('challan_id, bilties(destination, destination_branch_id, branches:destination_branch_id(name))');
     if (cbData) {
       const destMap = {};
       cbData.forEach(item => {
-        const dest = item.bilties?.branches?.name;
+        const dest = item.bilties?.branches?.name || item.bilties?.destination;
         if (dest) {
           if (!destMap[item.challan_id]) destMap[item.challan_id] = new Set();
           destMap[item.challan_id].add(dest);

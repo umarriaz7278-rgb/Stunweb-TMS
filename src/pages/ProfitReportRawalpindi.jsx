@@ -46,7 +46,7 @@ export default function ProfitReportRawalpindi() {
     // Step 1: Get all challan_ids that have Rawalpindi bilties
     const { data: cbData, error: cbError } = await supabase
       .from('challan_bilties')
-      .select('challan_id, bilties(destination_branch_id, branches(name))');
+      .select('challan_id, bilties(destination, destination_branch_id, branches(name))');
 
     if (cbError) {
       console.error('challan_bilties error:', cbError.message);
@@ -55,7 +55,11 @@ export default function ProfitReportRawalpindi() {
     }
 
     const rawalpindiChallanIds = (cbData || [])
-      .filter(cb => cb.bilties?.branches?.name === 'Rawalpindi')
+      .filter(cb => {
+        const bName = (cb.bilties?.branches?.name || '').trim().toLowerCase();
+        const bDest = (cb.bilties?.destination || '').trim().toLowerCase();
+        return bName === 'rawalpindi' || bDest === 'rawalpindi' || bName.startsWith('rawalpindi') || bDest.startsWith('rawalpindi');
+      })
       .map(cb => cb.challan_id);
 
     if (!rawalpindiChallanIds.length) {

@@ -392,13 +392,13 @@ export default function ChallanCreate() {
       // Manual Mode: Link to destination branch for ledger/broker account reporting
       try {
         let branchId = null;
-        const { data: bData } = await supabase.from('branches').select('id, name').ilike('name', selectedBranch.trim()).limit(1);
+        const { data: bData } = await supabase.from('branches').select('id, name');
         if (bData && bData.length > 0) {
-          branchId = bData[0].id;
+          const match = bData.find(b => (b.name || '').trim().toLowerCase() === (selectedBranch || '').trim().toLowerCase());
+          if (match) branchId = match.id;
         }
 
         const manualBiltyPayload = {
-          bilty_number: `MCH-${challanNum}`,
           destination: selectedBranch,
           destination_branch_id: branchId,
           total_amount: effectiveTotalBiltyAmount,
@@ -408,7 +408,7 @@ export default function ChallanCreate() {
           total_quantity: 1,
           quantity: 1,
           item_name: 'Manual Challan Shipment',
-          description: 'Direct Manual Challan Entry',
+          description: `Direct Manual Challan #${challanNum}`,
           sender_name: 'Direct Dispatch',
           receiver_name: selectedBranch,
           status: 'dispatched',
@@ -422,12 +422,17 @@ export default function ChallanCreate() {
           bErr = retryB.error;
         }
 
+        if (bErr) {
+          console.error("Manual bilty insert error:", bErr);
+        }
+
         if (bRes && bRes.length > 0) {
-          await supabase.from('challan_bilties').insert([{
+          const { error: cbLinkErr } = await supabase.from('challan_bilties').insert([{
             challan_id: challanId,
             bilty_id: bRes[0].id,
             loaded_quantity: 1
           }]);
+          if (cbLinkErr) console.error("challan_bilties link error:", cbLinkErr);
         }
       } catch (err) {
         console.warn('Manual bilty link notice:', err);
