@@ -37,6 +37,7 @@ const BranchDeliveryReport     = lazy(() => import('./pages/BranchDeliveryReport
 const BranchReceivable         = lazy(() => import('./pages/BranchReceivable'));
 const BranchBrokerAC           = lazy(() => import('./pages/BranchBrokerAC'));
 const BranchAccountStatement   = lazy(() => import('./pages/BranchAccountStatement'));
+const DispatchingOverview       = lazy(() => import('./pages/DispatchingOverview'));
 const Login                    = lazy(() => import('./pages/Login'));
 const SuperAdminDashboard      = lazy(() => import('./pages/SuperAdminDashboard'));
 import { useSettings } from './context/SettingsContext';
@@ -78,6 +79,16 @@ function getNavItems(primaryBranch = 'Islamabad') {
         { path: '/broker-receivable',                  icon: '🤝', label: `Broker A/C ${primaryBranch}` },
       ]
     },
+    {
+      key: 'dispatching',
+      label: 'Dispatching',
+      icon: '🚚',
+      children: [
+        { path: '/dispatching',                   icon: '📋', label: 'Dispatching Overview' },
+        { path: '/dispatching/finance',           icon: '💵', label: 'Dispatching Finance' },
+        { path: '/dispatching/account-statement', icon: '📄', label: 'Account Statement' },
+      ]
+    },
     { divider: true },
     { section: 'Operations' },
     { path: '/vehicle-management',         icon: '🚛', label: 'Vehicle / Trailer Management' },
@@ -102,6 +113,9 @@ const PAGE_TITLES = {
   '/challan':                      'Challan Management',
   '/challan/all-records':          'Challan History',
   '/karachi-office':               'Income / Expense Ledger',
+  '/dispatching':                  'Dispatching Overview',
+  '/dispatching/finance':          'Dispatching Finance',
+  '/dispatching/account-statement': 'Dispatching Account Statement',
   '/branch/islamabad':             'Branch Overview',
   '/branch/islamabad/finance':     'Branch Finance',
   '/branch/islamabad/account-statement': 'Account Statement',
@@ -151,6 +165,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState({
     islamabad: true,
+    dispatching: true,
   });
 
   const activeBranchName = primaryBranchName || 'Islamabad';
@@ -499,6 +514,9 @@ export default function App() {
             <Route path="/warehouse"                               element={<Warehouse />} />
             <Route path="/challan"                                 element={<ChallanCreate />} />
             <Route path="/challan/all-records"                     element={<AllChallanRecord />} />
+            <Route path="/dispatching"                             element={<DispatchingOverview />} />
+            <Route path="/dispatching/finance"                     element={<BranchFinance branchName="Dispatching" />} />
+            <Route path="/dispatching/account-statement"           element={<IslamabadAccountStatement branchName="Dispatching" />} />
             <Route path="/branch/lahore"                           element={<BranchOffice branchName="Lahore" />} />
             <Route path="/branch/lahore/finance"                   element={<BranchFinance branchName="Lahore" />} />
             <Route path="/branch/lahore/account-statement"         element={<IslamabadAccountStatement branchName="Lahore" />} />
