@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSettings } from '../context/SettingsContext';
-import { Settings as SettingsIcon, Building, Image, RotateCcw, Save, CheckCircle, AlertCircle, Upload, Eye, GitBranch, Plus, Trash2 } from 'lucide-react';
+import { 
+  Settings as SettingsIcon, Building, Image, RotateCcw, Save, 
+  CheckCircle, AlertCircle, Upload, Eye, GitBranch, Plus, Trash2,
+  Download, Database, ShieldCheck, FileUp, HardDrive, RefreshCw
+} from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 
@@ -248,6 +252,185 @@ export default function Settings() {
       setChallanFileString(null);
       showNotification('All settings have been restored to defaults.', 'success');
     }
+  };
+
+  // ── Backup & Restore State & Handlers ────────────────────────────────────────
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [restoreLoading, setRestoreLoading] = useState(false);
+  const [backupMsg, setBackupMsg] = useState({ text: '', type: '' });
+  const restoreFileInputRef = useRef(null);
+
+  const showBackupMsg = (text, type = 'success') => {
+    setBackupMsg({ text, type });
+    setTimeout(() => setBackupMsg({ text: '', type: '' }), 6000);
+  };
+
+  const handleExportBackup = async () => {
+    setBackupLoading(true);
+    try {
+      // 1. Fetch Supabase Data
+      const [
+        { data: bilties },
+        { data: challans },
+        { data: challanBilties },
+        { data: deliveries },
+        { data: ledgers },
+        { data: branchList }
+      ] = await Promise.all([
+        supabase.from('bilties').select('*'),
+        supabase.from('challans').select('*'),
+        supabase.from('challan_bilties').select('*'),
+        supabase.from('deliveries').select('*'),
+        supabase.from('branch_ledgers').select('*'),
+        supabase.from('branches').select('*')
+      ]);
+
+      // 2. Fetch all localStorage data
+      const localStoreDump = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
+          try {
+            const val = localStorage.getItem(key);
+            localStoreDump[key] = val;
+          } catch (e) {}
+        }
+      }
+
+      // 3. Compile Master Backup Object
+      const backupPackage = {
+        tms_backup_meta: {
+          app_name: 'Goods Transport Management System (TMS SaaS)',
+          version: '2.0',
+          created_at: new Date().toISOString(),
+          date_formatted: new Date().toLocaleString('en-PK'),
+          company_name: companyName || storedCompanyName || 'Client Company',
+          company_subtitle: companySubtitle || storedCompanySubtitle,
+          primary_branch: primaryBranchName || storedPrimaryBranchName,
+          summary: {
+            bilties_count: bilties?.length || 0,
+            challans_count: challans?.length || 0,
+            deliveries_count: deliveries?.length || 0,
+            ledgers_count: ledgers?.length || 0,
+            branches_count: branchList?.length || 0,
+            local_keys_count: Object.keys(localStoreDump).length
+          }
+        },
+        supabase_data: {
+          bilties: bilties || [],
+          challans: challans || [],
+          challan_bilties: challanBilties || [],
+          deliveries: deliveries || [],
+          branch_ledgers: ledgers || [],
+          branches: branchList || []
+        },
+        local_storage_data: localStoreDump
+      };
+
+      // 4. Download file
+      const jsonStr = JSON.stringify(backupPackage, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const cleanComp = (companyName || storedCompanyName || 'TMS').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const dateTag = new Date().toISOString().slice(0, 10);
+      link.href = url;
+      link.download = `${cleanComp}_Full_Backup_${dateTag}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showBackupMsg(`Full backup downloaded successfully! (${backupPackage.tms_backup_meta.summary.bilties_count} Bilties, ${backupPackage.tms_backup_meta.summary.challans_count} Challans, ${backupPackage.tms_backup_meta.summary.ledgers_count} Ledgers, ${backupPackage.tms_backup_meta.summary.deliveries_count} Deliveries).`, 'success');
+    } catch (err) {
+      console.error('Backup generation error:', err);
+      showBackupMsg(`Failed to generate backup: ${err.message || err}`, 'error');
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const handleImportBackup = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        setRestoreLoading(true);
+        const raw = event.target?.result;
+        if (!raw) throw new Error('File is empty.');
+        
+        const backup = JSON.parse(raw);
+        if (!backup.tms_backup_meta && !backup.supabase_data && !backup.local_storage_data) {
+          throw new Error('Invalid backup file format. This is not a recognized TMS backup file.');
+        }
+
+        const meta = backup.tms_backup_meta || {};
+        const sum = meta.summary || {};
+        const conf = window.confirm(
+          `Confirm System Restoration (ڈیٹا بحالی کی تصدیق):\n\n` +
+          `Company: ${meta.company_name || 'N/A'}\n` +
+          `Backup Date: ${meta.date_formatted || meta.created_at || 'Unknown'}\n` +
+          `Bilties: ${sum.bilties_count || backup.supabase_data?.bilties?.length || 0}\n` +
+          `Challans: ${sum.challans_count || backup.supabase_data?.challans?.length || 0}\n` +
+          `Ledgers: ${sum.ledgers_count || backup.supabase_data?.branch_ledgers?.length || 0}\n\n` +
+          `Warning: Restoring will merge and recover this backup into your current system.\nDo you wish to proceed?`
+        );
+
+        if (!conf) {
+          setRestoreLoading(false);
+          if (restoreFileInputRef.current) restoreFileInputRef.current.value = '';
+          return;
+        }
+
+        // 1. Restore localStorage items
+        if (backup.local_storage_data && typeof backup.local_storage_data === 'object') {
+          Object.entries(backup.local_storage_data).forEach(([k, v]) => {
+            if (typeof v === 'string') {
+              localStorage.setItem(k, v);
+            } else {
+              localStorage.setItem(k, JSON.stringify(v));
+            }
+          });
+        }
+
+        // 2. Restore Supabase Records (with upsert)
+        const sbData = backup.supabase_data || {};
+        
+        if (sbData.branches && sbData.branches.length > 0) {
+          await supabase.from('branches').upsert(sbData.branches, { onConflict: 'id', ignoreDuplicates: true });
+        }
+        if (sbData.bilties && sbData.bilties.length > 0) {
+          await supabase.from('bilties').upsert(sbData.bilties, { onConflict: 'id', ignoreDuplicates: false });
+        }
+        if (sbData.challans && sbData.challans.length > 0) {
+          await supabase.from('challans').upsert(sbData.challans, { onConflict: 'id', ignoreDuplicates: false });
+        }
+        if (sbData.challan_bilties && sbData.challan_bilties.length > 0) {
+          await supabase.from('challan_bilties').upsert(sbData.challan_bilties, { onConflict: 'id', ignoreDuplicates: false });
+        }
+        if (sbData.deliveries && sbData.deliveries.length > 0) {
+          await supabase.from('deliveries').upsert(sbData.deliveries, { onConflict: 'id', ignoreDuplicates: false });
+        }
+        if (sbData.branch_ledgers && sbData.branch_ledgers.length > 0) {
+          await supabase.from('branch_ledgers').upsert(sbData.branch_ledgers, { onConflict: 'id', ignoreDuplicates: false });
+        }
+
+        showBackupMsg('System successfully restored from backup! The page will now reload...', 'success');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1800);
+
+      } catch (err) {
+        console.error('Restore error:', err);
+        showBackupMsg(`Restoration failed: ${err.message || err}`, 'error');
+        setRestoreLoading(false);
+      } finally {
+        if (restoreFileInputRef.current) restoreFileInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
@@ -692,6 +875,165 @@ export default function Settings() {
               })}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* ─── SECTION 5: Data Backup & Disaster Recovery Center ─── */}
+      <div className="card" style={{ marginBottom: '24px', borderTop: '4px solid #059669', padding: '24px', background: '#fff' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(5, 150, 105, 0.1)', color: '#059669' }}>
+              <ShieldCheck size={24} />
+            </div>
+            <div>
+              <h2 style={{ margin: 0, color: '#065f46', fontSize: '1.25rem', fontWeight: 800 }}>
+                5. Data Backup & Restore Center (ڈیٹا بیک اپ اور بحالی)
+              </h2>
+              <p style={{ color: '#64748b', fontSize: '0.88rem', margin: '3px 0 0 0' }}>
+                Secure your complete system data daily. Download full backups or restore previously saved records anytime.
+              </p>
+            </div>
+          </div>
+          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#059669', background: '#ecfdf5', padding: '4px 12px', borderRadius: '12px', border: '1px solid #a7f3d0' }}>
+            🔒 Client-Isolated Security
+          </span>
+        </div>
+
+        {/* Backup message banner */}
+        {backupMsg.text && (
+          <div style={{
+            padding: '12px 18px',
+            marginBottom: '16px',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            backgroundColor: backupMsg.type === 'error' ? '#fee2e2' : '#d1fae5',
+            color: backupMsg.type === 'error' ? '#991b1b' : '#065f46',
+            border: `1.5px solid ${backupMsg.type === 'error' ? '#fca5a5' : '#86efac'}`,
+            fontWeight: 600,
+            fontSize: '0.9rem'
+          }}>
+            {backupMsg.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle size={20} />}
+            <span>{backupMsg.text}</span>
+          </div>
+        )}
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+          
+          {/* Box 1: Download Backup */}
+          <div style={{
+            background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+            border: '1.5px solid #86efac',
+            borderRadius: '12px',
+            padding: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', color: '#166534' }}>
+                <HardDrive size={20} />
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>
+                  📥 Download Daily Backup
+                </h3>
+              </div>
+              <p style={{ color: '#15803d', fontSize: '0.85rem', lineHeight: 1.5, marginBottom: '14px' }}>
+                Save a complete copy of all Bilties, Challans, Handover deliveries, Accounts, Ledgers, and Dispatching inventory directly to your device.
+              </p>
+              <div style={{ fontSize: '0.78rem', color: '#166534', background: 'rgba(255,255,255,0.7)', padding: '8px 12px', borderRadius: '6px', marginBottom: '16px' }}>
+                ✅ <strong>روزانہ کی محفوظ عادت:</strong> ہر روز کام ختم کرنے پر بیک اپ ڈاؤن لوڈ کر کے اپنے پاس یو ایس بی (USB) یا محفوظ فولڈر میں رکھیں۔
+              </div>
+            </div>
+
+            <button
+              type="button"
+              disabled={backupLoading || restoreLoading}
+              onClick={handleExportBackup}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                width: '100%',
+                padding: '12px 18px',
+                fontSize: '0.95rem',
+                fontWeight: 800,
+                color: '#fff',
+                backgroundColor: '#059669',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)',
+                opacity: backupLoading ? 0.7 : 1
+              }}
+            >
+              {backupLoading ? <RefreshCw size={18} className="spin" /> : <Download size={18} />}
+              {backupLoading ? 'Generating Backup...' : 'Download Full Backup (.json)'}
+            </button>
+          </div>
+
+          {/* Box 2: Restore Backup */}
+          <div style={{
+            background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+            border: '1.5px solid #93c5fd',
+            borderRadius: '12px',
+            padding: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', color: '#1e40af' }}>
+                <FileUp size={20} />
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>
+                  📤 Restore System from Backup
+                </h3>
+              </div>
+              <p style={{ color: '#1d4ed8', fontSize: '0.85rem', lineHeight: 1.5, marginBottom: '14px' }}>
+                If you ever change your computer or need to recover lost data, select your backup JSON file here to restore all business records immediately.
+              </p>
+              <div style={{ fontSize: '0.78rem', color: '#1e40af', background: 'rgba(255,255,255,0.7)', padding: '8px 12px', borderRadius: '6px', marginBottom: '16px' }}>
+                ⚡ <strong>خودکار بحالی:</strong> فائل منتخب کرتے ہی سسٹم ڈیٹا کو جانچے گا اور سارا ریکارڈ خودکار طور پر بحال کر دے گا۔
+              </div>
+            </div>
+
+            <div>
+              <input
+                ref={restoreFileInputRef}
+                type="file"
+                accept=".json,.tmsbak"
+                onChange={handleImportBackup}
+                style={{ display: 'none' }}
+              />
+              <button
+                type="button"
+                disabled={backupLoading || restoreLoading}
+                onClick={() => restoreFileInputRef.current?.click()}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  width: '100%',
+                  padding: '12px 18px',
+                  fontSize: '0.95rem',
+                  fontWeight: 800,
+                  color: '#fff',
+                  backgroundColor: '#2563eb',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
+                  opacity: restoreLoading ? 0.7 : 1
+                }}
+              >
+                {restoreLoading ? <RefreshCw size={18} className="spin" /> : <Upload size={18} />}
+                {restoreLoading ? 'Restoring Records...' : 'Upload & Restore Backup File'}
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
 
