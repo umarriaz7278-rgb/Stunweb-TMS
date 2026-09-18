@@ -21,7 +21,6 @@ const ContainerTransportFTL    = lazy(() => import('./pages/ContainerTransportFT
 const BrokerManagementFTL      = lazy(() => import('./pages/BrokerManagementFTL'));
 const TripsManagementFTL       = lazy(() => import('./pages/TripsManagementFTL'));
 const BrokerAccountsFTL        = lazy(() => import('./pages/BrokerAccountsFTL'));
-const BranchesAudit            = lazy(() => import('./pages/BranchesAudit'));
 const BookingReceipt           = lazy(() => import('./pages/BookingReceipt'));
 const AllBookingReceipts       = lazy(() => import('./pages/AllBookingReceipts'));
 const AllBookingRecord         = lazy(() => import('./pages/AllBookingRecord'));
@@ -86,7 +85,6 @@ function getNavItems(primaryBranch = 'Islamabad') {
     { path: '/local-freight-parties',      icon: '🚛', label: 'Local Freight Parties' },
     { path: '/container-transport-ftl',    icon: '🏗️', label: 'Container Transport (FTL)' },
     { path: '/claims',                     icon: '⚠️', label: 'Short Claims' },
-    { path: '/branches-audit',            icon: '🔍', label: 'Branches Audit' },
     { divider: true },
     { section: 'Admin' },
     { path: '/settings',                   icon: '⚙️', label: 'Settings' },
@@ -114,7 +112,6 @@ const PAGE_TITLES = {
   '/local-freight-parties':        'Local Freight Parties',
   '/container-transport-ftl':      'Container Transport (FTL)',
   '/claims':                       'Short Claims',
-  '/branches-audit':               'Branches Audit',
   '/vehicle-management':           'Vehicle / Trailer Management',
   '/finance':                      'Finance Overview',
   '/settings':                     'System Settings',
@@ -510,7 +507,6 @@ export default function App() {
             <Route path="/branch/rawalpindi"                       element={<BranchOffice branchName="Rawalpindi" />} />
             <Route path="/branch/rawalpindi/finance"               element={<BranchFinance branchName="Rawalpindi" />} />
             <Route path="/claims"                                  element={<Claims />} />
-            <Route path="/branches-audit"                          element={<BranchesAudit />} />
             <Route path="/karachi-office"                          element={<KarachiLedger />} />
             <Route path="/finance"                                 element={<FinanceDashboard />} />
             <Route path="/local-freight-parties"                   element={<LocalFreightParties />} />

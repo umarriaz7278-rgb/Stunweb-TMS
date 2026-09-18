@@ -22,6 +22,14 @@ export default function ChallanCreate() {
     } catch { return []; }
   });
 
+  // Manual Mode Switch: Auto (From Warehouse) vs Manual Challan
+  const [isManualMode, setIsManualMode] = useState(false);
+  const [manualForm, setManualForm] = useState({
+    rent_amount: '',
+    local_fare: '',
+    loading: ''
+  });
+
   // Form Fields
   const [formData, setFormData] = useState({
     vehicle_number: '',
@@ -221,8 +229,21 @@ export default function ChallanCreate() {
     return acc + Number(charges.labor_charges || 0);
   }, 0);
 
+  // Effective amounts depending on Auto vs Manual mode
+  const effectiveTotalBiltyAmount = isManualMode
+    ? (parseFloat(manualForm.rent_amount) || 0)
+    : calculatedTotalBiltyAmount;
+
+  const effectiveLocalFare = isManualMode
+    ? (parseFloat(manualForm.local_fare) || 0)
+    : totalLocalFare;
+
+  const effectiveLoading = isManualMode
+    ? (parseFloat(manualForm.loading) || 0)
+    : totalLoading;
+
   // Net Rent Amount = Total Rent Amount - (Total Local Fare + Total Loading)
-  const netRentAmount = calculatedTotalBiltyAmount - (totalLocalFare + totalLoading);
+  const netRentAmount = effectiveTotalBiltyAmount - (effectiveLocalFare + effectiveLoading);
 
   // Commission Deduction on Net Rent Amount
   const commissionDeduction = parseFloat(formData.commission_deduction || 0);
@@ -234,7 +255,7 @@ export default function ChallanCreate() {
   const afterVehicleFreight = afterCommission - parseFloat(formData.vehicle_freight || 0);
 
   // Profit = After Vehicle Freight + Total Local Fare + Total Loading
-  const profit = afterVehicleFreight + totalLocalFare + totalLoading;
+  const profit = afterVehicleFreight + effectiveLocalFare + effectiveLoading;
 
   // Receivable from Broker = Profit - Branch Deposit
   const branchDeposit = parseFloat(formData.branch_deposit || 0);
@@ -242,10 +263,27 @@ export default function ChallanCreate() {
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
-    if (Object.keys(selectedBilties).length === 0) {
+    if (!selectedBranch) {
+      setMessage('Error: Please select a destination branch in Step 1.');
+      return;
+    }
+    if (!formData.vehicle_number || !formData.vehicle_number.trim()) {
+      setMessage('Error: Vehicle number is required.');
+      return;
+    }
+    if (!formData.driver_name || !formData.driver_name.trim()) {
+      setMessage('Error: Driver name is required.');
+      return;
+    }
+    if (!isManualMode && Object.keys(selectedBilties).length === 0) {
       setMessage('Error: Please select at least one bilty to create a challan.');
       return;
     }
+    if (isManualMode && effectiveTotalBiltyAmount <= 0) {
+      setMessage('Error: Please enter a valid Total Rent Amount for the manual challan.');
+      return;
+    }
+
     if (formData.broker_name && formData.broker_name.trim()) {
       const confirmed = window.confirm(`Broker name entered: ${formData.broker_name}\n\nPlease confirm you have obtained permission from this broker before dispatching.`);
       if (!confirmed) {
@@ -262,10 +300,10 @@ export default function ChallanCreate() {
       broker_name: formData.broker_name,
       driver_name: formData.driver_name,
       challan_date: challanDate,
-      total_bilty_amount: calculatedTotalBiltyAmount,
-      labor_deduction: 0,
+      total_bilty_amount: effectiveTotalBiltyAmount,
+      labor_deduction: effectiveLoading,
       commission_deduction: commissionDeduction,
-      other_deduction: 0,
+      other_deduction: effectiveLocalFare,
       vehicle_freight: parseFloat(formData.vehicle_freight || 0),
       branch_deposit: branchDeposit,
       status: 'in_transit'
@@ -294,25 +332,121 @@ export default function ChallanCreate() {
     const challanId = challanData[0].id;
     const challanNum = challanData[0].challan_number;
 
-    // 2. Create Challan Bilties link
-    const links = Object.entries(selectedBilties).map(([bilty_id, obj]) => ({
-      challan_id: challanId,
-      bilty_id: bilty_id,
-      loaded_quantity: obj.loaded_quantity
-    }));
+    if (!isManualMode) {
+      // 2. Create Challan Bilties link
+      const links = Object.entries(selectedBilties).map(([bilty_id, obj]) => ({
+        challan_id: challanId,
+        bilty_id: bilty_id,
+        loaded_quantity: obj.loaded_quantity
+      }));
 
-    const { error: linkError } = await supabase.from('challan_bilties').insert(links);
+      const { error: linkError } = await supabase.from('challan_bilties').insert(links);
 
-    if (linkError) {
-      setMessage(`Details error: ${linkError.message}`);
+      if (linkError) {
+        setMessage(`Details error: ${linkError.message}`);
+      } else {
+        setMessage(`Challan #${challanNum} Created Successfully and dispatched!`);
+        // Snapshot for print
+        const biltySnapshot = Object.entries(selectedBilties).map(([bid, obj]) => {
+          const inv = inventory.find(i => String(i.id) === String(bid));
+          const charges = biltyCharges[bid] || {};
+          return { ...obj, bilty_number: inv?.bilty_number, destination: inv?.destination_name, description: inv?.description, sender: inv?.sender_name, receiver: inv?.receiver_name, local_fare: Number(charges.local_freight || 0), loading: Number(charges.labor_charges || 0) };
+        });
+        setSavedChallan({
+          challan_number: challanNum,
+          date: new Date(challanDate + 'T00:00:00').toLocaleDateString('en-PK'),
+          vehicle_number: formData.vehicle_number,
+          driver_name: formData.driver_name,
+          route_number: formData.route_number,
+          broker_name: formData.broker_name,
+          branch: selectedBranch,
+          bilties: biltySnapshot,
+          total_bilty_amount: effectiveTotalBiltyAmount,
+          total_local_fare: effectiveLocalFare,
+          total_loading: effectiveLoading,
+          net_rent_amount: netRentAmount,
+          commission_deduction: commissionDeduction,
+          vehicle_freight: parseFloat(formData.vehicle_freight || 0),
+          branch_deposit: branchDeposit,
+          receivable_from_broker: receivableFromBroker,
+          profit,
+          is_manual: false
+        });
+        // Update inventory list locally to remove loaded quantities
+        setInventory(prev => prev.map(inv => {
+          if(selectedBilties[inv.id]) {
+            return { ...inv, remaining_quantity: inv.remaining_quantity - selectedBilties[inv.id].loaded_quantity };
+          }
+          return inv;
+        }).filter(inv => inv.remaining_quantity > 0));
+        setSelectedBilties({});
+        setSelectedBranch('');
+        setCommissionPct('');
+        setChallanDate(new Date().toISOString().split('T')[0]);
+        setFormData({
+          vehicle_number: '', route_number: '', broker_name: '', driver_name: '',
+          commission_deduction: 0, vehicle_freight: 0, branch_deposit: 0
+        });
+      }
     } else {
-      setMessage(`Challan #${challanNum} Created Successfully and dispatched!`);
-      // Snapshot for print
-      const biltySnapshot = Object.entries(selectedBilties).map(([bid, obj]) => {
-        const inv = inventory.find(i => String(i.id) === String(bid));
-        const charges = biltyCharges[bid] || {};
-        return { ...obj, bilty_number: inv?.bilty_number, destination: inv?.destination_name, description: inv?.description, sender: inv?.sender_name, receiver: inv?.receiver_name, local_fare: Number(charges.local_freight || 0), loading: Number(charges.labor_charges || 0) };
-      });
+      // Manual Mode: Link to destination branch for ledger/broker account reporting
+      try {
+        let branchId = null;
+        const { data: bData } = await supabase.from('branches').select('id, name').ilike('name', selectedBranch.trim()).limit(1);
+        if (bData && bData.length > 0) {
+          branchId = bData[0].id;
+        }
+
+        const manualBiltyPayload = {
+          bilty_number: `MCH-${challanNum}`,
+          destination: selectedBranch,
+          destination_branch_id: branchId,
+          total_amount: effectiveTotalBiltyAmount,
+          custom_amount: effectiveTotalBiltyAmount,
+          local_freight: effectiveLocalFare,
+          labor_charges: effectiveLoading,
+          total_quantity: 1,
+          quantity: 1,
+          item_name: 'Manual Challan Shipment',
+          description: 'Direct Manual Challan Entry',
+          sender_name: 'Direct Dispatch',
+          receiver_name: selectedBranch,
+          status: 'dispatched',
+          bilty_date: challanDate
+        };
+
+        let { data: bRes, error: bErr } = await supabase.from('bilties').insert([withTenantId(manualBiltyPayload)]).select();
+        if (bErr && bErr.message && bErr.message.includes('tenant_id')) {
+          const retryB = await supabase.from('bilties').insert([manualBiltyPayload]).select();
+          bRes = retryB.data;
+          bErr = retryB.error;
+        }
+
+        if (bRes && bRes.length > 0) {
+          await supabase.from('challan_bilties').insert([{
+            challan_id: challanId,
+            bilty_id: bRes[0].id,
+            loaded_quantity: 1
+          }]);
+        }
+      } catch (err) {
+        console.warn('Manual bilty link notice:', err);
+      }
+
+      setMessage(`Manual Challan #${challanNum} Created Successfully and dispatched!`);
+      const manualSnapshot = [{
+        bilty_number: `MANUAL-${challanNum}`,
+        destination: selectedBranch,
+        description: 'Manual Challan Direct Entry',
+        sender: 'Direct Dispatch',
+        receiver: selectedBranch,
+        loaded_quantity: 1,
+        total_quantity: 1,
+        total_amount: effectiveTotalBiltyAmount,
+        local_fare: effectiveLocalFare,
+        loading: effectiveLoading
+      }];
+
       setSavedChallan({
         challan_number: challanNum,
         date: new Date(challanDate + 'T00:00:00').toLocaleDateString('en-PK'),
@@ -321,25 +455,21 @@ export default function ChallanCreate() {
         route_number: formData.route_number,
         broker_name: formData.broker_name,
         branch: selectedBranch,
-        bilties: biltySnapshot,
-        total_bilty_amount: calculatedTotalBiltyAmount,
-        total_local_fare: totalLocalFare,
-        total_loading: totalLoading,
+        bilties: manualSnapshot,
+        total_bilty_amount: effectiveTotalBiltyAmount,
+        total_local_fare: effectiveLocalFare,
+        total_loading: effectiveLoading,
         net_rent_amount: netRentAmount,
         commission_deduction: commissionDeduction,
         vehicle_freight: parseFloat(formData.vehicle_freight || 0),
         branch_deposit: branchDeposit,
         receivable_from_broker: receivableFromBroker,
-        profit
+        profit,
+        is_manual: true
       });
-      // Update inventory list locally to remove loaded quantities
-      setInventory(prev => prev.map(inv => {
-        if(selectedBilties[inv.id]) {
-          return { ...inv, remaining_quantity: inv.remaining_quantity - selectedBilties[inv.id].loaded_quantity };
-        }
-        return inv;
-      }).filter(inv => inv.remaining_quantity > 0));
+
       setSelectedBilties({});
+      setManualForm({ rent_amount: '', local_fare: '', loading: '' });
       setSelectedBranch('');
       setCommissionPct('');
       setChallanDate(new Date().toISOString().split('T')[0]);
@@ -500,33 +630,83 @@ export default function ChallanCreate() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Truck size={28} color="var(--primary-color)" />
           <h1 className="page-title" style={{ marginBottom: 0 }}>Create Challan (Dispatch)</h1>
         </div>
-        {savedChallan && (
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button type="button" onClick={handlePrint} style={{ padding: '7px 16px', fontSize: '0.85rem', fontWeight: 700, border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', background: '#f1f5f9', color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              ðŸ–¨ï¸ Print Challan #{savedChallan.challan_number}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Top Mode Selector: Auto vs Manual */}
+          <div style={{ display: 'flex', alignItems: 'center', background: '#f1f5f9', padding: '4px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }}>
+            <button
+              type="button"
+              onClick={() => setIsManualMode(false)}
+              style={{
+                padding: '7px 16px',
+                borderRadius: '7px',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 700,
+                fontSize: '0.88rem',
+                background: !isManualMode ? 'var(--primary-color)' : 'transparent',
+                color: !isManualMode ? '#fff' : '#475569',
+                boxShadow: !isManualMode ? '0 2px 4px rgba(0,0,0,0.12)' : 'none',
+                transition: 'all 0.2s'
+              }}
+            >
+              📦 Auto (Warehouse)
             </button>
-            <button type="button" onClick={handleWhatsApp} style={{ padding: '7px 16px', fontSize: '0.85rem', fontWeight: 700, border: 'none', borderRadius: '8px', cursor: 'pointer', background: '#25D366', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              ðŸ’¬ WhatsApp
+            <button
+              type="button"
+              onClick={() => setIsManualMode(true)}
+              style={{
+                padding: '7px 16px',
+                borderRadius: '7px',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 700,
+                fontSize: '0.88rem',
+                background: isManualMode ? '#7c3aed' : 'transparent',
+                color: isManualMode ? '#fff' : '#475569',
+                boxShadow: isManualMode ? '0 2px 4px rgba(124,58,237,0.25)' : 'none',
+                transition: 'all 0.2s'
+              }}
+            >
+              ✍️ Manual Challan
             </button>
           </div>
-        )}
+
+          {savedChallan && (
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button type="button" onClick={handlePrint} style={{ padding: '7px 16px', fontSize: '0.85rem', fontWeight: 700, border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', background: '#f1f5f9', color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                🖨️ Print Challan #{savedChallan.challan_number}
+              </button>
+              <button type="button" onClick={handleWhatsApp} style={{ padding: '7px 16px', fontSize: '0.85rem', fontWeight: 700, border: 'none', borderRadius: '8px', cursor: 'pointer', background: '#25D366', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                💬 WhatsApp
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {message && (
-        <div style={{ padding: '12px', marginBottom: '20px', borderRadius: '6px', backgroundColor: message.includes('Error') ? '#fee2e2' : '#d1fae5', color: message.includes('Error') ? '#991b1b' : '#065f46' }}>
+        <div style={{ padding: '12px', marginBottom: '20px', borderRadius: '6px', backgroundColor: message.includes('Error') ? '#fee2e2' : '#d1fae5', color: message.includes('Error') ? '#991b1b' : '#065f46', fontWeight: 600 }}>
           {message}
         </div>
       )}
 
       <form onSubmit={(e) => e.preventDefault()}>
         <div className="card no-print" style={{ marginBottom: '20px' }}>
-          <h3 style={{ color: '#2563eb', fontWeight: 800, fontSize: '1.05rem', margin: 0 }}>📍 Step 1: Select Destination Branch</h3>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '8px 0 12px 0' }}>Choose the branch to filter bilties by destination.</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <h3 style={{ color: '#2563eb', fontWeight: 800, fontSize: '1.05rem', margin: 0 }}>📍 Step 1: Select Destination Branch</h3>
+            {isManualMode && (
+              <span style={{ background: '#ede9fe', color: '#7c3aed', padding: '3px 10px', borderRadius: '12px', fontSize: '0.78rem', fontWeight: 700 }}>
+                Manual Mode Active
+              </span>
+            )}
+          </div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 12px 0' }}>Choose the destination branch for this challan (data will link to this branch ledger & broker account).</p>
           <div className="branch-select-grid">
             {allBranches.map(branch => (
               <button
@@ -600,68 +780,133 @@ export default function ChallanCreate() {
           </div>
         </div>
 
-
-        <div className="card" style={{ marginBottom: '20px' }}>
-          <h3 style={{ color: '#7c3aed', fontWeight: 800, fontSize: '1.05rem', margin: 0 }}>📦 Step 2: Select Bilties from Warehouse</h3>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '8px 0 16px 0' }}>Select bilties and specify how many packages you are loading. You can dispatch partial quantities.</p>
-          
-          <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
-            <table style={{ width: '100%', minWidth: '650px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-              <thead>
-                <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
-                  <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Select</th>
-                  <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bilty #</th>
-                  <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Destination</th>
-                  <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Available Qty</th>
-                  <th style={{ padding: '10px 8px', color: '#c0392b', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Rent Amount</th>
-                  <th style={{ padding: '10px 8px', color: '#059669', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Local Fare</th>
-                  <th style={{ padding: '10px 8px', color: '#d97706', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Loading</th>
-                  <th style={{ padding: '10px 8px', color: '#2563eb', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>TT Expense</th>
-                  <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Load Qty</th>
-                </tr>
-              </thead>
-              <tbody>
-                {!selectedBranch && <tr><td colSpan="9" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 600 }}>Please select a destination branch above to view bilties.</td></tr>}
-                {filteredInventory.map(item => {
-                  const charges = biltyCharges[item.id] || {};
-                  return (
-                  <tr key={item.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '8px' }}>
-                      <input 
-                        type="checkbox" 
-                        onChange={(e) => handleSelection(item, e.target.checked)}
-                        checked={!!selectedBilties[item.id]}
-                      />
-                    </td>
-                    <td style={{ padding: '8px', fontWeight: 600 }}>{item.bilty_number}</td>
-                    <td style={{ padding: '8px' }}>{item.destination_name}</td>
-                    <td style={{ padding: '8px' }}>{item.remaining_quantity}</td>
-                    <td style={{ padding: '8px', color: '#c0392b', fontWeight: 600 }}>{Number(charges.custom_amount || 0).toLocaleString()}</td>
-                    <td style={{ padding: '8px' }}>{Number(charges.local_freight || 0).toLocaleString()}</td>
-                    <td style={{ padding: '8px' }}>{Number(charges.labor_charges || 0).toLocaleString()}</td>
-                    <td style={{ padding: '8px' }}>{Number(charges.tt_expense || 0).toLocaleString()}</td>
-                    <td style={{ padding: '8px' }}>
-                       <input 
-                          type="number" 
-                          min="1" 
-                          max={item.remaining_quantity}
-                          value={selectedBilties[item.id]?.loaded_quantity || ''}
-                          disabled={!selectedBilties[item.id]}
-                          onChange={(e) => handleQuantityChange(item.id, e.target.value)}
-                          style={{ width: '80px', padding: '4px 8px' }}
-                       />
-                    </td>
+        {/* Step 2: Auto (Warehouse bilties) vs Manual Mode */}
+        {!isManualMode ? (
+          <div className="card" style={{ marginBottom: '20px' }}>
+            <h3 style={{ color: '#7c3aed', fontWeight: 800, fontSize: '1.05rem', margin: 0 }}>📦 Step 2: Select Bilties from Warehouse</h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '8px 0 16px 0' }}>Select bilties and specify how many packages you are loading. You can dispatch partial quantities.</p>
+            
+            <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+              <table style={{ width: '100%', minWidth: '650px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                <thead>
+                  <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
+                    <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Select</th>
+                    <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bilty #</th>
+                    <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Destination</th>
+                    <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Available Qty</th>
+                    <th style={{ padding: '10px 8px', color: '#c0392b', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Rent Amount</th>
+                    <th style={{ padding: '10px 8px', color: '#059669', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Local Fare</th>
+                    <th style={{ padding: '10px 8px', color: '#d97706', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Loading</th>
+                    <th style={{ padding: '10px 8px', color: '#2563eb', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>TT Expense</th>
+                    <th style={{ padding: '10px 8px', color: '#0f172a', fontWeight: 800, fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Load Qty</th>
                   </tr>
-                  );
-                })}
-                {selectedBranch && filteredInventory.length === 0 && <tr><td colSpan="9" style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)' }}>No bilties found for {selectedBranch}.</td></tr>}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {!selectedBranch && <tr><td colSpan="9" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontWeight: 600 }}>Please select a destination branch above to view bilties.</td></tr>}
+                  {filteredInventory.map(item => {
+                    const charges = biltyCharges[item.id] || {};
+                    return (
+                    <tr key={item.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '8px' }}>
+                        <input 
+                          type="checkbox" 
+                          onChange={(e) => handleSelection(item, e.target.checked)}
+                          checked={!!selectedBilties[item.id]}
+                        />
+                      </td>
+                      <td style={{ padding: '8px', fontWeight: 600 }}>{item.bilty_number}</td>
+                      <td style={{ padding: '8px' }}>{item.destination_name}</td>
+                      <td style={{ padding: '8px' }}>{item.remaining_quantity}</td>
+                      <td style={{ padding: '8px', color: '#c0392b', fontWeight: 600 }}>{Number(charges.custom_amount || 0).toLocaleString()}</td>
+                      <td style={{ padding: '8px' }}>{Number(charges.local_freight || 0).toLocaleString()}</td>
+                      <td style={{ padding: '8px' }}>{Number(charges.labor_charges || 0).toLocaleString()}</td>
+                      <td style={{ padding: '8px' }}>{Number(charges.tt_expense || 0).toLocaleString()}</td>
+                      <td style={{ padding: '8px' }}>
+                         <input 
+                            type="number" 
+                            min="1" 
+                            max={item.remaining_quantity}
+                            value={selectedBilties[item.id]?.loaded_quantity || ''}
+                            disabled={!selectedBilties[item.id]}
+                            onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                            style={{ width: '80px', padding: '4px 8px' }}
+                         />
+                      </td>
+                    </tr>
+                    );
+                  })}
+                  {selectedBranch && filteredInventory.length === 0 && <tr><td colSpan="9" style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)' }}>No bilties found for {selectedBranch}.</td></tr>}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="card" style={{ marginBottom: '20px', border: '1.5px dashed #7c3aed', background: '#faf5ff' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.2rem' }}>✍️</span>
+                <h3 style={{ color: '#7c3aed', fontWeight: 800, fontSize: '1.05rem', margin: 0 }}>
+                  Manual Challan Mode Active
+                </h3>
+              </div>
+              <span style={{ fontSize: '0.8rem', background: '#7c3aed', color: '#fff', padding: '4px 12px', borderRadius: '12px', fontWeight: 700 }}>
+                Warehouse Search Bypassed
+              </span>
+            </div>
+            <p style={{ fontSize: '0.88rem', color: '#5b21b6', margin: '8px 0 0 0', fontWeight: 600 }}>
+              Warehouse se bilties search ya select karne ki zarurat nahi hai. Neeche Step 3 me apni marzi se Total Rent, Local Fare aur Loading amounts enter karein.
+            </p>
+          </div>
+        )}
 
+        {/* Step 3: Financial Calculations */}
         <div className="card" style={{ marginBottom: '20px' }}>
           <h3 style={{ color: '#059669', fontWeight: 800, fontSize: '1.05rem', margin: 0 }}>💰 Step 3: Financial Calculations</h3>
+          
+          {/* If in Manual Mode: Show Direct Inputs for Rent, Local Fare, Loading */}
+          {isManualMode && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginTop: '14px', padding: '14px', background: '#faf5ff', borderRadius: '8px', border: '1.5px solid #e9d5ff' }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.84rem', fontWeight: 800, color: '#c0392b' }}>Total Rent Amount (Rs.) *</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="e.g. 50000"
+                  value={manualForm.rent_amount}
+                  onChange={e => setManualForm(prev => ({ ...prev, rent_amount: e.target.value }))}
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '1rem', height: '42px', fontWeight: 700, border: '1.5px solid #c0392b', borderRadius: '6px' }}
+                />
+              </div>
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.84rem', fontWeight: 800, color: '#059669' }}>Total Local Fare (Rs.)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0"
+                  value={manualForm.local_fare}
+                  onChange={e => setManualForm(prev => ({ ...prev, local_fare: e.target.value }))}
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '1rem', height: '42px', fontWeight: 700, border: '1.5px solid #059669', borderRadius: '6px' }}
+                />
+              </div>
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.84rem', fontWeight: 800, color: '#d97706' }}>Total Loading (Rs.)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0"
+                  value={manualForm.loading}
+                  onChange={e => setManualForm(prev => ({ ...prev, loading: e.target.value }))}
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '1rem', height: '42px', fontWeight: 700, border: '1.5px solid #d97706', borderRadius: '6px' }}
+                />
+              </div>
+            </div>
+          )}
+
           <div className="challan-fin-calc-grid" style={{ marginTop: '14px' }}>
             <div className="form-group" style={{ margin: 0 }}>
               <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0f172a' }}>Delivery (%)</label>
@@ -716,15 +961,15 @@ export default function ChallanCreate() {
           <div style={{ marginTop: '24px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span style={{ fontWeight: 600, color: '#1e293b' }}>Total Rent Amount:</span>
-              <strong style={{ color: '#0f172a' }}>Rs. {calculatedTotalBiltyAmount.toLocaleString()}</strong>
+              <strong style={{ color: '#0f172a' }}>Rs. {effectiveTotalBiltyAmount.toLocaleString()}</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#dc2626' }}>
               <span>Total Local Fare (all bilties):</span>
-              <strong>- Rs. {totalLocalFare.toLocaleString()}</strong>
+              <strong>- Rs. {effectiveLocalFare.toLocaleString()}</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#dc2626' }}>
               <span>Total Loading (all bilties):</span>
-              <strong>- Rs. {totalLoading.toLocaleString()}</strong>
+              <strong>- Rs. {effectiveLoading.toLocaleString()}</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', borderTop: '1px solid #cbd5e1', paddingTop: '8px' }}>
               <span style={{ fontWeight: 700, color: '#2563eb' }}>Net Rent Amount:</span>
@@ -736,11 +981,11 @@ export default function ChallanCreate() {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#059669' }}>
               <span>+ Add Local Fare:</span>
-              <strong>+ Rs. {totalLocalFare.toLocaleString()}</strong>
+              <strong>+ Rs. {effectiveLocalFare.toLocaleString()}</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#059669' }}>
               <span>+ Add Loading:</span>
-              <strong>+ Rs. {totalLoading.toLocaleString()}</strong>
+              <strong>+ Rs. {effectiveLoading.toLocaleString()}</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#dc2626' }}>
               <span>Vehicle Freight:</span>
@@ -761,14 +1006,19 @@ export default function ChallanCreate() {
           </div>
         </div>
 
-        <button type="button" className="btn btn-primary" style={{ width: '100%', padding: '16px', fontSize: '1.1rem' }} disabled={loading} onClick={() => {
-          if (Object.keys(selectedBilties).length === 0) {
-            setMessage('Error: Please select at least one bilty to create a challan.');
-            return;
+        <button 
+          type="button" 
+          className="btn btn-primary" 
+          style={{ width: '100%', padding: '16px', fontSize: '1.1rem', background: isManualMode ? '#7c3aed' : 'var(--primary-color)' }} 
+          disabled={loading} 
+          onClick={handleSubmit}
+        >
+          {loading 
+            ? 'Dispatching Vehicle...' 
+            : isManualMode 
+              ? '✍️ Create Manual Challan & Dispatch Vehicle' 
+              : 'Create Challan & Dispatch Vehicle'
           }
-          handleSubmit();
-        }}>
-            {loading ? 'Dispatching Vehicle...' : 'Create Challan & Dispatch Vehicle'}
         </button>
 
       </form>

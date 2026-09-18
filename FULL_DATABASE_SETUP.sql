@@ -2,11 +2,56 @@
 -- GOODS TRANSPORT MANAGEMENT SYSTEM (TMS) - 100% CLOUD/ONLINE SETUP
 -- Supabase SQL Editor mein poora copy-paste karke "RUN" karein.
 -- Tamaam pages aur features ab 100% Supabase Online Database par chalenge!
+-- Multi-Tenant & SaaS Ready (Har client ka data alag aur mehfooz)
 -- ================================================================
 
 -- 1. Enable UUID & Crypto Extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- ================================================================
+-- 1.1 SAAS MULTI-TENANT & CLIENT AUTHENTICATION TABLES
+-- ================================================================
+
+CREATE TABLE IF NOT EXISTS saas_tenants (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_name VARCHAR(200) NOT NULL,
+    owner_name VARCHAR(150),
+    phone VARCHAR(50),
+    email VARCHAR(150),
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    expires_at DATE DEFAULT (CURRENT_DATE + INTERVAL '1 year'),
+    plan_type VARCHAR(50) DEFAULT 'Standard',
+    max_vehicles INT DEFAULT 100,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS saas_super_admins (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    full_name VARCHAR(150) DEFAULT 'Super Admin',
+    email VARCHAR(150),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+INSERT INTO saas_super_admins (username, password_hash, full_name)
+VALUES ('superadmin', 'adminpassword123', 'Master Administrator')
+ON CONFLICT (username) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS app_settings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID REFERENCES saas_tenants(id) ON DELETE CASCADE,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(tenant_id, key)
+);
 
 -- ================================================================
 -- 2. CORE BOOKING & BILTY MODULE
@@ -568,6 +613,7 @@ GRANT EXECUTE ON FUNCTION reset_all_data() TO anon, authenticated;
 CREATE OR REPLACE VIEW pending_warehouse_inventory AS
 SELECT
   b.id,
+  b.tenant_id,
   b.bilty_number,
   b.bilty_date AS date,
   b.total_quantity,
@@ -634,6 +680,7 @@ GRANT SELECT ON pending_warehouse_inventory TO anon, authenticated;
 CREATE OR REPLACE VIEW branch_warehouse_inventory AS
 SELECT
   cb.id AS challan_bilty_id,
+  b.tenant_id,
   cb.bilty_id,
   cb.challan_id,
   cb.loaded_quantity,
