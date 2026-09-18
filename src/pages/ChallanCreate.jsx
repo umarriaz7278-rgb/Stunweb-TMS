@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useSettings } from '../context/SettingsContext';
 import { Truck } from 'lucide-react';
-import { applyTenantFilter, withTenantId } from '../utils/tenantStorage';
+import { applyTenantFilter, withTenantId, getScopedKey } from '../utils/tenantStorage';
 
 export default function ChallanCreate() {
   const { challanHeaderUrl, primaryBranchName } = useSettings();
@@ -14,13 +14,8 @@ export default function ChallanCreate() {
   // Branch filter (not printed)
   const [selectedBranch, setSelectedBranch] = useState('');
 
-  // Islamabad broker list for dropdown
-  const [islamabadBrokers, setIslamabadBrokers] = useState(() => {
-    try {
-      const s = localStorage.getItem('islamabad_broker_accounts');
-      return s ? JSON.parse(s) : [];
-    } catch { return []; }
-  });
+  // DB brokers (e.g. from islamabad_brokers)
+  const [dbBrokers, setDbBrokers] = useState([]);
 
   // Manual Mode Switch: Auto (From Warehouse) vs Manual Challan
   const [isManualMode, setIsManualMode] = useState(false);
@@ -55,6 +50,67 @@ export default function ChallanCreate() {
 
   // All dispatch branches (loaded from Supabase, excluding Karachi)
   const [allBranches, setAllBranches] = useState([primaryBranchName || 'Islamabad']);
+
+  useEffect(() => {
+    async function fetchDbBrokers() {
+      try {
+        let q = supabase.from('islamabad_brokers').select('*');
+        q = applyTenantFilter(q);
+        const { data, error } = await q;
+        if (!error && data) setDbBrokers(data);
+      } catch (e) {}
+    }
+    fetchDbBrokers();
+  }, []);
+
+  const getBranchBrokers = (branch) => {
+    const list = [];
+    const bTarget = (branch || '').trim().toLowerCase();
+
+    const loadFromKey = (k) => {
+      try {
+        const raw = localStorage.getItem(k);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) list.push(...parsed);
+        }
+      } catch {}
+    };
+
+    if (bTarget) {
+      if (getScopedKey) loadFromKey(getScopedKey(`${bTarget}_broker_accounts`));
+      loadFromKey(`${bTarget}_broker_accounts`);
+
+      const prim = (primaryBranchName || 'Islamabad').trim().toLowerCase();
+      if (bTarget === prim || bTarget === 'islamabad') {
+        if (getScopedKey) loadFromKey(getScopedKey('islamabad_broker_accounts'));
+        loadFromKey('islamabad_broker_accounts');
+        if (dbBrokers && dbBrokers.length > 0) list.push(...dbBrokers);
+      }
+    } else {
+      if (getScopedKey) loadFromKey(getScopedKey('islamabad_broker_accounts'));
+      loadFromKey('islamabad_broker_accounts');
+      if (dbBrokers && dbBrokers.length > 0) list.push(...dbBrokers);
+      allBranches.forEach(b => {
+        if (b && b.trim()) {
+          const bName = b.trim().toLowerCase();
+          if (getScopedKey) loadFromKey(getScopedKey(`${bName}_broker_accounts`));
+          loadFromKey(`${bName}_broker_accounts`);
+        }
+      });
+    }
+
+    const uniqueMap = new Map();
+    list.forEach(b => {
+      if (b && b.name && b.name.trim()) {
+        const key = b.name.trim().toLowerCase();
+        if (!uniqueMap.has(key)) {
+          uniqueMap.set(key, { id: b.id || key, name: b.name.trim(), phone: b.phone || '' });
+        }
+      }
+    });
+    return Array.from(uniqueMap.values());
+  };
 
   useEffect(() => {
     async function fetchInventory() {
@@ -144,10 +200,10 @@ export default function ChallanCreate() {
       const { data } = await supabase.from('branches').select('*').order('name');
       const currentPrimary = (primaryBranchName || 'Islamabad').trim();
       if (data) {
-        // Exclude Karachi (origin branch) from dispatch list
+        // Exclude Karachi (origin branch) from dispatch list and skip empty names
         let dispatchBranches = data
-          .filter(b => b.name.toLowerCase() !== 'karachi')
-          .map(b => (b.name.toLowerCase() === 'islamabad' ? currentPrimary : b.name));
+          .filter(b => b.name && b.name.trim() && b.name.trim().toLowerCase() !== 'karachi')
+          .map(b => (b.name.trim().toLowerCase() === 'islamabad' ? currentPrimary : b.name.trim()));
 
         if (!dispatchBranches.some(name => name.toLowerCase() === currentPrimary.toLowerCase())) {
           dispatchBranches.unshift(currentPrimary);
@@ -160,7 +216,10 @@ export default function ChallanCreate() {
           return a.localeCompare(b);
         });
 
-        if (unique.length > 0) setAllBranches(unique);
+        if (unique.length > 0) {
+          setAllBranches(unique);
+          setSelectedBranch(prev => prev || unique[0]);
+        }
       }
     }
 
@@ -762,33 +821,87 @@ export default function ChallanCreate() {
               <input type="date" value={challanDate} onChange={e => setChallanDate(e.target.value)} required style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />
             </div>
             <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '0.82rem', fontWeight: 600 }}>Broker Name
-                {selectedBranch && (() => {
-                  const bKey = `${selectedBranch.toLowerCase()}_broker_accounts`;
-                  const bList = (() => { try { return JSON.parse(localStorage.getItem(bKey) || '[]'); } catch { return []; } })();
-                  return bList.length > 0 ? <span style={{ color: '#2563eb', marginLeft: '6px', fontSize: '0.75rem' }}>({selectedBranch} Brokers)</span> : null;
-                })()}
-              </label>
-              {selectedBranch && (() => {
-                const bKey = `${selectedBranch.toLowerCase()}_broker_accounts`;
-                const bList = (() => { try { return JSON.parse(localStorage.getItem(bKey) || '[]'); } catch { return []; } })();
-                if (bList.length > 0) {
-                  return (
-                    <select
-                      name="broker_name"
-                      value={formData.broker_name}
-                      onChange={handleFormChange}
-                      style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%', border: '1.5px solid #2563eb', borderRadius: '6px', background: '#eff6ff', color: '#1e40af', fontWeight: 600, cursor: 'pointer' }}
-                    >
-                      <option value="">-- Select Broker --</option>
-                      {bList.map(b => (
-                        <option key={b.id} value={b.name}>{b.name}{b.phone ? ` (${b.phone})` : ''}</option>
-                      ))}
-                    </select>
-                  );
-                }
-                return <input type="text" name="broker_name" value={formData.broker_name} onChange={handleFormChange} placeholder="Broker name (optional)" style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />;
-              })() || <input type="text" name="broker_name" value={formData.broker_name} onChange={handleFormChange} placeholder="Broker name (optional)" style={{ padding: '9px 12px', fontSize: '0.98rem', height: '42px', width: '100%' }} />}
+              {(() => {
+                const branchBrokers = getBranchBrokers(selectedBranch);
+                return (
+                  <>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
+                      <span>
+                        Broker Name
+                        {selectedBranch && (
+                          <span style={{ color: '#2563eb', marginLeft: '6px', fontSize: '0.75rem', fontWeight: 700 }}>
+                            ({selectedBranch} Brokers: {branchBrokers.length})
+                          </span>
+                        )}
+                      </span>
+                      {branchBrokers.length > 0 && (
+                        <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                          Select or type custom
+                        </span>
+                      )}
+                    </label>
+                    {branchBrokers.length > 0 ? (
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <select
+                          name="broker_name"
+                          value={formData.broker_name}
+                          onChange={handleFormChange}
+                          style={{
+                            flex: 1,
+                            padding: '9px 12px',
+                            fontSize: '0.95rem',
+                            height: '42px',
+                            border: '1.5px solid #2563eb',
+                            borderRadius: '6px',
+                            background: '#eff6ff',
+                            color: '#1e40af',
+                            fontWeight: 600,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <option value="">-- Select {selectedBranch || 'Branch'} Broker --</option>
+                          {branchBrokers.map((b, idx) => (
+                            <option key={b.id || idx} value={b.name}>
+                              {b.name}{b.phone ? ` (${b.phone})` : ''}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="text"
+                          name="broker_name"
+                          value={formData.broker_name}
+                          onChange={handleFormChange}
+                          placeholder="Or type custom name"
+                          style={{
+                            width: '42%',
+                            padding: '9px 12px',
+                            fontSize: '0.88rem',
+                            height: '42px',
+                            border: '1.5px solid #cbd5e1',
+                            borderRadius: '6px'
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <input
+                        type="text"
+                        name="broker_name"
+                        value={formData.broker_name}
+                        onChange={handleFormChange}
+                        placeholder={`Broker name (optional${selectedBranch ? ` - add in ${selectedBranch} Broker A/C` : ''})`}
+                        style={{
+                          padding: '9px 12px',
+                          fontSize: '0.98rem',
+                          height: '42px',
+                          width: '100%',
+                          border: '1.5px solid #cbd5e1',
+                          borderRadius: '6px'
+                        }}
+                      />
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>

@@ -23,7 +23,12 @@ export default function BranchBrokerAC({ branchName }) {
   // Broker list tab
   const brokerKey = getScopedKey ? getScopedKey(`${branchName?.toLowerCase()}_broker_accounts`) : `${branchName?.toLowerCase()}_broker_accounts`;
   const [brokers, setBrokers] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(brokerKey) || '[]'); } catch { return []; }
+    try {
+      const k1 = getScopedKey ? getScopedKey(`${branchName?.toLowerCase()}_broker_accounts`) : null;
+      const k2 = `${branchName?.toLowerCase()}_broker_accounts`;
+      const s = (k1 ? localStorage.getItem(k1) : null) || localStorage.getItem(k2);
+      return s ? JSON.parse(s) : [];
+    } catch { return []; }
   });
   const [brokerForm, setBrokerForm] = useState({ name: '', phone: '', address: '' });
   const [showBrokerForm, setShowBrokerForm] = useState(false);
@@ -45,6 +50,12 @@ export default function BranchBrokerAC({ branchName }) {
     if (branchName) {
       fetchChallans();
       fetchReceived();
+      try {
+        const k1 = getScopedKey ? getScopedKey(`${branchName?.toLowerCase()}_broker_accounts`) : null;
+        const k2 = `${branchName?.toLowerCase()}_broker_accounts`;
+        const s = (k1 ? localStorage.getItem(k1) : null) || localStorage.getItem(k2);
+        if (s) setBrokers(JSON.parse(s));
+      } catch {}
     }
   }, [branchName]);
 
@@ -130,7 +141,10 @@ export default function BranchBrokerAC({ branchName }) {
   // Broker CRUD (localStorage)
   const saveBrokers = (list) => {
     setBrokers(list);
-    localStorage.setItem(brokerKey, JSON.stringify(list));
+    const k1 = brokerKey;
+    const k2 = `${branchName?.toLowerCase()}_broker_accounts`;
+    if (k1) localStorage.setItem(k1, JSON.stringify(list));
+    if (k2 && k1 !== k2) localStorage.setItem(k2, JSON.stringify(list));
   };
 
   const handleAddBroker = (e) => {
