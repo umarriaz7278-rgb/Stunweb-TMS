@@ -42,7 +42,7 @@ const Login                    = lazy(() => import('./pages/Login'));
 const SuperAdminDashboard      = lazy(() => import('./pages/SuperAdminDashboard'));
 import { useSettings } from './context/SettingsContext';
 import { useAuth } from './context/AuthContext';
-import { applyTenantFilter, getTenantItem } from './utils/tenantStorage';
+import { applyTenantFilter, getTenantItem, setTenantItem, getCurrentTenantId } from './utils/tenantStorage';
 
 
 // ─── Page Loader ─────────────────────────────────────────────────────────────
@@ -98,8 +98,12 @@ function getNavItems(primaryBranch = 'Islamabad') {
     { path: '/container-transport-ftl',    icon: '🏗️', label: 'Container Transport (FTL)' },
     { path: '/claims',                     icon: '⚠️', label: 'Short Claims' },
     { divider: true },
-    { section: 'Admin' },
-    { path: '/settings',                   icon: '⚙️', label: 'Settings' },
+    { section: 'System & Reports' },
+    { path: '/finance',                    icon: '💼', label: 'Finance & Accounting' },
+    { path: '/broker-ledger',              icon: '🤝', label: 'Broker Ledgers & Settlement' },
+    { path: '/booking-receipt',            icon: '🧾', label: 'New Booking Receipt' },
+    { path: '/booking-receipts',           icon: '📚', label: 'All Booking Receipts' },
+    { path: '/settings',                   icon: '⚙️', label: 'System Settings' },
   ];
 }
 
@@ -110,10 +114,10 @@ const PAGE_TITLES = {
   '/login':                        'Login Portal',
   '/bilty':                        'Bilty Booking',
   '/bilty/all-records':            'All Booking Records',
-  '/warehouse':                    'Karachi Warehouse',
+  '/warehouse':                    'Karachi Warehouse Inventory',
   '/challan':                      'Challan Management',
-  '/challan/all-records':          'Challan History',
-  '/karachi-office':               'Income / Expense Ledger',
+  '/challan/all-records':          'Challan Management History',
+  '/karachi-office':               'Karachi Office — Income/Expense Ledger',
   '/dispatching':                  'Dispatching Overview',
   '/dispatching/finance':          'Dispatching Finance',
   '/dispatching/account-statement': 'Dispatching Account Statement',
@@ -123,10 +127,15 @@ const PAGE_TITLES = {
   '/profit-report-islamabad':      'A/C Receivable',
   '/commission-report-islamabad':  'Delivery Report',
   '/broker-receivable':            'Broker A/C',
-  '/warehouse-rentals':            'Warehouse Rentals',
-  '/local-freight-parties':        'Local Freight Parties',
-  '/container-transport-ftl':      'Container Transport (FTL)',
   '/claims':                       'Short Claims',
+  '/booking-receipt':              'Booking Receipt (Manual)',
+  '/booking-receipts':             'Booking Receipts Archive',
+  '/broker-ledger':                'Broker Ledgers & Settlement',
+  '/local-freight-parties':        'Local Freight Parties',
+  '/warehouse-rentals':            'Warehouse Rentals Management',
+  '/container-transport-ftl':      'Container Transport (FTL)',
+  '/trips-management-ftl':         'Trips Management (FTL)',
+  '/broker-accounts-ftl':          'Broker Accounts (FTL)',
   '/vehicle-management':           'Vehicle / Trailer Management',
   '/finance':                      'Finance Overview',
   '/settings':                     'System Settings',
@@ -177,8 +186,28 @@ export default function App() {
   const [customBranches, setCustomBranches] = useState([]);
 
   useEffect(() => {
-    function loadCustomBranches() {
-      const custom = getTenantItem('custom_branches', []);
+    async function loadCustomBranches() {
+      let custom = getTenantItem('custom_branches', null);
+      if (custom === null) {
+        try {
+          const { supabase: sb } = await import('./supabaseClient');
+          const { data } = await sb.from('branches').select('*');
+          const tId = getCurrentTenantId ? getCurrentTenantId() : 'guest';
+          if (data && (tId === 'master' || tId === 'guest')) {
+            const fromDb = data
+              .filter(b => b.name && !BUILTIN_BRANCHES.includes(b.name.trim().toLowerCase()))
+              .map(b => ({ id: b.id, name: b.name.trim() }));
+            custom = fromDb;
+            setTenantItem('custom_branches', custom);
+          } else {
+            custom = [];
+            setTenantItem('custom_branches', []);
+          }
+        } catch {
+          custom = [];
+        }
+      }
+
       const currentPrimary = (primaryBranchName || 'Islamabad').toLowerCase();
       const filtered = (custom || []).filter(b => 
         b && b.name && 

@@ -6,7 +6,7 @@ import {
   Download, Database, ShieldCheck, FileUp, HardDrive, RefreshCw
 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-import { getTenantItem, setTenantItem } from '../utils/tenantStorage';
+import { getTenantItem, setTenantItem, getCurrentTenantId } from '../utils/tenantStorage';
 
 export default function Settings() {
   const {
@@ -47,11 +47,31 @@ export default function Settings() {
     setTimeout(() => setBranchMsg({ text: '', type: '' }), 4000);
   };
 
-  const fetchBranches = () => {
+  const fetchBranches = async () => {
     setBranchLoading(true);
     const primName = (primaryBranchName || storedPrimaryBranchName || 'Islamabad').trim();
-    const custom = getTenantItem('custom_branches', []) || [];
+    let custom = getTenantItem('custom_branches', null);
     
+    // If not set yet in local storage for master/guest client, initialize from Supabase once
+    if (custom === null) {
+      try {
+        const { data } = await supabase.from('branches').select('*');
+        const tId = getCurrentTenantId ? getCurrentTenantId() : 'guest';
+        if (data && (tId === 'master' || tId === 'guest')) {
+          const fromDb = data
+            .filter(b => b.name && !['islamabad', 'karachi'].includes(b.name.trim().toLowerCase()) && b.name.trim().toLowerCase() !== primName.toLowerCase())
+            .map(b => ({ id: b.id, name: b.name.trim(), created_at: b.created_at || new Date().toISOString() }));
+          custom = fromDb;
+          setTenantItem('custom_branches', custom);
+        } else {
+          custom = [];
+          setTenantItem('custom_branches', []);
+        }
+      } catch {
+        custom = [];
+      }
+    }
+
     // Built-in protected branches for this specific client
     const builtInList = [
       { id: 'built-in-primary', name: primName, isLocked: true },
@@ -870,7 +890,7 @@ export default function Settings() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {branches.map(branch => {
-                const isLocked = LOCKED_BRANCHES.includes(branch.name.toLowerCase());
+                const isLocked = Boolean(branch.isLocked);
                 return (
                   <div key={branch.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: '8px', border: `1.5px solid ${isLocked ? '#e5e7eb' : '#c4b5fd'}`, background: isLocked ? '#f9fafb' : '#f5f3ff' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
