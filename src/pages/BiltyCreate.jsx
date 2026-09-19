@@ -148,9 +148,13 @@ export default function BiltyCreate() {
     const isManual = isManualDest;
     const manualDest = manualDestName.trim();
 
+    const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(str || ''));
+    const finalBranchUUID = isValidUUID(destBranchId) ? destBranchId : null;
+    const resolvedDestName = isManual ? (manualDest || 'Manual') : (selectedBranchObj?.name || (typeof destBranchId === 'string' && !destBranchId.startsWith('primary-') && !destBranchId.startsWith('br_') ? destBranchId : primaryBranchName) || 'hydrabad');
+
     const insertData = {
-      destination_branch_id: destBranchId,
-      destination: isManual ? (manualDest || 'Manual') : (selectedBranchObj?.name || primaryBranchName || 'hydrabad'),
+      destination_branch_id: finalBranchUUID,
+      destination: resolvedDestName,
       sender_name: formData.sender_name,
       sender_phone: formData.sender_phone,
       receiver_name: formData.receiver_name,

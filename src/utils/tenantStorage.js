@@ -79,12 +79,19 @@ export function removeTenantItem(baseKey) {
 }
 
 /**
+ * Check if a string is a valid RFC-4122 UUID.
+ */
+export function isValidUUID(str) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(str || ''));
+}
+
+/**
  * Helper to attach tenant_id filter to Supabase queries.
- * If logged in as a tenant, automatically appends .eq('tenant_id', tenantId).
+ * If logged in as a tenant with a valid UUID, automatically appends .eq('tenant_id', tenantId).
  */
 export function applyTenantFilter(query) {
   const tenantId = getCurrentTenantId();
-  if (tenantId && tenantId !== 'master' && tenantId !== 'guest') {
+  if (tenantId && tenantId !== 'master' && tenantId !== 'guest' && isValidUUID(tenantId)) {
     return query.eq('tenant_id', tenantId);
   }
   return query;
@@ -95,7 +102,7 @@ export function applyTenantFilter(query) {
  */
 export function withTenantId(data) {
   const tenantId = getCurrentTenantId();
-  if (tenantId && tenantId !== 'master' && tenantId !== 'guest') {
+  if (tenantId && tenantId !== 'master' && tenantId !== 'guest' && isValidUUID(tenantId)) {
     if (Array.isArray(data)) {
       return data.map(item => ({ ...item, tenant_id: tenantId }));
     }
@@ -103,3 +110,4 @@ export function withTenantId(data) {
   }
   return data;
 }
+
