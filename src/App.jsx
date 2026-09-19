@@ -42,7 +42,7 @@ const Login                    = lazy(() => import('./pages/Login'));
 const SuperAdminDashboard      = lazy(() => import('./pages/SuperAdminDashboard'));
 import { useSettings } from './context/SettingsContext';
 import { useAuth } from './context/AuthContext';
-import { applyTenantFilter } from './utils/tenantStorage';
+import { applyTenantFilter, getTenantItem } from './utils/tenantStorage';
 
 
 // ─── Page Loader ─────────────────────────────────────────────────────────────
@@ -172,35 +172,39 @@ export default function App() {
   const activeBranchName = primaryBranchName || 'Islamabad';
   const navItems = getNavItems(activeBranchName);
 
-  // Custom branches (user-created via Settings, excludes built-in ISB/Karachi and active primary branch)
+  // Custom branches (100% Client-Isolated via tenant storage)
   const BUILTIN_BRANCHES = ['islamabad', 'karachi'];
   const [customBranches, setCustomBranches] = useState([]);
 
   useEffect(() => {
-    async function loadCustomBranches() {
-      const { supabase: sb } = await import('./supabaseClient');
-      let q = sb.from('branches').select('*').order('name');
-      q = applyTenantFilter(q);
-      const { data } = await q;
-      if (data) {
-        const currentPrimary = (primaryBranchName || 'Islamabad').toLowerCase();
-        const custom = data.filter(b => 
-          !BUILTIN_BRANCHES.includes(b.name.toLowerCase()) && 
-          b.name.toLowerCase() !== currentPrimary
-        );
-        setCustomBranches(custom);
-        // Auto-expand newly added branch groups
-        if (custom.length > 0) {
-          setOpenGroups(prev => {
-            const next = { ...prev };
-            custom.forEach(b => { next[b.name.toLowerCase()] = true; });
-            return next;
-          });
-        }
+    function loadCustomBranches() {
+      const custom = getTenantItem('custom_branches', []);
+      const currentPrimary = (primaryBranchName || 'Islamabad').toLowerCase();
+      const filtered = (custom || []).filter(b => 
+        b && b.name && 
+        !BUILTIN_BRANCHES.includes(b.name.toLowerCase()) && 
+        b.name.toLowerCase() !== currentPrimary
+      );
+      setCustomBranches(filtered);
+      // Auto-expand newly added branch groups
+      if (filtered.length > 0) {
+        setOpenGroups(prev => {
+          const next = { ...prev };
+          filtered.forEach(b => { next[b.name.toLowerCase()] = true; });
+          return next;
+        });
       }
     }
     loadCustomBranches();
-  }, [primaryBranchName]);
+
+    // Listen for real-time branch updates from Settings
+    window.addEventListener('tenant_branches_updated', loadCustomBranches);
+    window.addEventListener('storage', loadCustomBranches);
+    return () => {
+      window.removeEventListener('tenant_branches_updated', loadCustomBranches);
+      window.removeEventListener('storage', loadCustomBranches);
+    };
+  }, [primaryBranchName, tenant]);
 
   const toggleGroup = (key) => {
     setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }));

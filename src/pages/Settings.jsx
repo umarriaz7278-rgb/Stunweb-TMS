@@ -6,7 +6,7 @@ import {
   Download, Database, ShieldCheck, FileUp, HardDrive, RefreshCw
 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
-
+import { getTenantItem, setTenantItem } from '../utils/tenantStorage';
 
 export default function Settings() {
   const {
@@ -35,8 +35,7 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
 
-  // ── Branch Management State ──────────────────────────────────────────────────
-  const LOCKED_BRANCHES = ['islamabad', 'karachi'];
+  // ── Branch Management State (100% Client-Isolated) ───────────────────────────
   const [branches, setBranches] = useState([]);
   const [branchLoading, setBranchLoading] = useState(true);
   const [newBranchName, setNewBranchName] = useState('');
@@ -48,48 +47,73 @@ export default function Settings() {
     setTimeout(() => setBranchMsg({ text: '', type: '' }), 4000);
   };
 
-  useEffect(() => {
-    fetchBranches();
-  }, []);
-
-  const fetchBranches = async () => {
+  const fetchBranches = () => {
     setBranchLoading(true);
-    const { data, error } = await supabase.from('branches').select('*').order('name');
-    if (error) console.error('Error loading branches:', error.message);
-    if (data) setBranches(data);
+    const primName = (primaryBranchName || storedPrimaryBranchName || 'Islamabad').trim();
+    const custom = getTenantItem('custom_branches', []) || [];
+    
+    // Built-in protected branches for this specific client
+    const builtInList = [
+      { id: 'built-in-primary', name: primName, isLocked: true },
+      { id: 'built-in-karachi', name: 'Karachi', isLocked: true }
+    ];
+
+    const customList = (custom || []).map(b => ({
+      id: b.id || ('br_' + b.name),
+      name: b.name,
+      isLocked: false
+    }));
+
+    setBranches([...builtInList, ...customList]);
     setBranchLoading(false);
   };
 
-  const handleCreateBranch = async (e) => {
+  useEffect(() => {
+    fetchBranches();
+  }, [primaryBranchName, storedPrimaryBranchName]);
+
+  const handleCreateBranch = (e) => {
     e.preventDefault();
     const trimmedName = newBranchName.trim();
     if (!trimmedName) { showBranchMsg('Branch name required.', 'error'); return; }
-    if (LOCKED_BRANCHES.includes(trimmedName.toLowerCase())) {
-      showBranchMsg('This branch already exists as a built-in branch.', 'error'); return;
+    
+    const primName = (primaryBranchName || storedPrimaryBranchName || 'Islamabad').trim().toLowerCase();
+    if (trimmedName.toLowerCase() === 'karachi' || trimmedName.toLowerCase() === primName) {
+      showBranchMsg('This branch already exists as a built-in branch.', 'error'); 
+      return;
     }
-    const exists = branches.some(b => b.name.toLowerCase() === trimmedName.toLowerCase());
-    if (exists) { showBranchMsg('A branch with this name already exists.', 'error'); return; }
+
+    const existingCustom = getTenantItem('custom_branches', []) || [];
+    const exists = existingCustom.some(b => (b.name || '').trim().toLowerCase() === trimmedName.toLowerCase());
+    if (exists) { 
+      showBranchMsg('A branch with this name already exists in your system.', 'error'); 
+      return; 
+    }
+
     setBranchSaving(true);
-    const { error } = await supabase.from('branches').insert([{ name: trimmedName }]);
+    const newBranch = {
+      id: 'br_' + Date.now(),
+      name: trimmedName,
+      created_at: new Date().toISOString()
+    };
+    const updated = [...existingCustom, newBranch];
+    setTenantItem('custom_branches', updated);
     setBranchSaving(false);
-    if (error) { showBranchMsg('Error creating branch: ' + error.message, 'error'); }
-    else {
-      showBranchMsg(`Branch "${trimmedName}" created! Page will refresh to update sidebar.`, 'success');
-      setNewBranchName('');
-      fetchBranches();
-      setTimeout(() => window.location.reload(), 2000);
-    }
+    showBranchMsg(`Branch "${trimmedName}" created successfully!`, 'success');
+    setNewBranchName('');
+    fetchBranches();
+    window.dispatchEvent(new Event('tenant_branches_updated'));
   };
 
-  const handleDeleteBranch = async (branch) => {
-    if (!window.confirm(`Delete "${branch.name}" branch?\n\nThis removes it from the sidebar and Bilty/Challan selection.\nExisting data in Supabase remains safe.`)) return;
-    const { error } = await supabase.from('branches').delete().eq('id', branch.id);
-    if (error) { showBranchMsg('Error deleting branch: ' + error.message, 'error'); }
-    else {
-      showBranchMsg(`Branch "${branch.name}" deleted. Page will refresh.`, 'success');
-      fetchBranches();
-      setTimeout(() => window.location.reload(), 2000);
-    }
+  const handleDeleteBranch = (branch) => {
+    if (!window.confirm(`Delete "${branch.name}" branch?\n\nThis removes it from your sidebar and Bilty/Challan selection.`)) return;
+    
+    const existingCustom = getTenantItem('custom_branches', []) || [];
+    const updated = existingCustom.filter(b => b.name.toLowerCase() !== branch.name.toLowerCase() && b.id !== branch.id);
+    setTenantItem('custom_branches', updated);
+    showBranchMsg(`Branch "${branch.name}" deleted.`, 'success');
+    fetchBranches();
+    window.dispatchEvent(new Event('tenant_branches_updated'));
   };
 
   const biltyInputRef = useRef(null);

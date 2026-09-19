@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useSettings } from '../context/SettingsContext';
 import { Truck } from 'lucide-react';
-import { applyTenantFilter, withTenantId, getScopedKey, getCurrentTenantId } from '../utils/tenantStorage';
+import { applyTenantFilter, withTenantId, getScopedKey, getCurrentTenantId, getTenantItem } from '../utils/tenantStorage';
 
 export default function ChallanCreate() {
   const { challanHeaderUrl, primaryBranchName } = useSettings();
@@ -212,30 +212,18 @@ export default function ChallanCreate() {
       }
     }
 
-    async function fetchBranches() {
-      const { data } = await supabase.from('branches').select('*').order('name');
+    function fetchBranches() {
       const currentPrimary = (primaryBranchName || 'Islamabad').trim();
-      if (data) {
-        // Exclude Karachi (origin branch) from dispatch list and skip empty names
-        let dispatchBranches = data
-          .filter(b => b.name && b.name.trim() && b.name.trim().toLowerCase() !== 'karachi')
-          .map(b => (b.name.trim().toLowerCase() === 'islamabad' ? currentPrimary : b.name.trim()));
+      const custom = getTenantItem('custom_branches', []) || [];
+      const customNames = custom
+        .map(b => (b.name || '').trim())
+        .filter(n => n && n.toLowerCase() !== 'karachi' && n.toLowerCase() !== currentPrimary.toLowerCase());
 
-        if (!dispatchBranches.some(name => name.toLowerCase() === currentPrimary.toLowerCase())) {
-          dispatchBranches.unshift(currentPrimary);
-        }
-
-        const unique = Array.from(new Set(dispatchBranches));
-        unique.sort((a, b) => {
-          if (a.toLowerCase() === currentPrimary.toLowerCase()) return -1;
-          if (b.toLowerCase() === currentPrimary.toLowerCase()) return 1;
-          return a.localeCompare(b);
-        });
-
-        if (unique.length > 0) {
-          setAllBranches(unique);
-          setSelectedBranch(prev => prev || unique[0]);
-        }
+      const list = [currentPrimary, ...customNames];
+      const unique = Array.from(new Set(list));
+      if (unique.length > 0) {
+        setAllBranches(unique);
+        setSelectedBranch(prev => prev || unique[0]);
       }
     }
 

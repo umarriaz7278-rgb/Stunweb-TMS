@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useSettings } from '../context/SettingsContext';
-import { withTenantId } from '../utils/tenantStorage';
+import { withTenantId, getTenantItem } from '../utils/tenantStorage';
 
 export default function BiltyCreate() {
   const { biltyHeaderUrl, primaryBranchName } = useSettings();
@@ -56,53 +56,24 @@ export default function BiltyCreate() {
   }
 
   useEffect(() => {
-    async function loadBranches() {
+    function loadBranches() {
       try {
         const currentPrimary = (primaryBranchName || 'Islamabad').trim();
-        let { data, error } = await supabase.from('branches').select('*').order('name');
+        const custom = getTenantItem('custom_branches', []) || [];
         
-        if (error) {
-          console.error('Error loading branches:', error);
-          setMessage('Error loading branches: ' + error.message);
-          return;
-        }
+        const primaryBranch = {
+          id: 'primary-' + currentPrimary.toLowerCase(),
+          name: currentPrimary,
+        };
 
-        if (!data) data = [];
+        const customList = custom
+          .filter(b => b.name && b.name.trim().toLowerCase() !== 'karachi' && b.name.trim().toLowerCase() !== currentPrimary.toLowerCase())
+          .map(b => ({
+            id: b.id || ('br_' + b.name),
+            name: b.name.trim(),
+          }));
 
-        // Identify Karachi (origin)
-        let karachiBranch = data.find(b => b.name.toLowerCase() === 'karachi');
-        if (karachiBranch) setKarachiBranchId(karachiBranch.id);
-
-        // Find if currentPrimary already exists in DB
-        let primaryBranch = data.find(b => b.name.toLowerCase() === currentPrimary.toLowerCase());
-
-        // If primary branch does not exist in DB branches table, insert it automatically
-        if (!primaryBranch && currentPrimary) {
-          try {
-            const { data: inserted } = await supabase
-              .from('branches')
-              .insert([{ name: currentPrimary }])
-              .select();
-            if (inserted && inserted.length > 0) {
-              primaryBranch = inserted[0];
-              data.push(primaryBranch);
-            }
-          } catch (e) {
-            console.warn('Could not auto-insert primary branch into branches table:', e);
-          }
-        }
-
-        // Local fallback if remote insert was not possible
-        if (!primaryBranch && currentPrimary) {
-          primaryBranch = {
-            id: 'primary-' + currentPrimary.toLowerCase(),
-            name: currentPrimary,
-          };
-          data.push(primaryBranch);
-        }
-
-        // Exclude Karachi from destination list
-        let destinationBranches = data.filter(b => b.name.toLowerCase() !== 'karachi');
+        const destinationBranches = [primaryBranch, ...customList];
 
         // Deduplicate branches by name (case-insensitive)
         const seenNames = new Set();
@@ -115,26 +86,15 @@ export default function BiltyCreate() {
           }
         }
 
-        // Sort so primaryBranch is ALWAYS FIRST (#1) at the top of the destination dropdown
-        uniqueBranches.sort((a, b) => {
-          if (a.name.toLowerCase() === currentPrimary.toLowerCase()) return -1;
-          if (b.name.toLowerCase() === currentPrimary.toLowerCase()) return 1;
-          return a.name.localeCompare(b.name);
-        });
-
         setBranches(uniqueBranches);
-
-        // Automatically set primary branch as default selected destination
         if (uniqueBranches.length > 0) {
           setFormData(prev => ({
             ...prev,
-            destination_branch_id: uniqueBranches[0].id,
-            bilty_date: getPakistanDate(),
+            destination_branch_id: prev.destination_branch_id || uniqueBranches[0].id
           }));
         }
-      } catch (err) {
-        console.error('Exception loading branches:', err);
-        setMessage('Exception: ' + err.message);
+      } catch (e) {
+        console.error('Error loading branches:', e);
       }
     }
 

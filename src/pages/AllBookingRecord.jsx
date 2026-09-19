@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { BookOpen, Search, RefreshCw } from 'lucide-react';
-import { applyTenantFilter } from '../utils/tenantStorage';
+import { applyTenantFilter, getTenantItem } from '../utils/tenantStorage';
+import { useSettings } from '../context/SettingsContext';
 
 const STATUS_OPTIONS = [
   'Karachi Warehouse',
@@ -13,15 +14,16 @@ const STATUS_OPTIONS = [
 ];
 
 const STATUS_COLORS = {
-  'Karachi Warehouse': { bg: '#dbeafe', color: '#1e40af' },
-  'In Transit':        { bg: '#fef9c3', color: '#854d0e' },
-  'Lahore Branch':     { bg: '#f3e8ff', color: '#6b21a8' },
-  'Islamabad Branch':  { bg: '#ffedd5', color: '#9a3412' },
-  'Rawalpindi Branch': { bg: '#d1fae5', color: '#065f46' },
-  'Delivered':         { bg: '#dcfce7', color: '#15803d' },
+  'Karachi Warehouse': 'badge-orange',
+  'In Transit': 'badge-blue',
+  'Lahore Branch': 'badge-purple',
+  'Islamabad Branch': 'badge-teal',
+  'Rawalpindi Branch': 'badge-yellow',
+  'Delivered': 'badge-green',
 };
 
 export default function AllBookingRecord() {
+  const { primaryBranchName } = useSettings();
   const [bilties, setBilties] = useState([]);
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,11 +34,16 @@ export default function AllBookingRecord() {
   useEffect(() => {
     fetchBranches();
     fetchBilties();
-  }, []);
+  }, [primaryBranchName]);
 
-  async function fetchBranches() {
-    const { data } = await supabase.from('branches').select('*');
-    if (data) setBranches(data);
+  function fetchBranches() {
+    const currentPrimary = (primaryBranchName || 'Islamabad').trim();
+    const custom = getTenantItem('custom_branches', []) || [];
+    const list = [
+      { id: 'primary', name: currentPrimary },
+      ...custom.map(c => ({ id: c.id, name: c.name }))
+    ];
+    setBranches(list);
   }
 
   async function fetchBilties() {
@@ -52,7 +59,7 @@ export default function AllBookingRecord() {
   }
 
   const generateBiltyHTML = (b) => {
-    const destName = b.branches?.name || '';
+    const destName = b.destination || b.branches?.name || '';
     const biltyDate = new Date(b.created_at || Date.now()).toLocaleDateString('en-PK');
     const localFreight = Number(b.local_freight || 0);
     const laborCharges = Number(b.labor_charges || 0);
