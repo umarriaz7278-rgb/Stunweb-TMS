@@ -102,11 +102,64 @@ export const AuthProvider = ({ children }) => {
       throw new Error('Username aur Password dakhil karein.');
     }
 
-    // 1. Check Super Admin Login
-    if (
-      (cleanUser.toLowerCase() === DEFAULT_SUPERADMIN.username.toLowerCase() && cleanPass === DEFAULT_SUPERADMIN.password) ||
-      (cleanUser.toLowerCase() === 'admin' && cleanPass === 'admin123')
-    ) {
+    // 1. Check Client (Tenant) Login in Supabase FIRST
+    let tenant = null;
+    try {
+      const { data, error } = await supabase
+        .from('saas_tenants')
+        .select('*')
+        .eq('username', cleanUser)
+        .maybeSingle();
+
+      if (!error && data) {
+        tenant = data;
+      }
+    } catch {
+      // ignore
+    }
+
+    // Fallback: check local storage tenants
+    if (!tenant) {
+      const localTenants = getLocalTenants();
+      tenant = localTenants.find(t => t.username?.toLowerCase() === cleanUser.toLowerCase());
+    }
+
+    // If tenant found, verify password and log in as tenant
+    if (tenant) {
+      if (tenant.password_hash !== cleanPass && tenant.password !== cleanPass) {
+        throw new Error('Ghalat Password! Baraye meherbani theek password dakhil karein.');
+      }
+
+      if (tenant.is_active === false) {
+        throw new Error('Aapka account Deactivate / Suspend kar diya gaya hai. Baraye meherbani Administrator se rabta karein.');
+      }
+
+      if (tenant.expires_at) {
+        const expDate = new Date(tenant.expires_at);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        if (expDate < today) {
+          throw new Error(`Aapka subscription package (${tenant.expires_at}) expire ho chuka hai. Renewal ke liye Admin se rabta karein.`);
+        }
+      }
+
+      const tenantUser = {
+        ...tenant,
+        type: 'tenant',
+      };
+
+      setCurrentUser(tenantUser);
+      localStorage.setItem(LOCAL_STORAGE_SESSION_KEY, JSON.stringify(tenantUser));
+
+      if (tenant.company_name) {
+        localStorage.setItem('app_settings_company_name', tenant.company_name);
+      }
+
+      return { success: true, user: tenantUser };
+    }
+
+    // 2. If not a tenant, check Super Admin Login
+    if (cleanUser.toLowerCase() === DEFAULT_SUPERADMIN.username.toLowerCase() && cleanPass === DEFAULT_SUPERADMIN.password) {
       const superAdminUser = {
         id: 'superadmin-master',
         username: cleanUser,
@@ -142,66 +195,7 @@ export const AuthProvider = ({ children }) => {
       // ignore
     }
 
-    // 2. Check Client (Tenant) Login in Supabase
-    let tenant = null;
-    try {
-      const { data, error } = await supabase
-        .from('saas_tenants')
-        .select('*')
-        .eq('username', cleanUser)
-        .maybeSingle();
-
-      if (!error && data) {
-        tenant = data;
-      }
-    } catch {
-      // ignore
-    }
-
-    // Fallback: check local storage tenants
-    if (!tenant) {
-      const localTenants = getLocalTenants();
-      tenant = localTenants.find(t => t.username?.toLowerCase() === cleanUser.toLowerCase());
-    }
-
-    if (!tenant) {
-      throw new Error('Ghalat Username ya Password! Dobara koshish karein.');
-    }
-
-    // Check password
-    if (tenant.password_hash !== cleanPass && tenant.password !== cleanPass) {
-      throw new Error('Ghalat Password! Baraye meherbani theek password dakhil karein.');
-    }
-
-    // Check if Active (ON/OFF)
-    if (tenant.is_active === false) {
-      throw new Error('Aapka account Deactivate / Suspend kar diya gaya hai. Baraye meherbani Administrator se rabta karein.');
-    }
-
-    // Check Expiration
-    if (tenant.expires_at) {
-      const expDate = new Date(tenant.expires_at);
-      const today = new Date();
-      today.setHours(0,0,0,0);
-      if (expDate < today) {
-        throw new Error(`Aapka subscription package (${tenant.expires_at}) expire ho chuka hai. Renewal ke liye Admin se rabta karein.`);
-      }
-    }
-
-    const tenantUser = {
-      ...tenant,
-      type: 'tenant',
-    };
-
-    setCurrentUser(tenantUser);
-    localStorage.setItem(LOCAL_STORAGE_SESSION_KEY, JSON.stringify(tenantUser));
-
-    // Update settings context company name automatically
-    if (tenant.company_name) {
-      localStorage.setItem('app_settings_company_name', tenant.company_name);
-    }
-
-    return { success: true, user: tenantUser };
+    throw new Error('Ghalat Username ya Password! Dobara koshish karein.');
   };
 
   // Logout function
