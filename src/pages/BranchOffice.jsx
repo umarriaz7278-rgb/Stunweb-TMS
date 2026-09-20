@@ -89,9 +89,8 @@ export default function BranchOffice({ branchName }) {
     arrivedQ = applyTenantFilter(arrivedQ);
     const { data: arrivedChallans } = await arrivedQ;
 
-    // Also fetch deliveries for this tenant to subtract delivered items
+    // Also fetch deliveries to subtract delivered items
     let deliveriesQ = supabase.from('deliveries').select('bilty_id, delivered_qty');
-    deliveriesQ = applyTenantFilter(deliveriesQ);
     const { data: deliveriesData } = await deliveriesQ;
 
     const deliveredMap = {};
@@ -478,7 +477,12 @@ export default function BranchOffice({ branchName }) {
         extra_labor: parseFloat(deliveryFormData.extra_labor || 0), extra_unloading: parseFloat(deliveryFormData.extra_unloading || 0), local_fare: parseFloat(deliveryFormData.local_fare || 0), extra_other: parseFloat(deliveryFormData.extra_other || 0)
       };
 
-      const { data, error } = await supabase.from('deliveries').insert([withTenantId(payload)]).select().single();
+      let { data, error } = await supabase.from('deliveries').insert([withTenantId(payload)]).select().single();
+      if (error && error.message && error.message.includes('tenant_id')) {
+        const retry = await supabase.from('deliveries').insert([payload]).select().single();
+        data = retry.data;
+        error = retry.error;
+      }
       if (error) throw error;
 
       // Automatically add income entry to branch_ledgers if total income > 0
