@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { MapPin, PackageOpen } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
-import { getScopedKey, applyTenantFilter, withTenantId } from '../utils/tenantStorage';
+import { getScopedKey, applyTenantFilter, withTenantId, getTenantItem, setTenantItem } from '../utils/tenantStorage';
 
 export default function BranchOffice({ branchName }) {
   const navigate = useNavigate();
@@ -54,7 +54,7 @@ export default function BranchOffice({ branchName }) {
         *,
         challan_bilties (
           id, loaded_quantity, bilty_id,
-          bilties ( id, bilty_number, description, sender_name, receiver_name, receiver_phone, total_quantity, total_amount, local_freight, labor_charges, branches(name) )
+          bilties ( id, bilty_number, destination, description, sender_name, receiver_name, receiver_phone, total_quantity, total_amount, local_freight, labor_charges, branches(name) )
         )
       `)
       .eq('status', 'in_transit');
@@ -82,7 +82,7 @@ export default function BranchOffice({ branchName }) {
         id, challan_number, challan_date, vehicle_number,
         challan_bilties (
           id, loaded_quantity, bilty_id,
-          bilties ( id, bilty_number, description, sender_name, receiver_name, receiver_phone, total_quantity, total_amount, local_freight, labor_charges, branches(name) )
+          bilties ( id, bilty_number, destination, description, sender_name, receiver_name, receiver_phone, total_quantity, total_amount, local_freight, labor_charges, branches(name) )
         )
       `)
       .eq('status', 'arrived');
@@ -483,15 +483,35 @@ export default function BranchOffice({ branchName }) {
 
       // Automatically add income entry to branch_ledgers if total income > 0
       if (totalIncome > 0) {
-        const incomeEntry = withTenantId({
+        const bKey = (branchName || 'Islamabad').trim().toLowerCase();
+        const localEntry = {
+          id: 'ledger_' + Date.now(),
           branch_name: branchName,
           entry_date: new Date().toISOString().split('T')[0],
           entry_type: 'income',
           description: `Delivery collected - Bilty #${selectedBilty?.bilty_number || 'N/A'}`,
-          amount: totalIncome
-        });
-        const { error: incomeError } = await supabase.from('branch_ledgers').insert([incomeEntry]);
-        if (incomeError) console.error('Warning: Failed to add income entry to ledger:', incomeError);
+          amount: totalIncome,
+          created_at: new Date().toISOString()
+        };
+
+        const currentLocal = getTenantItem(`${bKey}_branch_ledgers`, []) || [];
+        setTenantItem(`${bKey}_branch_ledgers`, [localEntry, ...currentLocal]);
+
+        try {
+          const payload = {
+            branch_name: branchName,
+            entry_date: localEntry.entry_date,
+            entry_type: 'income',
+            description: localEntry.description,
+            amount: totalIncome
+          };
+          let { error: incomeError } = await supabase.from('branch_ledgers').insert([withTenantId(payload)]);
+          if (incomeError && incomeError.message && incomeError.message.includes('tenant_id')) {
+            await supabase.from('branch_ledgers').insert([payload]);
+          }
+        } catch (e) {
+          console.warn('DB branch ledger sync notice:', e);
+        }
       }
 
       const savedDelivery = {

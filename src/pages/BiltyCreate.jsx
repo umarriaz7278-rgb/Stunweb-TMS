@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useSettings } from '../context/SettingsContext';
-import { withTenantId, getTenantItem } from '../utils/tenantStorage';
+import { withTenantId, getTenantItem, applyTenantFilter } from '../utils/tenantStorage';
 
 export default function BiltyCreate() {
   const { biltyHeaderUrl, primaryBranchName } = useSettings();
@@ -51,8 +51,26 @@ export default function BiltyCreate() {
   const [excludeChargesFromPrint, setExcludeChargesFromPrint] = useState(false);
 
   async function fetchNextBiltyNumber() {
-    const { data, error } = await supabase.rpc('get_next_bilty_number');
-    if (data) setNextBiltyNumber(data);
+    try {
+      let q = supabase
+        .from('bilties')
+        .select('bilty_number')
+        .order('bilty_number', { ascending: false })
+        .limit(1);
+      q = applyTenantFilter(q);
+      const { data, error } = await q;
+      if (!error && data && data.length > 0 && typeof data[0].bilty_number === 'number') {
+        const nextNum = data[0].bilty_number + 1;
+        setNextBiltyNumber(nextNum);
+        return nextNum;
+      }
+      setNextBiltyNumber(1);
+      return 1;
+    } catch (e) {
+      console.error('Error fetching next tenant bilty number:', e);
+      setNextBiltyNumber(1);
+      return 1;
+    }
   }
 
   useEffect(() => {
@@ -176,8 +194,11 @@ export default function BiltyCreate() {
       exclude_charges_from_print: excludeChargesFromPrint,
       bilty_date: formData.bilty_date,
     };
-    if (formData.bilty_number.trim()) {
-      insertData.bilty_number = formData.bilty_number.trim();
+
+    if (formData.bilty_number && formData.bilty_number.trim()) {
+      insertData.bilty_number = parseInt(formData.bilty_number.trim(), 10) || formData.bilty_number.trim();
+    } else {
+      insertData.bilty_number = await fetchNextBiltyNumber();
     }
 
     let { data, error } = await supabase

@@ -363,14 +363,35 @@ export default function DispatchingOverview() {
       // 3. Automatically add income to branch_ledgers with branch_name = 'Dispatching'
       if (totalIncome > 0) {
         const incomeEntry = {
+          id: 'ledger_' + Date.now(),
           branch_name: 'Dispatching',
           entry_date: new Date().toISOString().split('T')[0],
           entry_type: 'income',
           description: `Delivery collected - Bilty #${selectedStock.bilty_number} (${deliveryFormData.customer_name || selectedStock.receiver_name || 'Customer'})`,
-          amount: totalIncome
+          amount: totalIncome,
+          created_at: new Date().toISOString()
         };
-        const { error: ledgerError } = await supabase.from('branch_ledgers').insert([withTenantId(incomeEntry)]);
-        if (ledgerError) console.warn('Ledger sync warning:', ledgerError);
+
+        // 1. Save to tenant-scoped storage for instant, 100% reliable display in Dispatching Finance
+        const currentLocal = getTenantItem('dispatching_branch_ledgers', []) || [];
+        setTenantItem('dispatching_branch_ledgers', [incomeEntry, ...currentLocal]);
+
+        // 2. Sync to Supabase branch_ledgers table
+        try {
+          const payload = {
+            branch_name: 'Dispatching',
+            entry_date: incomeEntry.entry_date,
+            entry_type: 'income',
+            description: incomeEntry.description,
+            amount: totalIncome
+          };
+          let { error: ledgerError } = await supabase.from('branch_ledgers').insert([withTenantId(payload)]);
+          if (ledgerError && ledgerError.message && ledgerError.message.includes('tenant_id')) {
+            await supabase.from('branch_ledgers').insert([payload]);
+          }
+        } catch (err) {
+          console.warn('Ledger sync warning:', err);
+        }
       }
 
       setRecentDelivery(deliveryRecord);

@@ -50,6 +50,30 @@ export default function ChallanCreate() {
 
   // All dispatch branches (loaded from Supabase, excluding Karachi)
   const [allBranches, setAllBranches] = useState([primaryBranchName || 'Islamabad']);
+  const [nextChallanNumber, setNextChallanNumber] = useState(null);
+
+  async function fetchNextChallanNumber() {
+    try {
+      let q = supabase
+        .from('challans')
+        .select('challan_number')
+        .order('challan_number', { ascending: false })
+        .limit(1);
+      q = applyTenantFilter(q);
+      const { data, error } = await q;
+      if (!error && data && data.length > 0 && typeof data[0].challan_number === 'number') {
+        const nextNum = data[0].challan_number + 1;
+        setNextChallanNumber(nextNum);
+        return nextNum;
+      }
+      setNextChallanNumber(1);
+      return 1;
+    } catch (e) {
+      console.error('Error fetching next tenant challan number:', e);
+      setNextChallanNumber(1);
+      return 1;
+    }
+  }
 
   useEffect(() => {
     async function fetchDbBrokers() {
@@ -61,6 +85,7 @@ export default function ChallanCreate() {
       } catch (e) {}
     }
     fetchDbBrokers();
+    fetchNextChallanNumber();
   }, []);
 
   const getBranchBrokers = (branch) => {
@@ -357,7 +382,10 @@ export default function ChallanCreate() {
     setLoading(true);
     setMessage('');
 
+    const nextChallanNum = await fetchNextChallanNumber();
+
     const challanPayload = {
+      challan_number: nextChallanNum,
       vehicle_number: formData.vehicle_number,
       route_number: formData.route_number,
       broker_name: formData.broker_name,
@@ -450,6 +478,7 @@ export default function ChallanCreate() {
           vehicle_number: '', route_number: '', broker_name: '', driver_name: '',
           commission_deduction: 0, vehicle_freight: 0, branch_deposit: 0
         });
+        fetchNextChallanNumber();
       }
     } else {
       // Manual Mode: Link to destination branch for ledger/broker account reporting
@@ -542,6 +571,7 @@ export default function ChallanCreate() {
         vehicle_number: '', route_number: '', broker_name: '', driver_name: '',
         commission_deduction: 0, vehicle_freight: 0, branch_deposit: 0
       });
+      fetchNextChallanNumber();
     }
     setLoading(false);
   };

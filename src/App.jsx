@@ -99,10 +99,6 @@ function getNavItems(primaryBranch = 'Islamabad') {
     { path: '/claims',                     icon: '⚠️', label: 'Short Claims' },
     { divider: true },
     { section: 'System & Reports' },
-    { path: '/finance',                    icon: '💼', label: 'Finance & Accounting' },
-    { path: '/broker-ledger',              icon: '🤝', label: 'Broker Ledgers & Settlement' },
-    { path: '/booking-receipt',            icon: '🧾', label: 'New Booking Receipt' },
-    { path: '/booking-receipts',           icon: '📚', label: 'All Booking Receipts' },
     { path: '/settings',                   icon: '⚙️', label: 'System Settings' },
   ];
 }

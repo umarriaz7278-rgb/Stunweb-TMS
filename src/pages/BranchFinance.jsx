@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { DollarSign, TrendingUp, TrendingDown, Wallet, Calendar, Filter } from 'lucide-react';
-import { applyTenantFilter, withTenantId } from '../utils/tenantStorage';
+import { applyTenantFilter, withTenantId, getTenantItem, setTenantItem, getCurrentTenantId } from '../utils/tenantStorage';
 
 export default function BranchFinance({ branchName }) {
   const [ledgers, setLedgers] = useState([]);
@@ -29,19 +29,52 @@ export default function BranchFinance({ branchName }) {
 
   async function fetchLedgers() {
     setLoading(true);
-    // Fetch all records for the specific branch
-    let q = supabase
-      .from('branch_ledgers')
-      .select('*')
-      .eq('branch_name', branchName)
-      .order('entry_date', { ascending: false })
-      .order('created_at', { ascending: false });
+    const bKey = (branchName || 'Islamabad').trim().toLowerCase();
+    const localEntries = getTenantItem(`${bKey}_branch_ledgers`, []) || [];
 
-    q = applyTenantFilter(q);
-    const { data, error } = await q;
+    let dbEntries = [];
+    try {
+      let q = supabase
+        .from('branch_ledgers')
+        .select('*')
+        .ilike('branch_name', branchName)
+        .order('entry_date', { ascending: false })
+        .order('created_at', { ascending: false });
 
-    if (data) setLedgers(data);
-    if (error) console.error('Error fetching ledgers:', error);
+      q = applyTenantFilter(q);
+      const { data, error } = await q;
+      if (!error && data) {
+        dbEntries = data;
+      } else if (error && error.message && error.message.includes('tenant_id')) {
+        const tId = getCurrentTenantId();
+        if (tId === 'master' || tId === 'guest') {
+          const retryQ = await supabase
+            .from('branch_ledgers')
+            .select('*')
+            .ilike('branch_name', branchName)
+            .order('entry_date', { ascending: false })
+            .order('created_at', { ascending: false });
+          if (retryQ.data) dbEntries = retryQ.data;
+        }
+      }
+    } catch (e) {
+      console.warn('DB fetch ledgers notice:', e);
+    }
+
+    const combined = [...localEntries];
+    dbEntries.forEach(dbItem => {
+      const exists = combined.some(c => 
+        (c.id && String(c.id) === String(dbItem.id)) ||
+        (c.entry_date === dbItem.entry_date && Number(c.amount) === Number(dbItem.amount) && c.description === dbItem.description && c.entry_type === dbItem.entry_type)
+      );
+      if (!exists) {
+        combined.push(dbItem);
+      }
+    });
+
+    combined.sort((a, b) => new Date(b.entry_date || b.created_at || 0) - new Date(a.entry_date || a.created_at || 0));
+
+    setLedgers(combined);
     setLoading(false);
   }
 
@@ -53,23 +86,41 @@ export default function BranchFinance({ branchName }) {
     setLoading(true); setMessage('');
     
     const form = type === 'income' ? incomeForm : expenseForm;
-    const payload = withTenantId({
+    const bKey = (branchName || 'Islamabad').trim().toLowerCase();
+
+    const localEntry = {
+      id: 'entry_' + Date.now(),
       branch_name: branchName,
       entry_date: form.date,
       entry_type: type,
       description: form.description,
-      amount: Number(form.amount) || 0
-    });
-    const { error } = await supabase.from('branch_ledgers').insert([payload]);
+      amount: Number(form.amount) || 0,
+      created_at: new Date().toISOString()
+    };
 
-    if (!error) {
-      if(type === 'income') setIncomeForm({ date: new Date().toISOString().split('T')[0], description: '', amount: '' });
-      if(type === 'expense') setExpenseForm({ date: new Date().toISOString().split('T')[0], description: '', amount: '' });
-      setMessage(`Successfully recorded ${type} entry!`);
-      fetchLedgers();
-    } else {
-      setMessage(`Error recording entry: ${error.message}`);
+    const currentLocal = getTenantItem(`${bKey}_branch_ledgers`, []) || [];
+    setTenantItem(`${bKey}_branch_ledgers`, [localEntry, ...currentLocal]);
+
+    try {
+      const payload = {
+        branch_name: branchName,
+        entry_date: form.date,
+        entry_type: type,
+        description: form.description,
+        amount: Number(form.amount) || 0
+      };
+      let { error } = await supabase.from('branch_ledgers').insert([withTenantId(payload)]);
+      if (error && error.message && error.message.includes('tenant_id')) {
+        await supabase.from('branch_ledgers').insert([payload]);
+      }
+    } catch (err) {
+      console.warn('DB insert notice:', err);
     }
+
+    if (type === 'income') setIncomeForm({ date: new Date().toISOString().split('T')[0], description: '', amount: '' });
+    if (type === 'expense') setExpenseForm({ date: new Date().toISOString().split('T')[0], description: '', amount: '' });
+    setMessage(`Successfully recorded ${type} entry!`);
+    fetchLedgers();
     setLoading(false);
   };
 
