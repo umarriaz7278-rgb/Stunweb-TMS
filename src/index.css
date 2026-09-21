@@ -5,6 +5,7 @@
 /* ========== ROOT VARIABLES ========== */
 :root {
   --primary: #2563eb;
+  --primary-color: #2563eb;
   --primary-dark: #1d4ed8;
   --primary-light: #eff6ff;
   --secondary: #64748b;
@@ -16,10 +17,13 @@
   --danger-light: #fef2f2;
   --dark: #0f172a;
   --text: #334155;
+  --text-color: #334155;
   --text-light: #94a3b8;
+  --text-muted: #94a3b8;
   --light: #f8fafc;
   --white: #ffffff;
   --border: #e2e8f0;
+  --border-color: #e2e8f0;
   --border-light: #f1f5f9;
   --sidebar-width: 240px;
   --header-height: 54px;

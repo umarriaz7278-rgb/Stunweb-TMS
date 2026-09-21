@@ -1130,16 +1130,33 @@ export default function ChallanCreate() {
 
         <button 
           type="button" 
-          className="btn btn-primary" 
-          style={{ width: '100%', padding: '16px', fontSize: '1.1rem', background: isManualMode ? '#7c3aed' : 'var(--primary-color)' }} 
+          className="btn" 
+          style={{ 
+            width: '100%', 
+            padding: '16px', 
+            fontSize: '1.15rem', 
+            fontWeight: 800,
+            letterSpacing: '0.5px',
+            backgroundColor: isManualMode ? '#7c3aed' : '#2563eb', 
+            color: '#ffffff',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            boxShadow: isManualMode ? '0 4px 14px rgba(124, 58, 237, 0.4)' : '0 4px 14px rgba(37, 99, 235, 0.4)',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
+          }} 
           disabled={loading} 
           onClick={handleSubmit}
         >
           {loading 
-            ? 'Dispatching Vehicle...' 
+            ? '⏳ Dispatching Vehicle...' 
             : isManualMode 
               ? '✍️ Create Manual Challan & Dispatch Vehicle' 
-              : 'Create Challan & Dispatch Vehicle'
+              : '🚀 Create Challan & Dispatch Vehicle'
           }
         </button>
 
