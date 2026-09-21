@@ -2,8 +2,10 @@ import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { Package, Search, Scale, DollarSign, FileText, X } from 'lucide-react';
 import { applyTenantFilter } from '../utils/tenantStorage';
+import { useSettings } from '../context/SettingsContext';
 
 export default function Warehouse() {
+  const { biltyHeaderUrl } = useSettings();
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -76,19 +78,25 @@ export default function Warehouse() {
       .single();
 
     // Convert header image to base64 to avoid separate loading
-    const headerBase64 = await new Promise((resolve) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        canvas.getContext('2d').drawImage(img, 0, 0);
-        resolve(canvas.toDataURL('image/png'));
-      };
-      img.onerror = () => resolve('');
-      img.src = '/bilty-header.jpg';
-    });
+    let headerBase64 = '';
+    const srcUrl = biltyHeaderUrl || '/bilty-header.jpg';
+    if (srcUrl.startsWith('data:image/')) {
+      headerBase64 = srcUrl;
+    } else {
+      headerBase64 = await new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          canvas.getContext('2d').drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = () => resolve(srcUrl);
+        img.src = srcUrl;
+      });
+    }
 
     const b = fullBilty || item;
     const destName = b.destination_name || b.branches?.name || item.destination_name || '';

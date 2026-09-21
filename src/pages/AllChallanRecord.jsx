@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { Truck, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { applyTenantFilter } from '../utils/tenantStorage';
+import { useSettings } from '../context/SettingsContext';
 
 export default function AllChallanRecord() {
+  const { challanHeaderUrl } = useSettings();
   const [challans, setChallans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -113,8 +115,26 @@ export default function AllChallanRecord() {
     );
   });
 
+  const getHeaderBase64 = async () => {
+    const srcUrl = challanHeaderUrl || '/challan-header.jpg';
+    if (srcUrl.startsWith('data:image/')) return srcUrl;
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => resolve(srcUrl);
+      img.src = srcUrl;
+    });
+  };
+
   // Generate challan HTML for print/PDF
-  function generateChallanHTML(challan, bilties) {
+  function generateChallanHTML(challan, bilties, headerBase64) {
     const biltyRows = (bilties || []).map((b, i) => {
       const bilty = b.bilties || {};
       const ratio = b.loaded_quantity / (bilty.total_quantity || 1);
@@ -138,15 +158,15 @@ export default function AllChallanRecord() {
     const netRecoverable = (parseFloat(challan.total_bilty_amount) || 0) - deductions;
     const profit = netRecoverable - (parseFloat(challan.vehicle_freight) || 0);
     const challanDate = challan.challan_date ? new Date(challan.challan_date + 'T00:00:00').toLocaleDateString('en-PK') : '-';
+    const headerSrc = headerBase64 || challanHeaderUrl || '/challan-header.jpg';
 
     return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Challan #${challan.challan_number}</title><style>
       @page { size: A4; margin: 8mm 10mm; }
       * { margin: 0; padding: 0; box-sizing: border-box; font-weight: 700 !important; -webkit-text-stroke: 0.2px #000; color: #000 !important; }
       body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #000; background: #fff; }
       .challan-copy { width: 100%; padding: 6mm 4mm; border: 2px solid #000; border-radius: 3px; overflow: hidden; page-break-inside: avoid; }
-      .title-row { text-align: center; margin-bottom: 10px; }
-      .title-row h2 { font-size: 16px; margin: 0; font-weight: 900 !important; }
-      .title-row p { font-size: 10px; color: #000 !important; font-weight: 800 !important; }
+      .header-img { margin-bottom: 8px; width: 100%; background: #fff; border-bottom: 1.5px solid #000; padding-bottom: 4px; }
+      .header-img img { width: 100%; height: auto; display: block; }
       .info-row { display: flex; justify-content: space-between; border: 1.5px solid #000; border-radius: 3px; padding: 5px 10px; margin-bottom: 6px; flex-wrap: wrap; }
       .info-cell { display: flex; flex-direction: column; align-items: center; padding: 2px 8px; }
       .info-cell .label { font-size: 9px; text-transform: uppercase; color: #000 !important; font-weight: 800 !important; }
@@ -171,10 +191,7 @@ export default function AllChallanRecord() {
       .sig-box span { font-size: 9px; color: #000 !important; text-transform: uppercase; font-weight: 800 !important; }
     </style></head><body>
       <div class="challan-copy">
-        <div class="title-row">
-          <h2>GUL-E-PAKISTAN</h2>
-          <p>Challan Dispatch Record</p>
-        </div>
+        <div class="header-img"><img src="${headerSrc}" alt="Challan Header" /></div>
         <div class="info-row">
           <div class="info-cell"><span class="label">Challan #</span><span class="value">${challan.challan_number || '-'}</span></div>
           <div class="info-cell"><span class="label">Date</span><span class="value">${challanDate}</span></div>
@@ -211,8 +228,9 @@ export default function AllChallanRecord() {
   }
 
   const handlePrint = async (challan) => {
+    const headerBase64 = await getHeaderBase64();
     const bilties = await fetchChallanBilties(challan.id);
-    const html = generateChallanHTML(challan, bilties);
+    const html = generateChallanHTML(challan, bilties, headerBase64);
     const w = window.open('', '_blank', 'width=900,height=700');
     w.document.write(html);
     w.document.close();
@@ -221,8 +239,9 @@ export default function AllChallanRecord() {
   };
 
   const handlePDF = async (challan) => {
+    const headerBase64 = await getHeaderBase64();
     const bilties = await fetchChallanBilties(challan.id);
-    const fullHTML = generateChallanHTML(challan, bilties);
+    const fullHTML = generateChallanHTML(challan, bilties, headerBase64);
     // Extract style and body content for proper PDF rendering
     const styleMatch = fullHTML.match(/<style>([\s\S]*?)<\/style>/);
     const bodyMatch = fullHTML.match(/<body>([\s\S]*?)<\/body>/);

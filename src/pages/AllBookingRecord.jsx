@@ -23,7 +23,7 @@ const STATUS_COLORS = {
 };
 
 export default function AllBookingRecord() {
-  const { primaryBranchName } = useSettings();
+  const { primaryBranchName, biltyHeaderUrl } = useSettings();
   const [bilties, setBilties] = useState([]);
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +58,25 @@ export default function AllBookingRecord() {
     setLoading(false);
   }
 
-  const generateBiltyHTML = (b) => {
+  const getHeaderBase64 = async () => {
+    const srcUrl = biltyHeaderUrl || '/bilty-header.jpg';
+    if (srcUrl.startsWith('data:image/')) return srcUrl;
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => resolve(srcUrl);
+      img.src = srcUrl;
+    });
+  };
+
+  const generateBiltyHTML = (b, headerBase64) => {
     const destName = b.destination || b.branches?.name || '';
     const biltyDate = new Date(b.created_at || Date.now()).toLocaleDateString('en-PK');
     const localFreight = Number(b.local_freight || 0);
@@ -66,10 +84,11 @@ export default function AllBookingRecord() {
     const customAmount = Number(b.custom_amount || 0);
     const ttExpense = Number(b.tt_expense || 0);
     const totalAmount = localFreight + laborCharges + customAmount + ttExpense;
+    const headerSrc = headerBase64 || biltyHeaderUrl || '/bilty-header.jpg';
 
     return `
       <div class="bilty-copy">
-        <div class="header-img"><img src="${window.location.origin}/bilty-header.jpg" alt="Gul-e-Pakistan Header" /></div>
+        <div class="header-img"><img src="${headerSrc}" alt="Bilty Header" /></div>
         <div class="route-bar">
           <div class="route-item"><span>From: </span><strong>Karachi</strong></div>
           <div class="route-item"><span>To: </span><strong>${destName}</strong></div>
@@ -140,8 +159,9 @@ export default function AllBookingRecord() {
     .divider-line { height: 8px; border-bottom: 2px dashed #999; margin: 2px 10px; }
   `;
 
-  const handlePrint = (b) => {
-    const biltyHTML = generateBiltyHTML(b);
+  const handlePrint = async (b) => {
+    const headerBase64 = await getHeaderBase64();
+    const biltyHTML = generateBiltyHTML(b, headerBase64);
     const biltyHTMLOffice = biltyHTML.replace(/<div class="disclaimer">[\s\S]*?<\/div>/, '');
     const printWindow = window.open('', '_blank', 'width=900,height=700');
     printWindow.document.write(`<!DOCTYPE html><html><head><meta charset='utf-8'/><meta name='viewport' content='width=device-width, initial-scale=1'/><title>Bilty #${b.bilty_number}</title><style>
@@ -159,7 +179,8 @@ export default function AllBookingRecord() {
   };
 
   const handlePDF = async (b) => {
-    const biltyHTML = generateBiltyHTML(b);
+    const headerBase64 = await getHeaderBase64();
+    const biltyHTML = generateBiltyHTML(b, headerBase64);
     const container = document.createElement('div');
     container.innerHTML = `<style>${biltyStyles}</style>${biltyHTML}`;
     document.body.appendChild(container);
