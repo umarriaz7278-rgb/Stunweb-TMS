@@ -1,7 +1,7 @@
 import { useState, useEffect, Fragment } from 'react';
 import { supabase } from '../supabaseClient';
 import { Users, Plus, Trash2, X, ChevronDown, ChevronUp, FileText, DollarSign } from 'lucide-react';
-import { applyTenantFilter, withTenantId, getScopedKey } from '../utils/tenantStorage';
+import { applyTenantFilter, withTenantId, getScopedKey, getTenantItem } from '../utils/tenantStorage';
 
 // Generic Broker A/C page for any branch
 // Receives branchName as a prop from App.jsx route
@@ -61,38 +61,50 @@ export default function BranchBrokerAC({ branchName }) {
 
   async function fetchChallans() {
     setLoadingChallans(true);
-    const { data: cbData, error: cbError } = await supabase
-      .from('challan_bilties')
-      .select('challan_id, bilties(destination, destination_branch_id, branches:destination_branch_id(name))');
-
-    if (cbError) {
-      console.error('challan_bilties error:', cbError.message);
-      setLoadingChallans(false);
-      return;
-    }
-
     const bTarget = (branchName || '').trim().toLowerCase();
-    const branchChallanIds = (cbData || [])
-      .filter(cb => {
-        if (!bTarget) return false;
-        const bName = (cb.bilties?.branches?.name || '').trim().toLowerCase();
-        const bDest = (cb.bilties?.destination || '').trim().toLowerCase();
-        return (bName && bName === bTarget) || (bDest && bDest === bTarget);
-      })
-      .map(cb => cb.challan_id);
+    const manualDestMap = getTenantItem('manual_challan_destinations', {}) || {};
 
-    if (!branchChallanIds.length) { setChallans([]); setLoadingChallans(false); return; }
+    const branchChallanIds = new Set();
+    try {
+      const { data: cbData } = await supabase
+        .from('challan_bilties')
+        .select('challan_id, bilties(destination, destination_branch_id, branches:destination_branch_id(name))');
+
+      if (cbData) {
+        cbData.forEach(cb => {
+          if (!bTarget) return;
+          const bName = (cb.bilties?.branches?.name || '').trim().toLowerCase();
+          const bDest = (cb.bilties?.destination || '').trim().toLowerCase();
+          if ((bName && bName === bTarget) || (bDest && bDest === bTarget)) {
+            branchChallanIds.add(cb.challan_id);
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('cbData error:', e);
+    }
 
     let query = supabase
       .from('challans')
-      .select('id, challan_number, challan_date, vehicle_number, total_bilty_amount, commission_deduction, vehicle_freight, branch_deposit, broker_name')
-      .in('id', branchChallanIds)
+      .select('id, challan_number, challan_date, vehicle_number, route_number, total_bilty_amount, commission_deduction, vehicle_freight, branch_deposit, broker_name')
       .order('id', { ascending: false });
 
     query = applyTenantFilter(query);
     const { data } = await query;
 
-    if (data) setChallans(data);
+    if (data) {
+      const filtered = data.filter(ch => {
+        if (branchChallanIds.has(ch.id)) return true;
+        const manualDest = (manualDestMap[ch.id] || '').trim().toLowerCase();
+        if (manualDest && (manualDest === bTarget || manualDest.includes(bTarget) || bTarget.includes(manualDest))) return true;
+        const rNum = (ch.route_number || '').trim().toLowerCase();
+        if (rNum && (rNum === bTarget || rNum.includes(bTarget) || bTarget.includes(rNum))) return true;
+        return false;
+      });
+      setChallans(filtered);
+    } else {
+      setChallans([]);
+    }
     setLoadingChallans(false);
   }
 

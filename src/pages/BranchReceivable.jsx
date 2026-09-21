@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { TrendingUp, Plus, X, Lock, Unlock } from 'lucide-react';
-import { applyTenantFilter, withTenantId, getScopedKey } from '../utils/tenantStorage';
+import { applyTenantFilter, withTenantId, getScopedKey, getTenantItem } from '../utils/tenantStorage';
 
 // Generic A/C Receivable page for any branch
 // Receives branchName as a prop from App.jsx route
@@ -17,7 +17,7 @@ export default function BranchReceivable({ branchName }) {
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ date: new Date().toISOString().split('T')[0], description: '', vehicle_number: '', amount: '' });
-  const [saving, setSaving] = useState(false);
+  const [saving] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
 
   const closedKey = getScopedKey ? getScopedKey(`profit_${branchName?.toLowerCase()}_closed`) : `profit_${branchName?.toLowerCase()}_closed`;
@@ -45,43 +45,51 @@ export default function BranchReceivable({ branchName }) {
 
   async function fetchChallans() {
     setLoadingChallans(true);
-    const { data: cbData, error: cbError } = await supabase
-      .from('challan_bilties')
-      .select('challan_id, bilties(destination, destination_branch_id, branches:destination_branch_id(name))');
-
-    if (cbError) {
-      console.error('challan_bilties error:', cbError.message);
-      setLoadingChallans(false);
-      return;
-    }
-
     const bTarget = (branchName || '').trim().toLowerCase();
-    const branchChallanIds = (cbData || [])
-      .filter(cb => {
-        if (!bTarget) return false;
-        const bName = (cb.bilties?.branches?.name || '').trim().toLowerCase();
-        const bDest = (cb.bilties?.destination || '').trim().toLowerCase();
-        return (bName && bName === bTarget) || (bDest && bDest === bTarget);
-      })
-      .map(cb => cb.challan_id);
+    const manualDestMap = getTenantItem('manual_challan_destinations', {}) || {};
 
-    if (!branchChallanIds.length) {
-      setChallans([]);
-      setLoadingChallans(false);
-      return;
+    const branchChallanIds = new Set();
+    try {
+      const { data: cbData } = await supabase
+        .from('challan_bilties')
+        .select('challan_id, bilties(destination, destination_branch_id, branches:destination_branch_id(name))');
+
+      if (cbData) {
+        cbData.forEach(cb => {
+          if (!bTarget) return;
+          const bName = (cb.bilties?.branches?.name || '').trim().toLowerCase();
+          const bDest = (cb.bilties?.destination || '').trim().toLowerCase();
+          if ((bName && bName === bTarget) || (bDest && bDest === bTarget)) {
+            branchChallanIds.add(cb.challan_id);
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('cbData error:', e);
     }
 
     let query = supabase
       .from('challans')
-      .select('id, challan_number, challan_date, vehicle_number, total_bilty_amount, labor_deduction, commission_deduction, other_deduction, vehicle_freight, branch_deposit')
-      .in('id', branchChallanIds)
+      .select('id, challan_number, challan_date, vehicle_number, route_number, total_bilty_amount, labor_deduction, commission_deduction, other_deduction, vehicle_freight, branch_deposit')
       .order('id', { ascending: false });
 
     query = applyTenantFilter(query);
     const { data, error } = await query;
 
     if (error) console.error('challans error:', error.message);
-    if (data) setChallans(data);
+    if (data) {
+      const filtered = data.filter(ch => {
+        if (branchChallanIds.has(ch.id)) return true;
+        const manualDest = (manualDestMap[ch.id] || '').trim().toLowerCase();
+        if (manualDest && (manualDest === bTarget || manualDest.includes(bTarget) || bTarget.includes(manualDest))) return true;
+        const rNum = (ch.route_number || '').trim().toLowerCase();
+        if (rNum && (rNum === bTarget || rNum.includes(bTarget) || bTarget.includes(rNum))) return true;
+        return false;
+      });
+      setChallans(filtered);
+    } else {
+      setChallans([]);
+    }
     setLoadingChallans(false);
   }
 

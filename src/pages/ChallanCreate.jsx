@@ -387,7 +387,7 @@ export default function ChallanCreate() {
     const challanPayload = {
       challan_number: nextChallanNum,
       vehicle_number: formData.vehicle_number,
-      route_number: formData.route_number,
+      route_number: formData.route_number || selectedBranch,
       broker_name: formData.broker_name,
       driver_name: formData.driver_name,
       challan_date: challanDate,
@@ -481,54 +481,12 @@ export default function ChallanCreate() {
         fetchNextChallanNumber();
       }
     } else {
-      // Manual Mode: Link to destination branch for ledger/broker account reporting
+      // Manual Mode: Direct dispatch without bilties. Link to destination branch for ledger/broker account reporting
       try {
-        let branchId = null;
-        const { data: bData } = await supabase.from('branches').select('id, name');
-        if (bData && bData.length > 0) {
-          const match = bData.find(b => (b.name || '').trim().toLowerCase() === (selectedBranch || '').trim().toLowerCase());
-          if (match) branchId = match.id;
-        }
-
-        // Get next bilty number for this tenant (works for all clients - new clients start at 1)
-        const nextManualBiltyNum = await fetchNextBiltyNumber();
-
-        const manualBiltyPayload = {
-          bilty_number: nextManualBiltyNum,
-          destination: selectedBranch,
-          destination_branch_id: branchId,
-          total_amount: effectiveTotalBiltyAmount,
-          custom_amount: effectiveTotalBiltyAmount,
-          local_freight: effectiveLocalFare,
-          labor_charges: effectiveLoading,
-          total_quantity: 1,
-          description: `Manual Challan #${challanNum} Dispatch`,
-          sender_name: 'Direct Dispatch',
-          receiver_name: selectedBranch,
-          bilty_date: challanDate
-        };
-
-        let { data: bRes, error: bErr } = await supabase.from('bilties').insert([withTenantId(manualBiltyPayload)]).select();
-        if (bErr && bErr.message && bErr.message.includes('tenant_id')) {
-          const retryB = await supabase.from('bilties').insert([manualBiltyPayload]).select();
-          bRes = retryB.data;
-          bErr = retryB.error;
-        }
-
-        if (bErr) {
-          console.error("Manual bilty insert error:", bErr);
-        }
-
-        if (bRes && bRes.length > 0) {
-          const { error: cbLinkErr } = await supabase.from('challan_bilties').insert([{
-            challan_id: challanId,
-            bilty_id: bRes[0].id,
-            loaded_quantity: 1
-          }]);
-          if (cbLinkErr) console.error("challan_bilties link error:", cbLinkErr);
-        }
+        const currentDestMap = getTenantItem('manual_challan_destinations', {}) || {};
+        setTenantItem('manual_challan_destinations', { ...currentDestMap, [challanId]: selectedBranch });
       } catch (err) {
-        console.warn('Manual bilty link notice:', err);
+        console.warn('Manual challan destination save notice:', err);
       }
 
       setMessage(`Manual Challan #${challanNum} Created Successfully and dispatched!`);
