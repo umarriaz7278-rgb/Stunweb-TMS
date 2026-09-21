@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { TrendingUp, Plus, X, Lock, Unlock } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
-import { applyTenantFilter, withTenantId, getScopedKey, getCurrentTenantId } from '../utils/tenantStorage';
+import { applyTenantFilter, withTenantId, getScopedKey, getCurrentTenantId, getTenantItem } from '../utils/tenantStorage';
 
 export default function ProfitReportIslamabad() {
   const { primaryBranchName } = useSettings();
@@ -54,43 +54,50 @@ export default function ProfitReportIslamabad() {
 
   async function fetchChallans() {
     setLoadingChallans(true);
-    // Step 1: Get all challan_ids that have Islamabad bilties
-    const { data: cbData, error: cbError } = await supabase
-      .from('challan_bilties')
-      .select('challan_id, bilties(destination_branch_id, branches(name))');
-
-    if (cbError) {
-      console.error('challan_bilties error:', cbError.message);
-      setLoadingChallans(false);
-      return;
-    }
-
     const targetName = (branchName || 'Islamabad').toLowerCase();
-    const islamabadChallanIds = (cbData || [])
-      .filter(cb => {
-        const n = cb.bilties?.branches?.name?.toLowerCase();
-        return n === targetName || n === 'islamabad';
-      })
-      .map(cb => cb.challan_id);
+    const manualDestMap = getTenantItem('manual_challan_destinations', {}) || {};
 
-    if (!islamabadChallanIds.length) {
-      setChallans([]);
-      setLoadingChallans(false);
-      return;
+    const islamabadChallanIds = new Set();
+    try {
+      const { data: cbData } = await supabase
+        .from('challan_bilties')
+        .select('challan_id, bilties(destination, destination_branch_id, branches:destination_branch_id(name))');
+
+      if (cbData) {
+        cbData.forEach(cb => {
+          const n = (cb.bilties?.branches?.name || '').toLowerCase();
+          const d = (cb.bilties?.destination || '').toLowerCase();
+          if (n === targetName || n === 'islamabad' || d === targetName || d === 'islamabad') {
+            islamabadChallanIds.add(cb.challan_id);
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('cbData error:', e);
     }
 
-    // Step 2: Fetch those challans with all financial fields
     let q = supabase
       .from('challans')
-      .select('id, challan_number, challan_date, vehicle_number, total_bilty_amount, labor_deduction, commission_deduction, other_deduction, vehicle_freight, branch_deposit')
-      .in('id', islamabadChallanIds)
+      .select('id, challan_number, challan_date, vehicle_number, route_number, total_bilty_amount, labor_deduction, commission_deduction, other_deduction, vehicle_freight, branch_deposit')
       .order('id', { ascending: false });
     q = applyTenantFilter(q);
 
     const { data, error } = await q;
 
     if (error) console.error('challans error:', error.message);
-    if (data) setChallans(data);
+    if (data) {
+      const filtered = data.filter(ch => {
+        if (islamabadChallanIds.has(ch.id)) return true;
+        const manualDest = (manualDestMap[ch.id] || '').trim().toLowerCase();
+        if (manualDest && (manualDest === targetName || manualDest === 'islamabad')) return true;
+        const rNum = (ch.route_number || '').trim().toLowerCase();
+        if (rNum && (rNum === targetName || rNum === 'islamabad' || rNum.includes(targetName) || targetName.includes(rNum))) return true;
+        return false;
+      });
+      setChallans(filtered);
+    } else {
+      setChallans([]);
+    }
     setLoadingChallans(false);
   }
 
