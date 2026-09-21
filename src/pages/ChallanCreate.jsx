@@ -615,8 +615,8 @@ export default function ChallanCreate() {
       body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; color: #000; background: #f5f0e8; }
       .challan-copy { width: 100%; padding: 4mm 2mm 2mm 2mm; border: 2px solid #000; border-radius: 3px; overflow: hidden; page-break-inside: avoid; background: #f5f0e8; }
       .challan-copy + .challan-copy { margin-top: 3vh; }
-      .header-img { margin: 0 0 3px 0; width: 100%; background: #fff; border-bottom: 1.5px solid #000; padding-bottom: 2px; max-height: 80px; overflow: hidden; display: flex; align-items: flex-start; }
-      .header-img img { width: 100%; max-height: 80px; object-fit: contain; object-position: top center; display: block; margin: 0; }
+      .header-img { margin: 0 0 3px 0; width: 100%; background: #fff; border-bottom: 1.5px solid #000; padding-bottom: 2px; }
+      .header-img img { width: 100%; height: auto; display: block; margin: 0; }
       .info-row { display: flex; justify-content: space-between; border: 1.5px solid #000; border-radius: 3px; padding: 4px 8px; margin-top: 2px; margin-bottom: 5px; }
       .info-cell { display: flex; flex-direction: column; align-items: center; }
       .info-cell .label { font-size: 10px; text-transform: uppercase; color: #000 !important; font-weight: 900 !important; }

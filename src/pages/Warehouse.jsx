@@ -188,16 +188,16 @@ export default function Warehouse() {
       * { margin: 0; padding: 0; box-sizing: border-box; font-weight: 900 !important; -webkit-text-stroke: 0.3px #000; color: #000 !important; }
       body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #000; background: #fff; }
       .charge-total, .charge-total span { font-weight: 900 !important; }
-      .bilty-copy { width: 100%; padding: 1mm 2mm; height: 138mm; max-height: 139mm; display: flex; flex-direction: column; justify-content: flex-start; page-break-inside: avoid; overflow: hidden; }
-      .bilty-separator { height: 0; border-bottom: 1.5px dashed #999; margin: 1px 8px; }
-      .copy-label { text-align: center; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #000; margin: 1px 0; font-weight: 800; }
-      .header-img { margin: 0 0 2px 0; width: 100%; border-bottom: 1.5px solid #000; padding: 0; max-height: 55px; overflow: hidden; display: flex; align-items: flex-start; }
-      .header-img img { width: 100%; max-height: 55px; object-fit: contain; object-position: top center; display: block; margin: 0; }
+      .bilty-copy { width: 100%; padding: 2mm 3mm; background: #fff; page-break-inside: avoid; }
+      .bilty-separator { height: 0; border-bottom: 1.5px dashed #999; margin: 2px 8px; }
+      .copy-label { text-align: center; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #000; margin: 2px 0; font-weight: 800; }
+      .header-img { margin-bottom: 2px; width: 100%; border-bottom: 2px solid #000; padding-bottom: 2px; }
+      .header-img img { width: 100%; height: auto; display: block; }
       .route-bar { display: flex; justify-content: space-between; align-items: center; background: #f5f5f5; border: 1px solid #999; border-radius: 3px; padding: 3px 8px; margin: 2px 0 4px 0; flex-wrap: wrap; gap: 4px; }
       .route-item { font-size: 11px; font-weight: 700; color: #000; }
       .route-item span { color: #000; }
       .route-item strong { color: #000; font-size: 11px; }
-      .main-layout { display: grid; grid-template-columns: 1fr 210px; gap: 6px; margin-bottom: 3px; align-items: start; flex: 1; min-height: 0; }
+      .main-layout { display: grid; grid-template-columns: 1fr 210px; gap: 6px; margin-bottom: 3px; align-items: start; }
       .left-col { display: flex; flex-direction: column; gap: 4px; }
       .card { border: 1px solid #999; border-radius: 3px; padding: 4px 6px; background: #fff; }
       .card-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #000; margin-bottom: 3px; padding-bottom: 2px; border-bottom: 1px solid #ccc; }
@@ -218,7 +218,7 @@ export default function Warehouse() {
       .charge-total { display: flex; justify-content: space-between; padding: 4px 0 0; margin-top: 2px; border-top: 2px solid #000; font-size: 12px; font-weight: 800; }
       .sig-area { margin-top: 3px; text-align: center; padding-top: 2px; border-top: 1px solid #999; }
       .sig-label { font-size: 9px; } .sig-line { width: 100px; margin: 10px auto 0; border-bottom: 1px solid #000; }
-      .disclaimer { padding: 2px 6px; border: 1px solid #999; background: #f5f5f5; border-radius: 3px; font-size: 8px; line-height: 1.2; text-align: center; font-weight: 700; margin-top: 2px; flex-shrink: 0; }
+      .disclaimer { padding: 2px 6px; border: 1px solid #999; background: #f5f5f5; border-radius: 3px; font-size: 8px; line-height: 1.2; text-align: center; font-weight: 700; margin-top: 2px; }
       @media print {
         body { margin: 0; padding: 0; }
         @page { size: A4 portrait; margin: 2mm 5mm; }
