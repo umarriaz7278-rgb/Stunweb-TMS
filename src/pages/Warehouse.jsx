@@ -123,12 +123,12 @@ export default function Warehouse() {
     const biltyHTML = `
       <div class="bilty-copy">
         <div class="header-img">
-          <img src="${headerBase64}" alt="Gul-e-Pakistan Header" />
+          <img src="${headerBase64}" alt="Bilty Header" />
         </div>
         <div class="route-bar">
-          <div class="route-item"><span>From: </span><strong>Karachi</strong><span style="margin:0 10px;">To:</span><strong>${destName}</strong></div>
+          <div class="route-item"><span>From: </span><strong>Karachi</strong><span style="margin:0 6px;">To:</span><strong>${destName}</strong></div>
           <div class="route-item"><span>Date: </span><strong>${biltyDate}</strong></div>
-          <div class="route-item" style="background:#000 !important;padding:4px 10px;border-radius:3px;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;"><span style="color:#fff !important;">Bilty #: </span><strong style="color:#fff !important;font-size:14px;">${biltyNumber}</strong></div>
+          <div class="route-item" style="background:#000 !important;padding:2px 8px;border-radius:3px;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;"><span style="color:#fff !important;">Bilty #: </span><strong style="color:#fff !important;font-size:12px;">${biltyNumber}</strong></div>
           ${orderNumber ? `<div class="route-item"><span>Order #: </span><strong>${orderNumber}</strong></div>` : ''}
           ${lclNumber ? `<div class="route-item"><span>LCL #: </span><strong>${lclNumber}</strong></div>` : ''}
           ${containerNumber ? `<div class="route-item"><span>Container #: </span><strong>${containerNumber}</strong></div>` : ''}
@@ -156,7 +156,7 @@ export default function Warehouse() {
                 <thead><tr><th>#</th><th>Qty</th><th>Description</th><th>Weight (KG)</th></tr></thead>
                 <tbody><tr><td><strong>1</strong></td><td><strong>${qty}</strong></td><td><strong>${description}</strong></td><td><strong>${weightKg}</strong></td></tr></tbody>
               </table>
-              <p style="color:red !important; font-weight:800; margin-top:6px; font-size:12px; min-height:18px; padding:4px 0;">Note: ${note || ""}</p>
+              <p style="color:red !important; font-weight:800; margin-top:3px; font-size:10px; min-height:14px; padding:2px 0;">Note: ${note || ""}</p>
             </div>
           </div>
           <div class="right-col">
@@ -169,7 +169,7 @@ export default function Warehouse() {
               <div class="charge-total"><span>Total Amount</span><span>Rs. ${totalAmount.toLocaleString()}</span></div>
               <div class="sig-area">
                 <div class="sig-label">Booking Clerk</div>
-                <div style="font-size:13px;font-weight:800;margin-top:4px;">${b.booking_clerk || ""}</div>
+                <div style="font-size:11px;font-weight:800;margin-top:2px;">${b.booking_clerk || ""}</div>
               </div>
             </div>
           </div>
@@ -184,53 +184,55 @@ export default function Warehouse() {
 
     const printWindow = window.open('', '_blank', 'width=900,height=700');
     printWindow.document.write(`<!DOCTYPE html><html><head><meta charset='utf-8'/><title>Bilty #${biltyNumber}</title><style>
-      @page { size: A4; margin: 3mm 7mm; }
+      @page { size: A4 portrait; margin: 2mm 5mm; }
       * { margin: 0; padding: 0; box-sizing: border-box; font-weight: 900 !important; -webkit-text-stroke: 0.3px #000; color: #000 !important; }
-      body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 16px; color: #000; background: #fff; }
+      body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #000; background: #fff; }
       .charge-total, .charge-total span { font-weight: 900 !important; }
-      .bilty-copy { width: 100%; padding: 10px 16px; }
-      .bilty-separator { height: 8px; border-bottom: 2px dashed #999; margin: 2px 14px; }
-      .copy-label { text-align: center; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #000; margin-bottom: 2px; font-weight: 800; }
-      .header-img { margin-bottom: 4px; width: 100%; border-bottom: 2px solid #000; padding-bottom: 4px; }
-      .header-img img { width: 100%; height: auto; display: block; }
-      .route-bar { display: flex; justify-content: space-between; align-items: center; background: #f5f5f5; border: 1px solid #999; border-radius: 5px; padding: 6px 14px; margin-bottom: 8px; flex-wrap: wrap; gap: 4px; }
-      .route-item { font-size: 14px; font-weight: 700; color: #000; }
+      .bilty-copy { width: 100%; padding: 1mm 2mm; height: 138mm; max-height: 139mm; display: flex; flex-direction: column; justify-content: flex-start; page-break-inside: avoid; overflow: hidden; }
+      .bilty-separator { height: 0; border-bottom: 1.5px dashed #999; margin: 1px 8px; }
+      .copy-label { text-align: center; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #000; margin: 1px 0; font-weight: 800; }
+      .header-img { margin: 0 0 2px 0; width: 100%; border-bottom: 1.5px solid #000; padding: 0; max-height: 55px; overflow: hidden; display: flex; align-items: flex-start; }
+      .header-img img { width: 100%; max-height: 55px; object-fit: contain; object-position: top center; display: block; margin: 0; }
+      .route-bar { display: flex; justify-content: space-between; align-items: center; background: #f5f5f5; border: 1px solid #999; border-radius: 3px; padding: 3px 8px; margin: 2px 0 4px 0; flex-wrap: wrap; gap: 4px; }
+      .route-item { font-size: 11px; font-weight: 700; color: #000; }
       .route-item span { color: #000; }
-      .route-item strong { color: #000; font-size: 15px; }
-      .route-item strong.accent { color: #000; font-size: 15px; }
-      .main-layout { display: grid; grid-template-columns: 1fr 260px; gap: 12px; margin-bottom: 8px; align-items: start; }
-      .left-col { display: flex; flex-direction: column; gap: 6px; }
-      .card { border: 1px solid #999; border-radius: 5px; padding: 8px 12px; }
-      .card-title { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: #000; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid #ccc; }
+      .route-item strong { color: #000; font-size: 11px; }
+      .main-layout { display: grid; grid-template-columns: 1fr 210px; gap: 6px; margin-bottom: 3px; align-items: start; flex: 1; min-height: 0; }
+      .left-col { display: flex; flex-direction: column; gap: 4px; }
+      .card { border: 1px solid #999; border-radius: 3px; padding: 4px 6px; background: #fff; }
+      .card-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #000; margin-bottom: 3px; padding-bottom: 2px; border-bottom: 1px solid #ccc; }
       .sr-grid { display: grid; grid-template-columns: 1fr 1fr; }
-      .sr-col { padding: 0 8px; }
+      .sr-col { padding: 0 6px; }
       .sr-col:first-child { padding-left: 0; }
       .sr-right { border-left: 1px solid #999; }
       .sr-col:last-child { padding-right: 0; }
-      .sr-label { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: #000; font-weight: 700; margin-bottom: 3px; }
-      .sr-name { font-size: 15px; font-weight: 700; color: #000; }
-      .sr-phone { font-size: 14px; color: #000; margin-top: 1px; font-weight: 700; }
+      .sr-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #000; font-weight: 700; margin-bottom: 2px; }
+      .sr-name { font-size: 11px; font-weight: 700; color: #000; }
+      .sr-phone { font-size: 10px; color: #000; margin-top: 1px; font-weight: 700; }
       table { width: 100%; border-collapse: collapse; }
-      th { background: #000 !important; color: #fff !important; padding: 7px 8px; font-size: 13px; text-align: left; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; -webkit-text-stroke: 0 !important; }
-      td { padding: 7px 8px; font-size: 15px; border-bottom: 1px solid #ccc; font-weight: 700; color: #000; }
-      td strong { color: #000 !important; font-size: 15px; }
-      .charge-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #ccc; font-size: 15px; }
+      th { background: #000 !important; color: #fff !important; padding: 3px 5px; font-size: 10px; text-align: left; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; -webkit-text-stroke: 0 !important; }
+      td { padding: 3px 5px; font-size: 11px; border-bottom: 1px solid #ccc; font-weight: 700; color: #000; }
+      .charge-item { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px solid #ccc; font-size: 11px; }
       .charge-item span:first-child { color: #000; font-weight: 700; }
       .charge-item span:last-child { font-weight: 700; color: #000; }
-      .charge-total { display: flex; justify-content: space-between; padding: 6px 0 0; margin-top: 5px; border-top: 2px solid #000; font-size: 17px; font-weight: 800; }
-      .charge-total span:last-child { color: #000; }
-      .sig-area { margin-top: 6px; text-align: center; padding-top: 3px; border-top: 1px solid #999; }
-      .sig-label { font-size: 11px; color: #000; }
-      .sig-line { width: 130px; margin: 14px auto 0; border-bottom: 1px solid #000; }
-      .disclaimer { padding: 5px 10px; border: 1px solid #999; background: #f5f5f5; border-radius: 4px; font-size: 11px; color: #000; line-height: 1.4; text-align: center; font-weight: 700; margin-top: 4px; }
-      @media print { body { padding: 0; } th { background: #000 !important; color: #fff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; -webkit-text-stroke: 0 !important; } }
+      .charge-total { display: flex; justify-content: space-between; padding: 4px 0 0; margin-top: 2px; border-top: 2px solid #000; font-size: 12px; font-weight: 800; }
+      .sig-area { margin-top: 3px; text-align: center; padding-top: 2px; border-top: 1px solid #999; }
+      .sig-label { font-size: 9px; } .sig-line { width: 100px; margin: 10px auto 0; border-bottom: 1px solid #000; }
+      .disclaimer { padding: 2px 6px; border: 1px solid #999; background: #f5f5f5; border-radius: 3px; font-size: 8px; line-height: 1.2; text-align: center; font-weight: 700; margin-top: 2px; flex-shrink: 0; }
+      @media print {
+        body { margin: 0; padding: 0; }
+        @page { size: A4 portrait; margin: 2mm 5mm; }
+      }
     </style></head><body>
       <div class="copy-label">CUSTOMER COPY</div>
       ${biltyHTML}
+      <div class="bilty-separator"></div>
+      <div class="copy-label">OFFICE COPY</div>
+      ${biltyHTMLOffice}
     </body></html>`);
     printWindow.document.close();
     printWindow.focus();
-    setTimeout(() => { printWindow.print(); }, 600);
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
   };
 
   const handleWhatsApp = (item) => {

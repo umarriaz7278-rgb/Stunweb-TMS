@@ -93,7 +93,7 @@ export default function AllBookingRecord() {
           <div class="route-item"><span>From: </span><strong>Karachi</strong></div>
           <div class="route-item"><span>To: </span><strong>${destName}</strong></div>
           <div class="route-item"><span>Date: </span><strong>${biltyDate}</strong></div>
-          <div class="route-item" style="background:#000 !important;padding:4px 10px;border-radius:3px;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;"><span style="color:#fff !important;">Bilty #: </span><strong style="color:#fff !important;font-size:14px;">${b.bilty_number}</strong></div>
+          <div class="route-item" style="background:#000 !important;padding:2px 8px;border-radius:3px;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;"><span style="color:#fff !important;">Bilty #: </span><strong style="color:#fff !important;font-size:12px;">${b.bilty_number}</strong></div>
           ${b.lcl_number ? `<div class="route-item"><span>LCL #: </span><strong>${b.lcl_number}</strong></div>` : ''}
           ${b.container_number ? `<div class="route-item"><span>Container #: </span><strong>${b.container_number}</strong></div>` : ''}
         </div>
@@ -109,7 +109,7 @@ export default function AllBookingRecord() {
               <div class="card-title">Goods Details</div>
               <table><thead><tr><th>#</th><th>Qty</th><th>Description</th><th>Weight (KG)</th></tr></thead>
               <tbody><tr><td><strong>1</strong></td><td><strong>${b.total_quantity || b.quantity || 0}</strong></td><td><strong>${b.description || ''}</strong></td><td><strong>${b.weight_kg || 0}</strong></td></tr></tbody></table>
-              <p style="color:red !important; font-weight:800; margin-top:6px; font-size:12px; min-height:18px; padding:4px 0;">Note: ${b.note || ''}</p>
+              <p style="color:red !important; font-weight:800; margin-top:3px; font-size:10px; min-height:14px; padding:2px 0;">Note: ${b.note || ''}</p>
             </div>
           </div>
           <div class="right-col">
@@ -120,7 +120,7 @@ export default function AllBookingRecord() {
               <div class="charge-item"><span>Local Fare</span><span>Rs. ${localFreight.toLocaleString()}</span></div>
               <div class="charge-item"><span>TT Expense</span><span>Rs. ${ttExpense.toLocaleString()}</span></div>
               <div class="charge-total"><span>Total Amount</span><span>Rs. ${totalAmount.toLocaleString()}</span></div>
-              <div class="sig-area"><div class="sig-label">Booking Clerk</div><div style="font-size:13px;font-weight:800;margin-top:4px;">${b.booking_clerk || ''}</div></div>
+              <div class="sig-area"><div class="sig-label">Booking Clerk</div><div style="font-size:11px;font-weight:800;margin-top:2px;">${b.booking_clerk || ''}</div></div>
             </div>
           </div>
         </div>
@@ -130,33 +130,36 @@ export default function AllBookingRecord() {
 
   const biltyStyles = `
     * { margin: 0; padding: 0; box-sizing: border-box; font-weight: 900 !important; color: #000 !important; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 15px; }
-    .bilty-copy { width: 100%; padding: 3mm; background: #fff; height: auto; display: flex; flex-direction: column; justify-content: space-between; page-break-inside: avoid; page-break-after: auto; }
-    .header-img { margin-bottom: 2px; width: 100%; border-bottom: 2px solid #000; padding-bottom: 2px; }
-    .header-img img { width: 100%; height: auto; display: block; }
-    .route-bar { display: flex; justify-content: space-between; align-items: center; background: #f5f5f5; border: 1px solid #999; border-radius: 4px; padding: 6px 10px; margin-bottom: 8px; flex-wrap: wrap; gap: 4px; }
-    .route-item { font-size: 12px; font-weight: 700; }
-    .route-item strong { font-size: 13px; }
-    .main-layout { display: grid; grid-template-columns: 1fr 220px; gap: 8px; margin-bottom: 6px; align-items: start; }
-    .left-col { display: flex; flex-direction: column; gap: 6px; }
-    .card { border: 1px solid #999; border-radius: 4px; padding: 8px 10px; }
-    .card-title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid #ccc; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; background: #fff; }
+    .bilty-copy { width: 100%; padding: 1mm 2mm; background: #fff; height: 138mm; max-height: 139mm; display: flex; flex-direction: column; justify-content: flex-start; page-break-inside: avoid; overflow: hidden; }
+    .header-img { margin: 0 0 2px 0; width: 100%; border-bottom: 1.5px solid #000; padding: 0; max-height: 55px; overflow: hidden; display: flex; align-items: flex-start; }
+    .header-img img { width: 100%; max-height: 55px; object-fit: contain; object-position: top center; display: block; margin: 0; }
+    .route-bar { display: flex; justify-content: space-between; align-items: center; background: #f5f5f5; border: 1px solid #999; border-radius: 3px; padding: 3px 8px; margin: 2px 0 4px 0; flex-wrap: wrap; gap: 4px; }
+    .route-item { font-size: 11px; font-weight: 700; }
+    .route-item strong { font-size: 11px; }
+    .main-layout { display: grid; grid-template-columns: 1fr 210px; gap: 6px; margin-bottom: 3px; align-items: start; flex: 1; min-height: 0; }
+    .left-col { display: flex; flex-direction: column; gap: 4px; }
+    .card { border: 1px solid #999; border-radius: 3px; padding: 4px 6px; background: #fff; }
+    .card-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 3px; padding-bottom: 2px; border-bottom: 1px solid #ccc; }
     .sr-grid { display: grid; grid-template-columns: 1fr 1fr; }
-    .sr-col { padding: 0 8px; } .sr-col:first-child { padding-left: 0; }
+    .sr-col { padding: 0 6px; } .sr-col:first-child { padding-left: 0; }
     .sr-right { border-left: 1px solid #999; }
-    .sr-label { font-size: 11px; text-transform: uppercase; font-weight: 700; margin-bottom: 3px; }
-    .sr-name { font-size: 13px; font-weight: 700; } .sr-phone { font-size: 12px; margin-top: 1px; }
+    .sr-label { font-size: 10px; text-transform: uppercase; font-weight: 700; margin-bottom: 2px; }
+    .sr-name { font-size: 11px; font-weight: 700; } .sr-phone { font-size: 10px; margin-top: 1px; }
     table { width: 100%; border-collapse: collapse; }
-    th { background: #000; color: #fff !important; padding: 5px 6px; font-size: 11px; text-align: left; font-weight: 700; text-transform: uppercase; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    td { padding: 5px 6px; font-size: 13px; border-bottom: 1px solid #ccc; font-weight: 700; }
-    .charge-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #ccc; font-size: 13px; }
-    .charge-total { display: flex; justify-content: space-between; padding: 6px 0 0; margin-top: 4px; border-top: 2px solid #000; font-size: 14px; font-weight: 800; }
-    .sig-area { margin-top: 6px; text-align: center; padding-top: 3px; border-top: 1px solid #999; }
-    .sig-label { font-size: 10px; } .sig-line { width: 120px; margin: 18px auto 0; border-bottom: 1px solid #000; }
-    .disclaimer { padding: 4px 8px; border: 1px solid #999; background: #f5f5f5; border-radius: 3px; font-size: 9px; line-height: 1.4; text-align: center; font-weight: 700; }
-    .copy-label { text-align: center; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; font-weight: 800; }
-    .bilty-copy + .copy-label { margin-top: 4px; }
-    .divider-line { height: 8px; border-bottom: 2px dashed #999; margin: 2px 10px; }
+    th { background: #000; color: #fff !important; padding: 3px 5px; font-size: 10px; text-align: left; font-weight: 700; text-transform: uppercase; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    td { padding: 3px 5px; font-size: 11px; border-bottom: 1px solid #ccc; font-weight: 700; }
+    .charge-item { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px solid #ccc; font-size: 11px; }
+    .charge-total { display: flex; justify-content: space-between; padding: 4px 0 0; margin-top: 2px; border-top: 2px solid #000; font-size: 12px; font-weight: 800; }
+    .sig-area { margin-top: 3px; text-align: center; padding-top: 2px; border-top: 1px solid #999; }
+    .sig-label { font-size: 9px; } .sig-line { width: 100px; margin: 10px auto 0; border-bottom: 1px solid #000; }
+    .disclaimer { padding: 2px 6px; border: 1px solid #999; background: #f5f5f5; border-radius: 3px; font-size: 8px; line-height: 1.2; text-align: center; font-weight: 700; margin-top: 2px; flex-shrink: 0; }
+    .copy-label { text-align: center; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; margin: 1px 0; font-weight: 800; }
+    .divider-line { height: 0; border-bottom: 1.5px dashed #999; margin: 1px 8px; }
+    @media print {
+      body { margin: 0; padding: 0; }
+      @page { size: A4 portrait; margin: 2mm 5mm; }
+    }
   `;
 
   const handlePrint = async (b) => {
@@ -165,8 +168,7 @@ export default function AllBookingRecord() {
     const biltyHTMLOffice = biltyHTML.replace(/<div class="disclaimer">[\s\S]*?<\/div>/, '');
     const printWindow = window.open('', '_blank', 'width=900,height=700');
     printWindow.document.write(`<!DOCTYPE html><html><head><meta charset='utf-8'/><meta name='viewport' content='width=device-width, initial-scale=1'/><title>Bilty #${b.bilty_number}</title><style>
-      @page { size: A4; margin: 3mm 5mm; }
-      @media print { body { margin: 0; padding: 0; } }
+      @page { size: A4 portrait; margin: 2mm 5mm; }
       ${biltyStyles}
     </style></head><body>
       <div class="copy-label">CUSTOMER COPY</div>${biltyHTML}
@@ -175,7 +177,7 @@ export default function AllBookingRecord() {
     </body></html>`);
     printWindow.document.close();
     printWindow.focus();
-    setTimeout(() => { printWindow.print(); }, 600);
+    setTimeout(() => { printWindow.print(); }, 500);
   };
 
   const handlePDF = async (b) => {

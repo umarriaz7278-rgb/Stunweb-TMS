@@ -323,44 +323,44 @@ export default function BiltyCreate() {
     const imgUrl = biltyHeaderUrl || (window.location.origin + '/bilty-header.jpg');
     const printWindow = window.open('', '_blank', 'width=800,height=600');
     printWindow.document.write(`<!DOCTYPE html><html><head><meta charset='utf-8'/><title>Bilty #${b.bilty_number}</title><style>
-      @page { size: A4; margin: 1mm 5mm; }
+      @page { size: A4 portrait; margin: 2mm 5mm; }
       * { margin: 0; padding: 0; box-sizing: border-box; font-weight: 900 !important; -webkit-text-stroke: 0.3px #000; color: #000 !important; }
-      body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; color: #000; padding: 0; background: #fff; }
-      .bilty-section { padding: 3px 12px; height: 73.5mm; display: flex; flex-direction: column; overflow: hidden; }
-      .bilty-separator { border-bottom: 2px dashed #999; margin: 0px 10px; height: 0px; }
+      body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #000; padding: 0; background: #fff; }
+      .bilty-section { padding: 1mm 2mm; height: 138mm; max-height: 139mm; display: flex; flex-direction: column; justify-content: flex-start; overflow: hidden; page-break-inside: avoid; }
+      .bilty-separator { border-bottom: 1.5px dashed #999; margin: 1px 8px; height: 0px; }
       .charge-total, .charge-total span { font-weight: 900 !important; }
-      .header { text-align: center; padding-bottom: 4px; margin-bottom: 4px; border-bottom: 2px solid #000; flex-shrink: 0; }
-      .header img { width: 100%; height: auto; display: block; }
-      .route-bar { display: flex; justify-content: space-between; align-items: center; background: #f5f5f5; border: 1px solid #999; border-radius: 4px; padding: 4px 10px; margin-bottom: 4px; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
-      .route-bar .item { font-size: 12px; font-weight: 700; }
-      .route-bar .item strong { color: #000; font-size: 12px; }
+      .header { text-align: center; padding-bottom: 0; margin-bottom: 2px; border-bottom: 1.5px solid #000; flex-shrink: 0; max-height: 55px; overflow: hidden; display: flex; align-items: flex-start; }
+      .header img { width: 100%; max-height: 55px; object-fit: contain; object-position: top center; display: block; margin: 0; }
+      .route-bar { display: flex; justify-content: space-between; align-items: center; background: #f5f5f5; border: 1px solid #999; border-radius: 3px; padding: 3px 8px; margin: 2px 0 4px 0; flex-wrap: wrap; gap: 4px; flex-shrink: 0; }
+      .route-bar .item { font-size: 11px; font-weight: 700; }
+      .route-bar .item strong { color: #000; font-size: 11px; }
       .route-bar .item span { color: #000; }
-      .two-col { display: grid; grid-template-columns: 1fr 220px; gap: 8px; margin-bottom: 4px; align-items: start; flex: 1; min-height: 0; overflow: hidden; }
-      .card { border: 1px solid #999; border-radius: 4px; padding: 6px 8px; background: #fff; }
-      .card-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #000; margin-bottom: 4px; padding-bottom: 3px; border-bottom: 1px solid #ccc; }
+      .two-col { display: grid; grid-template-columns: 1fr 210px; gap: 6px; margin-bottom: 3px; align-items: start; flex: 1; min-height: 0; overflow: hidden; }
+      .card { border: 1px solid #999; border-radius: 3px; padding: 4px 6px; background: #fff; }
+      .card-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #000; margin-bottom: 3px; padding-bottom: 2px; border-bottom: 1px solid #ccc; }
       .sr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
-      .sr-col { padding: 0 10px; }
+      .sr-col { padding: 0 6px; }
       .sr-col:first-child { border-right: 1px solid #999; padding-left: 0; }
       .sr-col:last-child { padding-right: 0; }
-      .sr-col h5 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #000; margin-bottom: 3px; font-weight: 700; }
-      .sr-col p { font-size: 12px; margin: 2px 0; font-weight: 700; color: #000; }
-      .sr-col p span { color: #000; font-size: 11px; font-weight: 700; }
+      .sr-col h5 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #000; margin-bottom: 2px; font-weight: 700; }
+      .sr-col p { font-size: 11px; margin: 2px 0; font-weight: 700; color: #000; }
+      .sr-col p span { color: #000; font-size: 10px; font-weight: 700; }
       table { width: 100%; border-collapse: collapse; }
-      th { background: #000 !important; color: #fff !important; padding: 4px 6px; font-size: 10px; text-align: left; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; -webkit-text-stroke: 0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      td { padding: 4px 6px; font-size: 12px; border-bottom: 1px solid #ccc; font-weight: 700; color: #000; }
-      .charge-item { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; border-bottom: 1px solid #ccc; font-size: 12px; }
+      th { background: #000 !important; color: #fff !important; padding: 3px 5px; font-size: 10px; text-align: left; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; -webkit-text-stroke: 0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      td { padding: 3px 5px; font-size: 11px; border-bottom: 1px solid #ccc; font-weight: 700; color: #000; }
+      .charge-item { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; border-bottom: 1px solid #ccc; font-size: 11px; }
       .charge-item:last-of-type { border-bottom: none; }
       .charge-item span:first-child { color: #000; font-weight: 700; }
       .charge-item span:last-child { font-weight: 700; color: #000; }
-      .charge-total { display: flex; justify-content: space-between; align-items: center; padding: 4px 0 0; margin-top: 4px; border-top: 2px solid #000; font-size: 13px; font-weight: 800; }
+      .charge-total { display: flex; justify-content: space-between; align-items: center; padding: 4px 0 0; margin-top: 2px; border-top: 2px solid #000; font-size: 12px; font-weight: 800; }
       .charge-total span:last-child { color: #000; }
-      .sig-box { margin-top: 6px; padding-top: 3px; border-top: 1px solid #999; text-align: center; }
-      .sig-box p { font-size: 10px; color: #000; margin-bottom: 2px; }
-      .sig-line { width: 120px; margin: 14px auto 0; border-bottom: 1px solid #000; }
-      .disclaimer { margin-top: 3px; padding: 3px 10px; border: 1px solid #999; background: #f5f5f5; border-radius: 3px; font-size: 9px; color: #000; line-height: 1.3; text-align: center; font-weight: 700; flex-shrink: 0; }
-      .footer { text-align: center; margin-top: 4px; font-size: 9px; color: #000; padding-top: 3px; border-top: 1px solid #ccc; font-weight: 700; }
-      .copy-label { text-align: center; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #000; margin-bottom: 2px; font-weight: 800; flex-shrink: 0; }
-      @media print { body { padding: 0; } .bilty-section { padding: 3px 12px; height: 73.5mm; } th { background: #000 !important; color: #fff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; -webkit-text-stroke: 0 !important; } }
+      .sig-box { margin-top: 3px; padding-top: 2px; border-top: 1px solid #999; text-align: center; }
+      .sig-box p { font-size: 9px; color: #000; margin-bottom: 2px; }
+      .sig-line { width: 100px; margin: 10px auto 0; border-bottom: 1px solid #000; }
+      .disclaimer { margin-top: 2px; padding: 2px 6px; border: 1px solid #999; background: #f5f5f5; border-radius: 3px; font-size: 8px; color: #000; line-height: 1.2; text-align: center; font-weight: 700; flex-shrink: 0; }
+      .footer { text-align: center; margin-top: 2px; font-size: 8px; color: #000; padding-top: 2px; border-top: 1px solid #ccc; font-weight: 700; }
+      .copy-label { text-align: center; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #000; margin-bottom: 1px; font-weight: 800; flex-shrink: 0; }
+      @media print { body { padding: 0; margin: 0; } @page { size: A4 portrait; margin: 2mm 5mm; } }
     </style></head><body>
       <div class='bilty-section'>
       <div class='copy-label'>CUSTOMER COPY</div>
