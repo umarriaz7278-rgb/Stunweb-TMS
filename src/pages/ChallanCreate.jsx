@@ -490,7 +490,11 @@ export default function ChallanCreate() {
           if (match) branchId = match.id;
         }
 
+        // Get next bilty number for this tenant (works for all clients - new clients start at 1)
+        const nextManualBiltyNum = await fetchNextBiltyNumber();
+
         const manualBiltyPayload = {
+          bilty_number: nextManualBiltyNum,
           destination: selectedBranch,
           destination_branch_id: branchId,
           total_amount: effectiveTotalBiltyAmount,
