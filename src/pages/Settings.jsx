@@ -15,9 +15,11 @@ export default function Settings() {
     primaryBranchName: storedPrimaryBranchName,
     biltyHeaderUrl: storedBiltyHeaderUrl,
     challanHeaderUrl: storedChallanHeaderUrl,
+    bookingReceiptHeaderUrl: storedBookingReceiptHeaderUrl,
     saveSettings,
     resetBiltyHeader,
     resetChallanHeader,
+    resetBookingReceiptHeader,
     resetAllSettings,
     DEFAULT_SETTINGS,
   } = useSettings();
@@ -28,9 +30,11 @@ export default function Settings() {
 
   const [biltyPreview, setBiltyPreview] = useState(storedBiltyHeaderUrl);
   const [challanPreview, setChallanPreview] = useState(storedChallanHeaderUrl);
+  const [bookingReceiptPreview, setBookingReceiptPreview] = useState(storedBookingReceiptHeaderUrl);
 
   const [biltyFileString, setBiltyFileString] = useState(null);
   const [challanFileString, setChallanFileString] = useState(null);
+  const [bookingReceiptFileString, setBookingReceiptFileString] = useState(null);
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
@@ -138,6 +142,7 @@ export default function Settings() {
 
   const biltyInputRef = useRef(null);
   const challanInputRef = useRef(null);
+  const bookingReceiptInputRef = useRef(null);
 
   const showNotification = (text, type = 'success') => {
     setMessage({ text, type });
@@ -169,8 +174,11 @@ export default function Settings() {
       } else if (type === 'challan') {
         setChallanPreview(base64);
         setChallanFileString(base64);
+      } else if (type === 'booking_receipt') {
+        setBookingReceiptPreview(base64);
+        setBookingReceiptFileString(base64);
       }
-      showNotification(`${type === 'bilty' ? 'Bilty' : 'Challan'} header image selected. Click 'Save' to apply.`, 'success');
+      showNotification(`${type === 'bilty' ? 'Bilty' : type === 'challan' ? 'Challan' : 'Booking Receipt'} header image selected. Click 'Save' to apply.`, 'success');
     };
     reader.readAsDataURL(file);
   };
@@ -267,6 +275,23 @@ export default function Settings() {
     }
   };
 
+  const handleSaveBookingReceiptHeader = async () => {
+    if (!bookingReceiptFileString && bookingReceiptPreview === storedBookingReceiptHeaderUrl) {
+      showNotification('No changes made to Booking Receipt header.', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      await saveSettings({ bookingReceiptHeaderUrl: bookingReceiptPreview });
+      setBookingReceiptFileString(null);
+      showNotification('Container Transport Booking Receipt Header updated successfully!', 'success');
+    } catch (err) {
+      showNotification('Failed to save Booking Receipt header: ' + err.message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleResetBilty = async () => {
     if (window.confirm('Are you sure you want to reset Bilty header to default?')) {
       await resetBiltyHeader();
@@ -285,6 +310,15 @@ export default function Settings() {
     }
   };
 
+  const handleResetBookingReceipt = async () => {
+    if (window.confirm('Are you sure you want to reset Booking Receipt header to default?')) {
+      await resetBookingReceiptHeader();
+      setBookingReceiptPreview(DEFAULT_SETTINGS.bookingReceiptHeaderUrl);
+      setBookingReceiptFileString(null);
+      showNotification('Booking Receipt header reset to default.', 'success');
+    }
+  };
+
   const handleResetAll = async () => {
     if (window.confirm('Are you sure you want to reset all settings to system defaults?')) {
       await resetAllSettings();
@@ -292,8 +326,10 @@ export default function Settings() {
       setCompanySubtitle(DEFAULT_SETTINGS.companySubtitle);
       setBiltyPreview(DEFAULT_SETTINGS.biltyHeaderUrl);
       setChallanPreview(DEFAULT_SETTINGS.challanHeaderUrl);
+      setBookingReceiptPreview(DEFAULT_SETTINGS.bookingReceiptHeaderUrl);
       setBiltyFileString(null);
       setChallanFileString(null);
+      setBookingReceiptFileString(null);
       showNotification('All settings have been restored to defaults.', 'success');
     }
   };
@@ -751,13 +787,13 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* ─── SECTION 3: Challan Management Print Header ─── */}
+      {/* ─── SECTION 4: Challan Management Print Header ─── */}
       <div className="card" style={{ marginBottom: '24px', borderTop: '4px solid #d97706', padding: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Image size={22} color="#d97706" />
             <h2 style={{ margin: 0, color: '#b45309', fontSize: '1.25rem', fontWeight: 800 }}>
-              3. Challan Management Print Header (چالان پرنٹ ہیڈر)
+              4. Challan Management Print Header (چالان پرنٹ ہیڈر)
             </h2>
           </div>
           <span style={{ fontSize: '0.8rem', background: '#fef3c7', color: '#92400e', padding: '4px 10px', borderRadius: '20px', fontWeight: 700 }}>
@@ -834,12 +870,95 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* ─── SECTION 4: Branch Management ─── */}
+      {/* ─── SECTION 5: Container Transport (FTL) Booking Receipt Header ─── */}
+      <div className="card" style={{ marginBottom: '24px', borderTop: '4px solid #0284c7', padding: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Image size={22} color="#0284c7" />
+            <h2 style={{ margin: 0, color: '#0369a1', fontSize: '1.25rem', fontWeight: 800 }}>
+              5. Container Transport (FTL) Booking Receipt Header (کنٹینر ٹرانسپورٹ بکنگ رسید ہیڈر)
+            </h2>
+          </div>
+          <span style={{ fontSize: '0.8rem', background: '#e0f2fe', color: '#0369a1', padding: '4px 10px', borderRadius: '20px', fontWeight: 700 }}>
+            Applies to Container Transport FTL Booking Receipts Print
+          </span>
+        </div>
+
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '14px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Eye size={15} /> Header Image Live Preview:
+            </span>
+            <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+              Recommended Size: <strong>1100px × 150px</strong> (PNG / JPG)
+            </span>
+          </div>
+
+          <div style={{ border: '2px dashed #cbd5e1', borderRadius: '6px', background: '#ffffff', padding: '10px', textAlign: 'center', minHeight: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {bookingReceiptPreview ? (
+              <img
+                src={bookingReceiptPreview}
+                alt="Booking Receipt Header Preview"
+                style={{ maxWidth: '100%', maxHeight: '130px', objectFit: 'contain', display: 'block', margin: '0 auto' }}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+            ) : (
+              <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>No header image loaded</span>
+            )}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <input
+              type="file"
+              ref={bookingReceiptInputRef}
+              accept="image/png, image/jpeg, image/jpg, image/webp"
+              style={{ display: 'none' }}
+              onChange={(e) => handleImageUpload(e, 'booking_receipt')}
+            />
+            <button
+              type="button"
+              onClick={() => bookingReceiptInputRef.current?.click()}
+              className="btn btn-secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', fontWeight: 700, borderRadius: '8px', border: '1.5px solid #0284c7', color: '#0369a1' }}
+            >
+              <Upload size={17} />
+              Upload New Booking Receipt Header (PNG / JPG)
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              type="button"
+              onClick={handleResetBookingReceipt}
+              className="btn btn-secondary"
+              style={{ padding: '10px 16px', fontSize: '0.88rem', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <RotateCcw size={15} /> Reset Default
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSaveBookingReceiptHeader}
+              disabled={saving}
+              className="btn btn-primary"
+              style={{ padding: '10px 22px', fontSize: '0.92rem', fontWeight: 700, backgroundColor: '#0284c7', borderColor: '#0284c7', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <Save size={17} /> Save Booking Receipt Header
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── SECTION 6: Branch Management ─── */}
       <div className="card" style={{ marginBottom: '24px', borderTop: '4px solid #7c3aed', padding: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
           <GitBranch size={22} color="#7c3aed" />
           <h2 style={{ margin: 0, color: '#5b21b6', fontSize: '1.25rem', fontWeight: 800 }}>
-            4. Branch Management (برانچ مینجمنٹ)
+            6. Branch Management (برانچ مینجمنٹ)
           </h2>
         </div>
         <p style={{ color: '#64748b', fontSize: '0.88rem', marginBottom: '18px' }}>
@@ -922,7 +1041,7 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* ─── SECTION 5: Data Backup & Disaster Recovery Center ─── */}
+      {/* ─── SECTION 7: Data Backup & Disaster Recovery Center ─── */}
       <div className="card" style={{ marginBottom: '24px', borderTop: '4px solid #059669', padding: '24px', background: '#fff' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -931,7 +1050,7 @@ export default function Settings() {
             </div>
             <div>
               <h2 style={{ margin: 0, color: '#065f46', fontSize: '1.25rem', fontWeight: 800 }}>
-                5. Data Backup & Restore Center (ڈیٹا بیک اپ اور بحالی)
+                7. Data Backup & Restore Center (ڈیٹا بیک اپ اور بحالی)
               </h2>
               <p style={{ color: '#64748b', fontSize: '0.88rem', margin: '3px 0 0 0' }}>
                 Secure your complete system data daily. Download full backups or restore previously saved records anytime.
@@ -1084,7 +1203,6 @@ export default function Settings() {
       {/* Guide Card */}
       <div className="card" style={{ background: '#f8fafc', borderLeft: '4px solid #3b82f6', padding: '18px 24px' }}>
         <h3 style={{ margin: '0 0 8px 0', fontSize: '1rem', color: '#1e40af', fontWeight: 700 }}>
-
           💡 Header Design Guide (ہیڈر ڈیزائن ہدایات)
         </h3>
         <ul style={{ margin: 0, paddingLeft: '20px', color: '#475569', fontSize: '0.88rem', lineHeight: 1.6 }}>
@@ -1093,6 +1211,9 @@ export default function Settings() {
           </li>
           <li>
             <strong>Challan Header:</strong> Full width banner designed for A4 landscape/portrait print. Recommended resolution is <strong>1100px × 150px</strong>.
+          </li>
+          <li>
+            <strong>Container Transport Booking Receipt Header:</strong> Full width banner designed for Container Transport FTL A4 landscape print. Recommended resolution is <strong>1100px × 150px</strong>.
           </li>
           <li>
             <strong>File Formats:</strong> High-resolution PNG or JPG with transparent or white background is recommended.

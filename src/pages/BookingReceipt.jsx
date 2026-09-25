@@ -11,7 +11,7 @@ function generateBookingNumber(lastNum) {
 }
 
 export default function BookingReceipt() {
-  const { companyName } = useSettings();
+  const { companyName, bookingReceiptHeaderUrl } = useSettings();
   const activeCompanyName = companyName || 'GUL-E-PAKISTAN';
   const navigate = useNavigate();
   const printRef = useRef();
@@ -223,7 +223,7 @@ export default function BookingReceipt() {
 
   const handlePrint = async () => {
     const bNum = isManual ? form.booking_number : bookingNumber;
-    const imgUrl = window.location.origin + '/booking-header.jpg';
+    const imgUrl = bookingReceiptHeaderUrl || (window.location.origin + '/booking-header.jpg');
 
     // Build container/reference items for route bar (only show filled ones)
     const refItems = [

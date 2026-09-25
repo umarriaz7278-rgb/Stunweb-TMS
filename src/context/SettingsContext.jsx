@@ -10,6 +10,7 @@ const DEFAULT_SETTINGS = {
   primaryBranchName: 'Islamabad',
   biltyHeaderUrl: '/bilty-header.jpg',
   challanHeaderUrl: '/challan-header.jpg',
+  bookingReceiptHeaderUrl: '/booking-header.jpg',
 };
 
 export const SettingsProvider = ({ children }) => {
@@ -36,6 +37,10 @@ export const SettingsProvider = ({ children }) => {
     return getTenantItem('app_settings_challan_header_url', DEFAULT_SETTINGS.challanHeaderUrl);
   });
 
+  const [bookingReceiptHeaderUrl, setBookingReceiptHeaderUrl] = useState(() => {
+    return getTenantItem('app_settings_booking_receipt_header_url', DEFAULT_SETTINGS.bookingReceiptHeaderUrl);
+  });
+
   const [loading, setLoading] = useState(false);
 
   // Sync settings whenever session changes
@@ -50,6 +55,7 @@ export const SettingsProvider = ({ children }) => {
     setPrimaryBranchName(getTenantItem('app_settings_primary_branch_name', DEFAULT_SETTINGS.primaryBranchName));
     setBiltyHeaderUrl(getTenantItem('app_settings_bilty_header_url', DEFAULT_SETTINGS.biltyHeaderUrl));
     setChallanHeaderUrl(getTenantItem('app_settings_challan_header_url', DEFAULT_SETTINGS.challanHeaderUrl));
+    setBookingReceiptHeaderUrl(getTenantItem('app_settings_booking_receipt_header_url', DEFAULT_SETTINGS.bookingReceiptHeaderUrl));
   }, []);
 
   // Load from Supabase on mount
@@ -80,6 +86,10 @@ export const SettingsProvider = ({ children }) => {
             if (item.key === 'challan_header_url' && item.value) {
               setChallanHeaderUrl(item.value);
               setTenantItem('app_settings_challan_header_url', item.value);
+            }
+            if (item.key === 'booking_receipt_header_url' && item.value) {
+              setBookingReceiptHeaderUrl(item.value);
+              setTenantItem('app_settings_booking_receipt_header_url', item.value);
             }
           });
         }
@@ -114,6 +124,10 @@ export const SettingsProvider = ({ children }) => {
         setChallanHeaderUrl(newSettings.challanHeaderUrl);
         setTenantItem('app_settings_challan_header_url', newSettings.challanHeaderUrl);
       }
+      if (newSettings.bookingReceiptHeaderUrl !== undefined) {
+        setBookingReceiptHeaderUrl(newSettings.bookingReceiptHeaderUrl);
+        setTenantItem('app_settings_booking_receipt_header_url', newSettings.bookingReceiptHeaderUrl);
+      }
 
       // Sync to Supabase app_settings table
       const upsertList = [];
@@ -131,6 +145,9 @@ export const SettingsProvider = ({ children }) => {
       }
       if (newSettings.challanHeaderUrl !== undefined) {
         upsertList.push({ key: 'challan_header_url', value: newSettings.challanHeaderUrl, updated_at: new Date().toISOString() });
+      }
+      if (newSettings.bookingReceiptHeaderUrl !== undefined) {
+        upsertList.push({ key: 'booking_receipt_header_url', value: newSettings.bookingReceiptHeaderUrl, updated_at: new Date().toISOString() });
       }
 
       if (upsertList.length > 0) {
@@ -155,6 +172,10 @@ export const SettingsProvider = ({ children }) => {
     return saveSettings({ challanHeaderUrl: DEFAULT_SETTINGS.challanHeaderUrl });
   };
 
+  const resetBookingReceiptHeader = async () => {
+    return saveSettings({ bookingReceiptHeaderUrl: DEFAULT_SETTINGS.bookingReceiptHeaderUrl });
+  };
+
   const resetAllSettings = async () => {
     return saveSettings(DEFAULT_SETTINGS);
   };
@@ -167,10 +188,12 @@ export const SettingsProvider = ({ children }) => {
         primaryBranchName,
         biltyHeaderUrl,
         challanHeaderUrl,
+        bookingReceiptHeaderUrl,
         loading,
         saveSettings,
         resetBiltyHeader,
         resetChallanHeader,
+        resetBookingReceiptHeader,
         resetAllSettings,
         DEFAULT_SETTINGS,
       }}
@@ -190,10 +213,12 @@ export const useSettings = () => {
       primaryBranchName: getTenantItem('app_settings_primary_branch_name', DEFAULT_SETTINGS.primaryBranchName),
       biltyHeaderUrl: getTenantItem('app_settings_bilty_header_url', DEFAULT_SETTINGS.biltyHeaderUrl),
       challanHeaderUrl: getTenantItem('app_settings_challan_header_url', DEFAULT_SETTINGS.challanHeaderUrl),
+      bookingReceiptHeaderUrl: getTenantItem('app_settings_booking_receipt_header_url', DEFAULT_SETTINGS.bookingReceiptHeaderUrl),
       loading: false,
       saveSettings: () => {},
       resetBiltyHeader: () => {},
       resetChallanHeader: () => {},
+      resetBookingReceiptHeader: () => {},
       resetAllSettings: () => {},
       DEFAULT_SETTINGS,
     };

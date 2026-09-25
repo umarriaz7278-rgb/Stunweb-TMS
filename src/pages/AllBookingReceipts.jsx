@@ -5,7 +5,7 @@ import { applyTenantFilter, getTenantItem, setTenantItem } from '../utils/tenant
 import { useSettings } from '../context/SettingsContext';
 
 export default function AllBookingReceipts() {
-  const { companyName } = useSettings();
+  const { companyName, bookingReceiptHeaderUrl } = useSettings();
   const activeCompanyName = companyName || 'Gul-e-Pakistan';
   const [receipts, setReceipts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -88,7 +88,7 @@ export default function AllBookingReceipts() {
   `;
 
   function buildReceiptHTML(r) {
-    const imgUrl = window.location.origin + '/booking-header.jpg';
+    const imgUrl = bookingReceiptHeaderUrl || (window.location.origin + '/booking-header.jpg');
     const totalFreight = (parseFloat(r.freight) || 0) + (parseFloat(r.local_freight) || 0) + (parseFloat(r.labour_charges) || 0);
     const refItems = [
       r.lc_number ? `<div class='item'><span>Local Container #: </span><strong>${r.lc_number}</strong></div>` : '',
