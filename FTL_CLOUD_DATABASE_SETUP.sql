@@ -97,10 +97,25 @@ BEGIN
   END IF;
 END $$;
 
--- 4. Create Indexes for Fast Multi-Tenant Queries
+-- 4. Enable RLS and Open Anon Access Policies
+ALTER TABLE ftl_brokers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ftl_trips ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ftl_broker_receivables ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "anon_all_ftl_brokers" ON ftl_brokers;
+CREATE POLICY "anon_all_ftl_brokers" ON ftl_brokers FOR ALL TO anon USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "anon_all_ftl_trips" ON ftl_trips;
+CREATE POLICY "anon_all_ftl_trips" ON ftl_trips FOR ALL TO anon USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "anon_all_ftl_broker_receivables" ON ftl_broker_receivables;
+CREATE POLICY "anon_all_ftl_broker_receivables" ON ftl_broker_receivables FOR ALL TO anon USING (true) WITH CHECK (true);
+
+-- 5. Create Indexes for Fast Multi-Tenant Queries
 CREATE INDEX IF NOT EXISTS idx_ftl_brokers_tenant ON ftl_brokers(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_ftl_trips_tenant ON ftl_trips(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_ftl_trips_date ON ftl_trips(date);
 CREATE INDEX IF NOT EXISTS idx_ftl_trips_broker ON ftl_trips(broker_name);
 CREATE INDEX IF NOT EXISTS idx_ftl_broker_receivables_tenant ON ftl_broker_receivables(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_ftl_broker_receivables_broker ON ftl_broker_receivables(broker_name);
+

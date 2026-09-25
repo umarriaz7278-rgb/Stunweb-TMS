@@ -35,9 +35,17 @@ export default function BrokerManagementFTL() {
       const { data, error } = await q;
 
       if (!error && data) {
-        // If Supabase is empty but localStorage has data, auto-migrate to cloud
-        if (data.length === 0 && Array.isArray(localData) && localData.length > 0) {
-          const insertPayload = localData.map(b => withTenantId({
+        // Smart cloud auto-sync: upload any local brokers that are not yet in Supabase
+        const cloudNames = new Set(data.map(b => (b.full_name || '').trim().toLowerCase()).filter(Boolean));
+        const missingInCloud = Array.isArray(localData)
+          ? localData.filter(b => {
+              const name = (b.fullName || b.full_name || '').trim().toLowerCase();
+              return name && !cloudNames.has(name);
+            })
+          : [];
+
+        if (missingInCloud.length > 0) {
+          const insertPayload = missingInCloud.map(b => withTenantId({
             full_name: b.fullName || b.full_name || '',
             address: b.address || '',
             cnic: b.cnic || '',
@@ -50,7 +58,8 @@ export default function BrokerManagementFTL() {
             .select();
 
           if (!migErr && migratedData) {
-            const formatted = migratedData.map(b => ({
+            const combined = [...migratedData, ...data];
+            const formatted = combined.map(b => ({
               id: b.id,
               fullName: b.full_name,
               address: b.address || '',

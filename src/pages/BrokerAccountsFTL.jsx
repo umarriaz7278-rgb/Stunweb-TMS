@@ -94,8 +94,19 @@ export default function BrokerAccountsFTL() {
       const { data: rData, error: rErr } = await rQuery;
 
       if (!rErr && rData) {
-        if (rData.length === 0 && Array.isArray(localRecv) && localRecv.length > 0) {
-          const insertPayload = localRecv.map(lr => withTenantId({
+        // Smart cloud auto-sync: upload any local payments that are not yet in Supabase
+        const missingInCloud = Array.isArray(localRecv)
+          ? localRecv.filter(lr => {
+              return !rData.some(cr =>
+                cr.broker_name === lr.brokerName &&
+                cr.date === lr.date &&
+                parseFloat(cr.amount) === parseFloat(lr.amount)
+              );
+            })
+          : [];
+
+        if (missingInCloud.length > 0) {
+          const insertPayload = missingInCloud.map(lr => withTenantId({
             broker_name: lr.brokerName || '',
             date: lr.date || new Date().toISOString().slice(0, 10),
             description: lr.description || 'Payment Received',
@@ -108,7 +119,8 @@ export default function BrokerAccountsFTL() {
             .select();
 
           if (!migErr && migratedRecv) {
-            const formatted = migratedRecv.map(r => ({
+            const combined = [...migratedRecv, ...rData];
+            const formatted = combined.map(r => ({
               id: r.id,
               brokerName: r.broker_name,
               date: r.date ? String(r.date).slice(0, 10) : '',

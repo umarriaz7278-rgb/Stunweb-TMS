@@ -88,20 +88,28 @@ export default function TripsManagementFTL() {
       const { data: tData, error: tErr } = await tQuery;
 
       if (!tErr && tData) {
-        // Auto-migration if Supabase trips empty but local storage has trips
-        if (tData.length === 0 && Array.isArray(localTrips) && localTrips.length > 0) {
-          const insertPayload = localTrips.map(lt => withTenantId({
+        // Smart cloud auto-sync: upload any local trips that are not yet in Supabase
+        const cloudBiltyNos = new Set(tData.map(t => String(t.bilty_number || '').trim()).filter(Boolean));
+        const missingInCloud = Array.isArray(localTrips)
+          ? localTrips.filter(lt => {
+              const bNo = String(lt.biltyNumber || lt.bilty_number || '').trim();
+              return bNo ? !cloudBiltyNos.has(bNo) : !tData.some(ct => ct.date === lt.date && (ct.total_bilty_fare === lt.totalBiltyFare));
+            })
+          : [];
+
+        if (missingInCloud.length > 0) {
+          const insertPayload = missingInCloud.map(lt => withTenantId({
             date: lt.date || new Date().toISOString().slice(0, 10),
-            bilty_number: lt.biltyNumber || '',
-            vehicle_number: lt.vehicleNumber || '',
-            from_location: lt.from || 'Karachi',
-            to_location: lt.to || '',
-            total_bilty_fare: parseFloat(lt.totalBiltyFare) || 0,
-            vehicle_fare: parseFloat(lt.vehicleFare) || 0,
-            gross_profit: parseFloat(lt.grossProfit) || 0,
-            net_profit: parseFloat(lt.netProfit) || 0,
-            total_expenses: parseFloat(lt.totalExpenses) || 0,
-            broker_name: lt.brokerName || '',
+            bilty_number: lt.biltyNumber || lt.bilty_number || '',
+            vehicle_number: lt.vehicleNumber || lt.vehicle_number || '',
+            from_location: lt.from || lt.from_location || 'Karachi',
+            to_location: lt.to || lt.to_location || '',
+            total_bilty_fare: parseFloat(lt.totalBiltyFare || lt.total_bilty_fare) || 0,
+            vehicle_fare: parseFloat(lt.vehicleFare || lt.vehicle_fare) || 0,
+            gross_profit: parseFloat(lt.grossProfit || lt.gross_profit) || 0,
+            net_profit: parseFloat(lt.netProfit || lt.net_profit) || 0,
+            total_expenses: parseFloat(lt.totalExpenses || lt.total_expenses) || 0,
+            broker_name: lt.brokerName || lt.broker_name || '',
             expenses: lt.expenses || []
           }));
 
@@ -111,7 +119,8 @@ export default function TripsManagementFTL() {
             .select();
 
           if (!migErr && migratedTrips) {
-            const formatted = migratedTrips.map(formatTripRow);
+            const combined = [...migratedTrips, ...tData];
+            const formatted = combined.map(formatTripRow);
             setTrips(formatted);
             setTenantItem(STORAGE_KEY, formatted);
             setLoading(false);
