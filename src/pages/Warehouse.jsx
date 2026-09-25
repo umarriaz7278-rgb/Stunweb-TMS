@@ -193,7 +193,7 @@ export default function Warehouse() {
       .bilty-separator { height: 0; border-bottom: 2px dashed #555; margin: 3mm 8px; }
       .copy-label { text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #000; margin: 2px 0 3px; font-weight: 900; }
       .header-img { margin-bottom: 3px; width: 100%; border-bottom: 2px solid #000; padding-bottom: 3px; }
-      .header-img img { width: 100%; max-height: 85px; object-fit: contain; display: block; }
+      .header-img img { width: 100%; height: auto; max-height: 105px; display: block; margin: 0; }
       .route-bar { display: flex; justify-content: space-between; align-items: center; background: #f5f5f5; border: 1.5px solid #666; border-radius: 4px; padding: 5px 12px; margin: 3px 0 5px 0; flex-wrap: wrap; gap: 6px; }
       .route-item { font-size: 13.5px; font-weight: 800; color: #000; }
       .route-item span { color: #000; }

@@ -134,7 +134,7 @@ export default function AllBookingRecord() {
     body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13.5px; background: #fff; line-height: 1.35; }
     .bilty-copy { width: 100%; padding: 3mm 4mm 2mm 4mm; background: #fff; page-break-inside: avoid; }
     .header-img { margin-bottom: 3px; width: 100%; border-bottom: 2px solid #000; padding-bottom: 3px; }
-    .header-img img { width: 100%; max-height: 85px; object-fit: contain; display: block; }
+    .header-img img { width: 100%; height: auto; max-height: 105px; display: block; margin: 0; }
     .route-bar { display: flex; justify-content: space-between; align-items: center; background: #f5f5f5; border: 1.5px solid #666; border-radius: 4px; padding: 5px 12px; margin: 3px 0 5px 0; flex-wrap: wrap; gap: 6px; }
     .route-item { font-size: 13.5px; font-weight: 800; }
     .route-item strong { font-size: 14px; }

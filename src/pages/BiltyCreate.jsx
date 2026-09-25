@@ -351,7 +351,7 @@ export default function BiltyCreate() {
       .bilty-separator { border-bottom: 2px dashed #555; margin: 3mm 8px; height: 0px; }
       .charge-total, .charge-total span { font-weight: 900 !important; }
       .header { text-align: center; padding-bottom: 3px; margin-bottom: 3px; border-bottom: 2px solid #000; width: 100%; }
-      .header img { width: 100%; height: auto; display: block; margin: 0; max-height: 85px; object-fit: contain; }
+      .header img { width: 100%; height: auto; max-height: 105px; display: block; margin: 0; }
       .route-bar { display: flex; justify-content: space-between; align-items: center; background: #f5f5f5; border: 1.5px solid #666; border-radius: 4px; padding: 5px 12px; margin: 3px 0 5px 0; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
       .route-bar .item { font-size: 13.5px; font-weight: 800; }
       .route-bar .item strong { color: #000; font-size: 14px; }

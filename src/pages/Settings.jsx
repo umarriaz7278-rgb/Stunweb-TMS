@@ -688,7 +688,7 @@ export default function Settings() {
               <Eye size={15} /> Header Image Live Preview:
             </span>
             <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
-              Recommended Size: <strong>1000px × 140px</strong> (PNG / JPG)
+              Recommended Size: <strong>1100px × 140px</strong> (Full Width Banner - PNG / JPG)
             </span>
           </div>
 
