@@ -1,21 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Truck, Plus, Edit, Trash2, X, Save } from 'lucide-react';
+import { Truck, Plus, Edit, Trash2, X, Save, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getTenantItem, setTenantItem } from '../utils/tenantStorage';
+import { supabase } from '../supabaseClient';
+import { applyTenantFilter, withTenantId, getTenantItem, setTenantItem } from '../utils/tenantStorage';
 
 const STORAGE_KEY = 'ftl_brokers';
 
-function loadBrokers() {
-  return getTenantItem(STORAGE_KEY, []);
-}
-
-function saveBrokers(brokers) {
-  setTenantItem(STORAGE_KEY, brokers);
-}
-
 export default function BrokerManagementFTL() {
   const navigate = useNavigate();
-  const [brokers, setBrokers] = useState(loadBrokers);
+  const [brokers, setBrokers] = useState(() => getTenantItem(STORAGE_KEY, []));
+  const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
@@ -26,9 +20,74 @@ export default function BrokerManagementFTL() {
     ntn: '',
   });
 
+  // Fetch brokers from Supabase & auto-migrate any existing local storage data
+  const fetchBrokers = async () => {
+    setLoading(true);
+    try {
+      // 1. Check if we have local brokers that need migration to cloud
+      const localData = getTenantItem(STORAGE_KEY, []);
+
+      let q = supabase
+        .from('ftl_brokers')
+        .select('*')
+        .order('created_at', { ascending: true });
+      q = applyTenantFilter(q);
+      const { data, error } = await q;
+
+      if (!error && data) {
+        // If Supabase is empty but localStorage has data, auto-migrate to cloud
+        if (data.length === 0 && Array.isArray(localData) && localData.length > 0) {
+          const insertPayload = localData.map(b => withTenantId({
+            full_name: b.fullName || b.full_name || '',
+            address: b.address || '',
+            cnic: b.cnic || '',
+            phone: b.phone || '',
+            ntn: b.ntn || ''
+          }));
+          const { data: migratedData, error: migErr } = await supabase
+            .from('ftl_brokers')
+            .insert(insertPayload)
+            .select();
+
+          if (!migErr && migratedData) {
+            const formatted = migratedData.map(b => ({
+              id: b.id,
+              fullName: b.full_name,
+              address: b.address || '',
+              cnic: b.cnic || '',
+              phone: b.phone || '',
+              ntn: b.ntn || '',
+            }));
+            setBrokers(formatted);
+            setTenantItem(STORAGE_KEY, formatted);
+            setLoading(false);
+            return;
+          }
+        }
+
+        const formatted = data.map(b => ({
+          id: b.id,
+          fullName: b.full_name,
+          address: b.address || '',
+          cnic: b.cnic || '',
+          phone: b.phone || '',
+          ntn: b.ntn || '',
+        }));
+        setBrokers(formatted);
+        setTenantItem(STORAGE_KEY, formatted);
+      } else if (error) {
+        console.warn('Supabase fetch error (fallback to local cache):', error.message);
+      }
+    } catch (err) {
+      console.error('Error in fetchBrokers:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    saveBrokers(brokers);
-  }, [brokers]);
+    fetchBrokers();
+  }, []);
 
   const resetForm = () => {
     setForm({ fullName: '', address: '', cnic: '', phone: '', ntn: '' });
@@ -40,12 +99,70 @@ export default function BrokerManagementFTL() {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editingId) {
-      setBrokers(prev => prev.map(b => b.id === editingId ? { ...b, ...form } : b));
-    } else {
-      setBrokers(prev => [...prev, { id: Date.now().toString(), ...form }]);
+    try {
+      if (editingId) {
+        // Update in Supabase
+        const { error } = await supabase
+          .from('ftl_brokers')
+          .update({
+            full_name: form.fullName,
+            address: form.address,
+            cnic: form.cnic,
+            phone: form.phone,
+            ntn: form.ntn
+          })
+          .eq('id', editingId);
+
+        if (error) {
+          console.warn('Supabase update warning:', error.message);
+        }
+        setBrokers(prev => {
+          const updated = prev.map(b => b.id === editingId ? { ...b, ...form } : b);
+          setTenantItem(STORAGE_KEY, updated);
+          return updated;
+        });
+      } else {
+        // Insert into Supabase
+        const payload = withTenantId({
+          full_name: form.fullName,
+          address: form.address,
+          cnic: form.cnic,
+          phone: form.phone,
+          ntn: form.ntn
+        });
+
+        let { data, error } = await supabase
+          .from('ftl_brokers')
+          .insert([payload])
+          .select();
+
+        // Fallback retry if tenant_id column in cache difference
+        if (error && error.message && error.message.includes('tenant_id')) {
+          const { tenant_id, ...fallbackPayload } = payload;
+          const retry = await supabase.from('ftl_brokers').insert([fallbackPayload]).select();
+          data = retry.data;
+          error = retry.error;
+        }
+
+        const newBroker = data && data[0] ? {
+          id: data[0].id,
+          fullName: data[0].full_name,
+          address: data[0].address || '',
+          cnic: data[0].cnic || '',
+          phone: data[0].phone || '',
+          ntn: data[0].ntn || '',
+        } : { id: Date.now().toString(), ...form };
+
+        setBrokers(prev => {
+          const updated = [...prev, newBroker];
+          setTenantItem(STORAGE_KEY, updated);
+          return updated;
+        });
+      }
+    } catch (err) {
+      console.error('Error saving broker:', err);
     }
     resetForm();
   };
@@ -62,9 +179,18 @@ export default function BrokerManagementFTL() {
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this broker?')) {
-      setBrokers(prev => prev.filter(b => b.id !== id));
+      try {
+        await supabase.from('ftl_brokers').delete().eq('id', id);
+      } catch (err) {
+        console.warn('Supabase delete warning:', err);
+      }
+      setBrokers(prev => {
+        const updated = prev.filter(b => b.id !== id);
+        setTenantItem(STORAGE_KEY, updated);
+        return updated;
+      });
     }
   };
 
@@ -78,7 +204,17 @@ export default function BrokerManagementFTL() {
 
       <div className="card" style={{ marginBottom: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>All Brokers</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>All Brokers</h2>
+            <button
+              onClick={fetchBrokers}
+              className="btn btn-secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', fontSize: '0.75rem' }}
+              title="Refresh from cloud"
+            >
+              <RefreshCw size={13} className={loading ? 'spin' : ''} /> Refresh
+            </button>
+          </div>
           <button
             className="btn btn-primary"
             onClick={() => { resetForm(); setShowForm(true); }}
@@ -130,7 +266,11 @@ export default function BrokerManagementFTL() {
           </div>
         )}
 
-        {brokers.length === 0 ? (
+        {loading && brokers.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
+            Loading brokers from cloud...
+          </div>
+        ) : brokers.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
             No brokers added yet. Click "Add Broker" to get started.
           </div>

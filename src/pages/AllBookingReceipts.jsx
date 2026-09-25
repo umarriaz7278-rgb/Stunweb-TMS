@@ -166,12 +166,18 @@ export default function AllBookingReceipts() {
       return;
     }
 
-    // Delete matching trip from tenant-scoped storage
+    // Delete matching trip from Supabase & local cache
     try {
+      let dtQuery = supabase.from('ftl_trips').delete().eq('bilty_number', r.booking_number);
+      dtQuery = applyTenantFilter(dtQuery);
+      await dtQuery;
+
       const trips = getTenantItem('ftl_trips', []);
       const updatedTrips = trips.filter(t => t.biltyNumber !== r.booking_number);
       setTenantItem('ftl_trips', updatedTrips);
-    } catch {}
+    } catch (err) {
+      console.warn('Trip delete notice:', err);
+    }
 
     // Refresh list
     fetchReceipts();

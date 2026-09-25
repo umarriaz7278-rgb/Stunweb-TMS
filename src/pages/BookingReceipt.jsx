@@ -19,12 +19,31 @@ export default function BookingReceipt() {
   const [message, setMessage] = useState({ text: '', type: '' });
   const [brokers, setBrokers] = useState([]);
 
-  // Load brokers from tenant-scoped storage (shared with BrokerManagementFTL)
+  // Load brokers from Supabase (shared with BrokerManagementFTL)
   useEffect(() => {
-    try {
-      const data = getTenantItem('ftl_brokers', []);
-      if (data) setBrokers(data);
-    } catch {}
+    async function fetchBrokers() {
+      try {
+        let q = supabase.from('ftl_brokers').select('*').order('created_at', { ascending: true });
+        q = applyTenantFilter(q);
+        const { data } = await q;
+        if (data && data.length > 0) {
+          const formatted = data.map(b => ({
+            id: b.id,
+            fullName: b.full_name,
+            address: b.address || '',
+            cnic: b.cnic || '',
+            phone: b.phone || '',
+            ntn: b.ntn || '',
+          }));
+          setBrokers(formatted);
+          setTenantItem('ftl_brokers', formatted);
+          return;
+        }
+      } catch (err) {}
+      const localData = getTenantItem('ftl_brokers', []);
+      if (localData) setBrokers(localData);
+    }
+    fetchBrokers();
   }, []);
 
   const today = new Date().toISOString().split('T')[0];
@@ -150,8 +169,28 @@ export default function BookingReceipt() {
         setMessage({ text: 'Error saving: ' + error.message, type: 'error' });
       }
     } else {
-      // Auto-create trip in Trips Management (tenant scoped)
+      // Auto-create trip in Trips Management (Supabase Cloud + local cache)
       try {
+        const tripPayload = withTenantId({
+          date: form.date,
+          bilty_number: payload.booking_number,
+          vehicle_number: form.vehicle_number || '',
+          from_location: form.loading_points || 'Karachi',
+          to_location: form.destination || '',
+          total_bilty_fare: totalFreight,
+          vehicle_fare: parseFloat(form.vehicle_fare) || 0,
+          gross_profit: totalFreight - (parseFloat(form.vehicle_fare) || 0),
+          net_profit: totalFreight - (parseFloat(form.vehicle_fare) || 0),
+          total_expenses: 0,
+          broker_name: form.broker_name || '',
+          expenses: []
+        });
+        let { error: tErr } = await supabase.from('ftl_trips').insert([tripPayload]);
+        if (tErr && tErr.message && tErr.message.includes('tenant_id')) {
+          const { tenant_id, ...fallbackTP } = tripPayload;
+          await supabase.from('ftl_trips').insert([fallbackTP]);
+        }
+
         const existingTrips = getTenantItem('ftl_trips', []);
         const newTrip = {
           id: Date.now().toString(),
@@ -170,7 +209,9 @@ export default function BookingReceipt() {
           createdAt: new Date().toISOString(),
         };
         setTenantItem('ftl_trips', [newTrip, ...existingTrips]);
-      } catch {}
+      } catch (err) {
+        console.warn('Auto trip insert error:', err);
+      }
       setMessage({ text: 'Booking Receipt saved successfully!', type: 'success' });
       // Fetch next available number
       fetchLastBookingNumber();

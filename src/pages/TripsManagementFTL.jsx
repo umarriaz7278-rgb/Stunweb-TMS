@@ -1,22 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Truck, Plus, Trash2, X, Eye, ArrowLeft } from 'lucide-react';
+import { Truck, Plus, Trash2, X, Eye, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getTenantItem, setTenantItem } from '../utils/tenantStorage';
+import { supabase } from '../supabaseClient';
+import { applyTenantFilter, withTenantId, getTenantItem, setTenantItem } from '../utils/tenantStorage';
 
 const STORAGE_KEY = 'ftl_trips';
 const BROKERS_KEY = 'ftl_brokers';
-
-function loadTrips() {
-  return getTenantItem(STORAGE_KEY, []);
-}
-
-function saveTrips(trips) {
-  setTenantItem(STORAGE_KEY, trips);
-}
-
-function loadBrokers() {
-  return getTenantItem(BROKERS_KEY, []);
-}
 
 const emptyForm = {
   date: new Date().toISOString().slice(0, 10),
@@ -30,28 +19,120 @@ const emptyForm = {
   brokerName: '',
 };
 
+function formatTripRow(t) {
+  const biltyFare = parseFloat(t.total_bilty_fare || t.totalBiltyFare) || 0;
+  const vehFare = parseFloat(t.vehicle_fare || t.vehicleFare) || 0;
+  const exps = Array.isArray(t.expenses) ? t.expenses : [];
+  const totExp = exps.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const gp = biltyFare - vehFare;
+  const np = gp - totExp;
+
+  return {
+    id: t.id,
+    date: t.date ? String(t.date).slice(0, 10) : '',
+    biltyNumber: t.bilty_number || t.biltyNumber || '',
+    vehicleNumber: t.vehicle_number || t.vehicleNumber || '',
+    from: t.from_location || t.from || 'Karachi',
+    to: t.to_location || t.to || '',
+    totalBiltyFare: biltyFare,
+    vehicleFare: vehFare,
+    grossProfit: gp,
+    netProfit: np,
+    totalExpenses: totExp,
+    brokerName: t.broker_name || t.brokerName || '',
+    expenses: exps,
+    createdAt: t.created_at || t.createdAt || new Date().toISOString()
+  };
+}
+
 export default function TripsManagementFTL() {
   const navigate = useNavigate();
-  const [trips, setTrips] = useState(loadTrips);
+  const [trips, setTrips] = useState(() => getTenantItem(STORAGE_KEY, []));
+  const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
   const [viewTrip, setViewTrip] = useState(null);
   const [filterMonth, setFilterMonth] = useState('');
-  const [brokers, setBrokers] = useState(loadBrokers);
+  const [brokers, setBrokers] = useState(() => getTenantItem(BROKERS_KEY, []));
   const [showOldTripSelect, setShowOldTripSelect] = useState(false);
   const [editingTrip, setEditingTrip] = useState(null);
   const [editExpenses, setEditExpenses] = useState([]);
   const [brokerConfirm, setBrokerConfirm] = useState(null); // { trip, onConfirm }
   const [editingVehicleFare, setEditingVehicleFare] = useState(null); // { id, value }
 
-  // Refresh brokers when form opens
-  useEffect(() => {
-    if (showForm) setBrokers(loadBrokers());
-  }, [showForm]);
+  // Fetch trips & brokers from Supabase with auto-migration of local storage data
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // 1. Fetch brokers
+      let bQuery = supabase.from('ftl_brokers').select('*').order('created_at', { ascending: true });
+      bQuery = applyTenantFilter(bQuery);
+      const { data: bData } = await bQuery;
+      if (bData && bData.length > 0) {
+        const formattedBrokers = bData.map(b => ({
+          id: b.id,
+          fullName: b.full_name,
+          address: b.address || '',
+          cnic: b.cnic || '',
+          phone: b.phone || '',
+          ntn: b.ntn || '',
+        }));
+        setBrokers(formattedBrokers);
+        setTenantItem(BROKERS_KEY, formattedBrokers);
+      }
+
+      // 2. Fetch trips
+      const localTrips = getTenantItem(STORAGE_KEY, []);
+      let tQuery = supabase.from('ftl_trips').select('*').order('date', { ascending: false });
+      tQuery = applyTenantFilter(tQuery);
+      const { data: tData, error: tErr } = await tQuery;
+
+      if (!tErr && tData) {
+        // Auto-migration if Supabase trips empty but local storage has trips
+        if (tData.length === 0 && Array.isArray(localTrips) && localTrips.length > 0) {
+          const insertPayload = localTrips.map(lt => withTenantId({
+            date: lt.date || new Date().toISOString().slice(0, 10),
+            bilty_number: lt.biltyNumber || '',
+            vehicle_number: lt.vehicleNumber || '',
+            from_location: lt.from || 'Karachi',
+            to_location: lt.to || '',
+            total_bilty_fare: parseFloat(lt.totalBiltyFare) || 0,
+            vehicle_fare: parseFloat(lt.vehicleFare) || 0,
+            gross_profit: parseFloat(lt.grossProfit) || 0,
+            net_profit: parseFloat(lt.netProfit) || 0,
+            total_expenses: parseFloat(lt.totalExpenses) || 0,
+            broker_name: lt.brokerName || '',
+            expenses: lt.expenses || []
+          }));
+
+          const { data: migratedTrips, error: migErr } = await supabase
+            .from('ftl_trips')
+            .insert(insertPayload)
+            .select();
+
+          if (!migErr && migratedTrips) {
+            const formatted = migratedTrips.map(formatTripRow);
+            setTrips(formatted);
+            setTenantItem(STORAGE_KEY, formatted);
+            setLoading(false);
+            return;
+          }
+        }
+
+        const formatted = tData.map(formatTripRow);
+        setTrips(formatted);
+        setTenantItem(STORAGE_KEY, formatted);
+      }
+    } catch (err) {
+      console.error('Error in TripsManagement fetchData:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    saveTrips(trips);
-  }, [trips]);
+    fetchData();
+  }, []);
 
   const resetForm = () => {
     setForm({ ...emptyForm, date: new Date().toISOString().slice(0, 10), expenses: [] });
@@ -84,35 +165,84 @@ export default function TripsManagementFTL() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const trip = {
-      id: Date.now().toString(),
-      ...form,
+    const tripData = {
+      date: form.date,
+      biltyNumber: form.biltyNumber,
+      vehicleNumber: form.vehicleNumber,
+      from: form.from,
+      to: form.to,
       totalBiltyFare: parseFloat(form.totalBiltyFare) || 0,
       vehicleFare: parseFloat(form.vehicleFare) || 0,
       expenses: form.expenses.map(ex => ({ label: ex.label, amount: parseFloat(ex.amount) || 0 })),
       grossProfit,
       netProfit,
       totalExpenses,
-      vehicleNumber: form.vehicleNumber,
+      brokerName: form.brokerName,
       createdAt: new Date().toISOString(),
     };
+
+    const doSaveTrip = async () => {
+      try {
+        const payload = withTenantId({
+          date: tripData.date,
+          bilty_number: tripData.biltyNumber,
+          vehicle_number: tripData.vehicleNumber,
+          from_location: tripData.from,
+          to_location: tripData.to,
+          total_bilty_fare: tripData.totalBiltyFare,
+          vehicle_fare: tripData.vehicleFare,
+          gross_profit: tripData.grossProfit,
+          net_profit: tripData.netProfit,
+          total_expenses: tripData.totalExpenses,
+          broker_name: tripData.brokerName,
+          expenses: tripData.expenses
+        });
+
+        let { data, error } = await supabase.from('ftl_trips').insert([payload]).select();
+        if (error && error.message && error.message.includes('tenant_id')) {
+          const { tenant_id, ...fallbackPayload } = payload;
+          const retry = await supabase.from('ftl_trips').insert([fallbackPayload]).select();
+          data = retry.data;
+        }
+
+        const savedTrip = data && data[0] ? formatTripRow(data[0]) : { id: Date.now().toString(), ...tripData };
+        setTrips(prev => {
+          const updated = [savedTrip, ...prev];
+          setTenantItem(STORAGE_KEY, updated);
+          return updated;
+        });
+      } catch (err) {
+        console.error('Error saving trip to cloud:', err);
+      }
+      resetForm();
+      setBrokerConfirm(null);
+    };
+
     if (form.brokerName) {
       setBrokerConfirm({
         brokerName: form.brokerName,
         vehicleNumber: form.vehicleNumber || '—',
         netProfit,
-        onConfirm: () => { setTrips(prev => [trip, ...prev]); resetForm(); setBrokerConfirm(null); },
+        onConfirm: doSaveTrip,
         onCancel: () => setBrokerConfirm(null),
       });
     } else {
-      setTrips(prev => [trip, ...prev]);
-      resetForm();
+      doSaveTrip();
     }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this trip?')) {
-      setTrips(prev => prev.filter(t => t.id !== id));
+      try {
+        await supabase.from('ftl_trips').delete().eq('id', id);
+      } catch (err) {
+        console.warn('Delete trip warning:', err);
+      }
+      setTrips(prev => {
+        const updated = prev.filter(t => t.id !== id);
+        setTenantItem(STORAGE_KEY, updated);
+        return updated;
+      });
     }
   };
 
@@ -138,21 +268,38 @@ export default function TripsManagementFTL() {
     setEditExpenses(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSaveOldTrip = () => {
+  const handleSaveOldTrip = async () => {
     const newExpenses = editExpenses.map(ex => ({ label: ex.label, amount: parseFloat(ex.amount) || 0 }));
     const totalExp = newExpenses.reduce((sum, e) => sum + e.amount, 0);
     const grossP = (parseFloat(editingTrip.totalBiltyFare) || 0) - (parseFloat(editingTrip.vehicleFare) || 0);
     const netP = grossP - totalExp;
-    const doSave = () => {
-      setTrips(prev => prev.map(t =>
-        t.id === editingTrip.id
-          ? { ...t, expenses: newExpenses, totalExpenses: totalExp, grossProfit: grossP, netProfit: netP }
-          : t
-      ));
+
+    const doSave = async () => {
+      try {
+        await supabase.from('ftl_trips').update({
+          expenses: newExpenses,
+          total_expenses: totalExp,
+          gross_profit: grossP,
+          net_profit: netP
+        }).eq('id', editingTrip.id);
+      } catch (err) {
+        console.warn('Update trip expenses warning:', err);
+      }
+
+      setTrips(prev => {
+        const updated = prev.map(t =>
+          t.id === editingTrip.id
+            ? { ...t, expenses: newExpenses, totalExpenses: totalExp, grossProfit: grossP, netProfit: netP }
+            : t
+        );
+        setTenantItem(STORAGE_KEY, updated);
+        return updated;
+      });
       setEditingTrip(null);
       setEditExpenses([]);
       setBrokerConfirm(null);
     };
+
     if (editingTrip.brokerName) {
       setBrokerConfirm({
         brokerName: editingTrip.brokerName,
@@ -166,15 +313,33 @@ export default function TripsManagementFTL() {
     }
   };
 
-  const handleVehicleFareSave = (tripId) => {
+  const handleVehicleFareSave = async (tripId) => {
     const newFare = parseFloat(editingVehicleFare?.value) || 0;
-    setTrips(prev => prev.map(t => {
-      if (t.id !== tripId) return t;
-      const grossP = (parseFloat(t.totalBiltyFare) || 0) - newFare;
-      const totalExp = (t.totalExpenses) || 0;
-      const netP = grossP - totalExp;
-      return { ...t, vehicleFare: newFare, grossProfit: grossP, netProfit: netP };
-    }));
+    const currentTrip = trips.find(t => t.id === tripId);
+    if (!currentTrip) return;
+
+    const grossP = (parseFloat(currentTrip.totalBiltyFare) || 0) - newFare;
+    const totalExp = currentTrip.totalExpenses || 0;
+    const netP = grossP - totalExp;
+
+    try {
+      await supabase.from('ftl_trips').update({
+        vehicle_fare: newFare,
+        gross_profit: grossP,
+        net_profit: netP
+      }).eq('id', tripId);
+    } catch (err) {
+      console.warn('Update vehicle fare warning:', err);
+    }
+
+    setTrips(prev => {
+      const updated = prev.map(t => {
+        if (t.id !== tripId) return t;
+        return { ...t, vehicleFare: newFare, grossProfit: grossP, netProfit: netP };
+      });
+      setTenantItem(STORAGE_KEY, updated);
+      return updated;
+    });
     setEditingVehicleFare(null);
   };
 
@@ -262,7 +427,17 @@ export default function TripsManagementFTL() {
 
       <div className="card" style={{ marginBottom: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-          <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>All Trips</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>All Trips</h2>
+            <button
+              onClick={fetchData}
+              className="btn btn-secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', fontSize: '0.75rem' }}
+              title="Refresh from cloud"
+            >
+              <RefreshCw size={13} className={loading ? 'spin' : ''} /> Refresh
+            </button>
+          </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
             <input
               type="month"
@@ -292,7 +467,9 @@ export default function TripsManagementFTL() {
         </div>
 
         {/* Trips Table */}
-        {filteredTrips.length === 0 ? (
+        {loading && trips.length === 0 ? (
+          <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '32px 0' }}>Loading trips from cloud...</p>
+        ) : filteredTrips.length === 0 ? (
           <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '32px 0' }}>No trips found. Click "Add Trip" to get started.</p>
         ) : (
           <div style={{ overflowX: 'auto' }}>
@@ -481,6 +658,7 @@ export default function TripsManagementFTL() {
           </div>
         </div>
       )}
+
       {/* Old Trip Selection Modal */}
       {showOldTripSelect && (
         <div className="modal-overlay" style={{
@@ -607,6 +785,7 @@ export default function TripsManagementFTL() {
           </div>
         </div>
       )}
+
       {/* Broker Account Confirmation Modal */}
       {brokerConfirm && (
         <div className="modal-overlay" style={{

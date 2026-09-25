@@ -36,6 +36,7 @@ export default function BiltyCreate() {
     order_number: '',
     expense_name: '',
     booking_clerk: '',
+    bilty_type: '',
     bilty_date: getPakistanDate()
   });
 
@@ -285,6 +286,24 @@ export default function BiltyCreate() {
         }
       }
 
+      // Handle Auto Income Entry for Paid Bilty
+      if (formData.bilty_type === 'Paid' && totalAmount > 0) {
+        try {
+          const entryDate = formData.bilty_date || new Date().toISOString().split('T')[0];
+          const senderInfo = formData.sender_name ? ` (${formData.sender_name})` : '';
+          await supabase
+            .from('karachi_ledgers')
+            .insert([withTenantId({
+              entry_date: entryDate,
+              entry_type: 'income',
+              description: `Bilty #${createdBilty.bilty_number} - Paid${senderInfo}`,
+              amount: totalAmount
+            })]);
+        } catch (err) {
+          console.error('Error auto-syncing paid bilty to Income/Expense ledger:', err);
+        }
+      }
+
       // Reset form
         setFormData(prev => ({
           ...prev,
@@ -307,7 +326,8 @@ export default function BiltyCreate() {
           custom_amount: 0,
           order_number: '',
           expense_name: '',
-          booking_clerk: ''
+          booking_clerk: '',
+          bilty_type: ''
         }));
         setAddToAccount(false);
         setLocalFreightPartyName('');
@@ -594,6 +614,19 @@ export default function BiltyCreate() {
             <div className="form-group">
               <label>#Bilty Number {nextBiltyNumber && <span style={{ fontSize: '0.75rem', color: '#e85d04', fontWeight: 700 }}>(Next: {nextBiltyNumber})</span>}</label>
               <input type="text" name="bilty_number" className="form-control" value={formData.bilty_number} onChange={handleChange} placeholder="Auto or Manual" />
+            </div>
+            <div className="form-group">
+              <label>Bilty Type</label>
+              <select
+                name="bilty_type"
+                className="form-control"
+                value={formData.bilty_type}
+                onChange={handleChange}
+              >
+                <option value="">-- Select Type --</option>
+                <option value="Paid">Paid</option>
+                <option value="ToPay">ToPay</option>
+              </select>
             </div>
 
           </div>

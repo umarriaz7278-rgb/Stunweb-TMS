@@ -1,24 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Truck, Plus, Trash2, X, ArrowLeft, Eye, DollarSign, Printer, Filter, Download } from 'lucide-react';
+import { Truck, Plus, Trash2, X, ArrowLeft, Eye, DollarSign, Printer, Filter, Download, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getTenantItem, setTenantItem } from '../utils/tenantStorage';
+import { supabase } from '../supabaseClient';
+import { applyTenantFilter, withTenantId, getTenantItem, setTenantItem } from '../utils/tenantStorage';
 
 const TRIPS_KEY = 'ftl_trips';
 const BROKERS_KEY = 'ftl_brokers';
 const RECEIVABLES_KEY = 'ftl_broker_receivables';
-
-function loadTrips() {
-  return getTenantItem(TRIPS_KEY, []);
-}
-function loadBrokers() {
-  return getTenantItem(BROKERS_KEY, []);
-}
-function loadReceivables() {
-  return getTenantItem(RECEIVABLES_KEY, []);
-}
-function saveReceivables(data) {
-  setTenantItem(RECEIVABLES_KEY, data);
-}
 
 const formatCurrency = (val) => {
   const num = parseFloat(val);
@@ -26,11 +14,38 @@ const formatCurrency = (val) => {
   return 'Rs. ' + num.toLocaleString('en-PK');
 };
 
+function formatTripRow(t) {
+  const biltyFare = parseFloat(t.total_bilty_fare || t.totalBiltyFare) || 0;
+  const vehFare = parseFloat(t.vehicle_fare || t.vehicleFare) || 0;
+  const exps = Array.isArray(t.expenses) ? t.expenses : [];
+  const totExp = exps.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const gp = biltyFare - vehFare;
+  const np = (t.net_profit !== undefined && t.net_profit !== null) ? parseFloat(t.net_profit) : (gp - totExp);
+
+  return {
+    id: t.id,
+    date: t.date ? String(t.date).slice(0, 10) : '',
+    biltyNumber: t.bilty_number || t.biltyNumber || '',
+    vehicleNumber: t.vehicle_number || t.vehicleNumber || '',
+    from: t.from_location || t.from || 'Karachi',
+    to: t.to_location || t.to || '',
+    totalBiltyFare: biltyFare,
+    vehicleFare: vehFare,
+    grossProfit: gp,
+    netProfit: np,
+    totalExpenses: totExp,
+    brokerName: t.broker_name || t.brokerName || '',
+    expenses: exps,
+    createdAt: t.created_at || t.createdAt || new Date().toISOString()
+  };
+}
+
 export default function BrokerAccountsFTL() {
   const navigate = useNavigate();
-  const [brokers, setBrokers] = useState(loadBrokers);
-  const [trips, setTrips] = useState(loadTrips);
-  const [receivables, setReceivables] = useState(loadReceivables);
+  const [brokers, setBrokers] = useState(() => getTenantItem(BROKERS_KEY, []));
+  const [trips, setTrips] = useState(() => getTenantItem(TRIPS_KEY, []));
+  const [receivables, setReceivables] = useState(() => getTenantItem(RECEIVABLES_KEY, []));
+  const [loading, setLoading] = useState(false);
   const [selectedBroker, setSelectedBroker] = useState(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentForm, setPaymentForm] = useState({ date: new Date().toISOString().slice(0, 10), description: '', vehicleNumber: '', amount: '' });
@@ -41,20 +56,96 @@ export default function BrokerAccountsFTL() {
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
 
-  // Refresh data periodically
-  useEffect(() => {
-    const refresh = () => {
-      setBrokers(loadBrokers());
-      setTrips(loadTrips());
-      setReceivables(loadReceivables());
-    };
-    window.addEventListener('storage', refresh);
-    return () => window.removeEventListener('storage', refresh);
-  }, []);
+  // Fetch all broker data from Supabase
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // 1. Fetch brokers
+      let bQuery = supabase.from('ftl_brokers').select('*').order('created_at', { ascending: true });
+      bQuery = applyTenantFilter(bQuery);
+      const { data: bData } = await bQuery;
+      if (bData) {
+        const formattedBrokers = bData.map(b => ({
+          id: b.id,
+          fullName: b.full_name,
+          address: b.address || '',
+          cnic: b.cnic || '',
+          phone: b.phone || '',
+          ntn: b.ntn || '',
+        }));
+        setBrokers(formattedBrokers);
+        setTenantItem(BROKERS_KEY, formattedBrokers);
+      }
+
+      // 2. Fetch trips
+      let tQuery = supabase.from('ftl_trips').select('*').order('date', { ascending: false });
+      tQuery = applyTenantFilter(tQuery);
+      const { data: tData } = await tQuery;
+      if (tData) {
+        const formattedTrips = tData.map(formatTripRow);
+        setTrips(formattedTrips);
+        setTenantItem(TRIPS_KEY, formattedTrips);
+      }
+
+      // 3. Fetch broker receivables & auto-migrate if needed
+      const localRecv = getTenantItem(RECEIVABLES_KEY, []);
+      let rQuery = supabase.from('ftl_broker_receivables').select('*').order('date', { ascending: false });
+      rQuery = applyTenantFilter(rQuery);
+      const { data: rData, error: rErr } = await rQuery;
+
+      if (!rErr && rData) {
+        if (rData.length === 0 && Array.isArray(localRecv) && localRecv.length > 0) {
+          const insertPayload = localRecv.map(lr => withTenantId({
+            broker_name: lr.brokerName || '',
+            date: lr.date || new Date().toISOString().slice(0, 10),
+            description: lr.description || 'Payment Received',
+            vehicle_number: lr.vehicleNumber || '',
+            amount: parseFloat(lr.amount) || 0
+          }));
+          const { data: migratedRecv, error: migErr } = await supabase
+            .from('ftl_broker_receivables')
+            .insert(insertPayload)
+            .select();
+
+          if (!migErr && migratedRecv) {
+            const formatted = migratedRecv.map(r => ({
+              id: r.id,
+              brokerName: r.broker_name,
+              date: r.date ? String(r.date).slice(0, 10) : '',
+              description: r.description || '',
+              vehicleNumber: r.vehicle_number || '',
+              amount: parseFloat(r.amount) || 0,
+              createdAt: r.created_at || ''
+            }));
+            setReceivables(formatted);
+            setTenantItem(RECEIVABLES_KEY, formatted);
+            setLoading(false);
+            return;
+          }
+        }
+
+        const formatted = rData.map(r => ({
+          id: r.id,
+          brokerName: r.broker_name,
+          date: r.date ? String(r.date).slice(0, 10) : '',
+          description: r.description || '',
+          vehicleNumber: r.vehicle_number || '',
+          amount: parseFloat(r.amount) || 0,
+          createdAt: r.created_at || ''
+        }));
+        setReceivables(formatted);
+        setTenantItem(RECEIVABLES_KEY, formatted);
+      }
+    } catch (err) {
+      console.error('Error fetching broker accounts data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    saveReceivables(receivables);
-  }, [receivables]);
+    fetchData();
+  }, []);
 
   // Get broker trips (profit entries)
   const getBrokerTrips = (brokerName) => {
@@ -76,25 +167,67 @@ export default function BrokerAccountsFTL() {
     return { totalProfit, totalReceived, balance, tripCount: brokerTrips.length };
   };
 
-  const handlePaymentSubmit = (e) => {
+  const handlePaymentSubmit = async (e) => {
     e.preventDefault();
-    const entry = {
-      id: Date.now().toString(),
+    const entryData = {
       brokerName: selectedBroker,
       date: paymentForm.date,
       description: paymentForm.description,
       vehicleNumber: paymentForm.vehicleNumber,
       amount: parseFloat(paymentForm.amount) || 0,
-      createdAt: new Date().toISOString(),
     };
-    setReceivables(prev => [entry, ...prev]);
+
+    try {
+      const payload = withTenantId({
+        broker_name: entryData.brokerName,
+        date: entryData.date,
+        description: entryData.description,
+        vehicle_number: entryData.vehicleNumber,
+        amount: entryData.amount
+      });
+
+      let { data, error } = await supabase.from('ftl_broker_receivables').insert([payload]).select();
+      if (error && error.message && error.message.includes('tenant_id')) {
+        const { tenant_id, ...fallbackPayload } = payload;
+        const retry = await supabase.from('ftl_broker_receivables').insert([fallbackPayload]).select();
+        data = retry.data;
+      }
+
+      const newEntry = data && data[0] ? {
+        id: data[0].id,
+        brokerName: data[0].broker_name,
+        date: data[0].date ? String(data[0].date).slice(0, 10) : entryData.date,
+        description: data[0].description || '',
+        vehicleNumber: data[0].vehicle_number || '',
+        amount: parseFloat(data[0].amount) || 0,
+        createdAt: data[0].created_at || new Date().toISOString()
+      } : { id: Date.now().toString(), ...entryData, createdAt: new Date().toISOString() };
+
+      setReceivables(prev => {
+        const updated = [newEntry, ...prev];
+        setTenantItem(RECEIVABLES_KEY, updated);
+        return updated;
+      });
+    } catch (err) {
+      console.error('Error saving payment to cloud:', err);
+    }
+
     setPaymentForm({ date: new Date().toISOString().slice(0, 10), description: '', vehicleNumber: '', amount: '' });
     setShowPaymentForm(false);
   };
 
-  const handleDeletePayment = (id) => {
+  const handleDeletePayment = async (id) => {
     if (window.confirm('Are you sure you want to delete this payment entry?')) {
-      setReceivables(prev => prev.filter(r => r.id !== id));
+      try {
+        await supabase.from('ftl_broker_receivables').delete().eq('id', id);
+      } catch (err) {
+        console.warn('Delete payment warning:', err);
+      }
+      setReceivables(prev => {
+        const updated = prev.filter(r => r.id !== id);
+        setTenantItem(RECEIVABLES_KEY, updated);
+        return updated;
+      });
     }
   };
 
@@ -123,18 +256,6 @@ export default function BrokerAccountsFTL() {
         id: r.id,
       })),
     ].sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    // Apply date filter
-    const filteredEntries = ledgerEntries.filter(entry => {
-      if (filterType === 'month') {
-        return entry.date && entry.date.startsWith(filterMonth);
-      }
-      if (filterType === 'custom') {
-        if (filterDateFrom && entry.date < filterDateFrom) return false;
-        if (filterDateTo && entry.date > filterDateTo) return false;
-      }
-      return true;
-    });
 
     // Running balance (on ALL entries, then show only filtered)
     let runningBalance = 0;
@@ -544,9 +665,21 @@ export default function BrokerAccountsFTL() {
       </div>
 
       <div className="card" style={{ padding: '24px' }}>
-        <h2 style={{ margin: '0 0 20px', fontSize: '1.15rem', fontWeight: 700 }}>All Broker Accounts</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>All Broker Accounts</h2>
+          <button
+            onClick={fetchData}
+            className="btn btn-secondary"
+            style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', fontSize: '0.75rem' }}
+            title="Refresh from cloud"
+          >
+            <RefreshCw size={13} className={loading ? 'spin' : ''} /> Refresh
+          </button>
+        </div>
 
-        {brokers.length === 0 ? (
+        {loading && brokers.length === 0 ? (
+          <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '32px 0' }}>Loading broker accounts from cloud...</p>
+        ) : brokers.length === 0 ? (
           <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '32px 0' }}>No brokers found. Add brokers in Broker Management first.</p>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
@@ -556,7 +689,7 @@ export default function BrokerAccountsFTL() {
                 <div
                   key={broker.id}
                   className="card"
-                  onClick={() => { setTrips(loadTrips()); setReceivables(loadReceivables()); setSelectedBroker(broker.fullName); setFilterType('all'); setFilterDateFrom(''); setFilterDateTo(''); }}
+                  onClick={() => { setSelectedBroker(broker.fullName); setFilterType('all'); setFilterDateFrom(''); setFilterDateTo(''); }}
                   style={{
                     cursor: 'pointer',
                     padding: '24px',
