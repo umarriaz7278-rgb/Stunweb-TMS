@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import { FileText, Printer, MessageCircle, Save, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { applyTenantFilter, withTenantId, getTenantItem, setTenantItem } from '../utils/tenantStorage';
+import { useSettings } from '../context/SettingsContext';
 
 function generateBookingNumber(lastNum) {
   const num = (lastNum || 1000) + 1;
@@ -10,6 +11,8 @@ function generateBookingNumber(lastNum) {
 }
 
 export default function BookingReceipt() {
+  const { companyName } = useSettings();
+  const activeCompanyName = companyName || 'GUL-E-PAKISTAN';
   const navigate = useNavigate();
   const printRef = useRef();
 
@@ -292,7 +295,7 @@ export default function BookingReceipt() {
         <div class='disclaimer'>
           <strong>Note:</strong> The Company will not be responsible for damages caused by theft, robbery, vehicle hijacking, road accidents, fires, rains, floods and other natural disasters. The party should insure its goods and assets.
         </div>
-        <div class='footer'>Thank you for choosing Gul-e-Pakistan &mdash; Safe & Timely Delivery Guaranteed</div>
+        <div class='footer'>Thank you for choosing ${activeCompanyName} &mdash; Safe & Timely Delivery Guaranteed</div>
       </div>`;
 
     const printWindow = window.open('', '_blank', 'width=900,height=700');
@@ -402,7 +405,7 @@ export default function BookingReceipt() {
       {/* Printable Area */}
       <div ref={printRef}>
         <div className="print-header" style={{ display: 'none' }}>
-          <h2>GUL-E-PAKISTAN</h2>
+          <h2>${activeCompanyName}</h2>
           <p>Booking Receipt</p>
           <p>Booking No: {currentBookingNum} | Date: {form.date}</p>
         </div>

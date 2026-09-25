@@ -5,7 +5,8 @@ import { applyTenantFilter } from '../utils/tenantStorage';
 import { useSettings } from '../context/SettingsContext';
 
 export default function AllChallanRecord() {
-  const { challanHeaderUrl } = useSettings();
+  const { challanHeaderUrl, companyName } = useSettings();
+  const activeCompanyName = companyName || 'GUL-E-PAKISTAN';
   const [challans, setChallans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -286,7 +287,7 @@ export default function AllChallanRecord() {
     const challanDate = challan.challan_date ? new Date(challan.challan_date + 'T00:00:00').toLocaleDateString('en-PK') : '-';
 
     const text = [
-      `*GUL-E-PAKISTAN*`,
+      `*${activeCompanyName}*`,
       `Challan Record`,
       ``,
       `*Challan #:* ${challan.challan_number}`,

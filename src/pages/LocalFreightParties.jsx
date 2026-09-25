@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { ArrowLeft, Plus, Save, Trash2, Calendar, CreditCard, User, History, Download, Lock } from 'lucide-react';
 import { applyTenantFilter, withTenantId } from '../utils/tenantStorage';
+import { useSettings } from '../context/SettingsContext';
 
 export default function LocalFreightParties() {
+  const { companyName } = useSettings();
+  const activeCompanyName = companyName || 'GUL-E-PAKISTAN GOODS';
   const [parties, setParties] = useState([]);
   const [selectedParty, setSelectedParty] = useState(null);
   const [transactions, setTransactions] = useState([]);
@@ -149,7 +152,7 @@ export default function LocalFreightParties() {
     let htmlContent = `
       <div style="font-family: Arial, Helvetica, sans-serif; padding: 16px;">
         <div style="text-align:center; margin-bottom:12px;">
-          <h1 style="margin:0; font-size:20px;">GUL-E-PAKISTAN GOODS KARACHI</h1>
+          <h1 style="margin:0; font-size:20px;">${activeCompanyName} KARACHI</h1>
           <div style="font-weight:700; margin-top:6px;">Account Holder: ${selectedParty.name}</div>
           <div style="color:#666; margin-top:4px;">Ledger Month: ${selectedMonth} &nbsp; | &nbsp; Generated: ${new Date().toLocaleDateString()}</div>
         </div>
@@ -197,7 +200,7 @@ export default function LocalFreightParties() {
           </div>
         </div>
 
-        <div style="text-align:center; color:#999; font-size:12px; margin-top:24px;">This is an auto-generated report from GUL-E-PAKISTAN System</div>
+        <div style="text-align:center; color:#999; font-size:12px; margin-top:24px;">This is an auto-generated report from ${activeCompanyName} System</div>
       </div>
     `;
 

@@ -14,7 +14,8 @@ const DISPATCH_DELIVERIES_KEY = 'dispatching_delivery_history';
 
 export default function DispatchingOverview() {
   const navigate = useNavigate();
-  const { primaryBranchName } = useSettings();
+  const { primaryBranchName, companyName } = useSettings();
+  const activeCompanyName = companyName || 'DISPATCHING HUB';
 
   // Active Tab: 'inventory' | 'create' | 'deliveries'
   const [activeTab, setActiveTab] = useState('inventory');
@@ -430,8 +431,8 @@ export default function DispatchingOverview() {
       @media print { body { width: 80mm; padding: 4px; } }
     </style></head><body>
       <div class="header">
-        <h2>DISPATCHING HUB</h2>
-        <p>Delivery & Handover Receipt</p>
+        <h2>${activeCompanyName}</h2>
+        <p>Dispatching Hub &mdash; Delivery & Handover Receipt</p>
         <span class="badge">Bilty #: ${delivery.bilty_number}</span>
       </div>
       <div class="info-sec">

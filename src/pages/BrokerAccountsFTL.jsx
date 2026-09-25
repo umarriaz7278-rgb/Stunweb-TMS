@@ -3,6 +3,7 @@ import { Truck, Plus, Trash2, X, ArrowLeft, Eye, DollarSign, Printer, Filter, Do
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { applyTenantFilter, withTenantId, getTenantItem, setTenantItem } from '../utils/tenantStorage';
+import { useSettings } from '../context/SettingsContext';
 
 const TRIPS_KEY = 'ftl_trips';
 const BROKERS_KEY = 'ftl_brokers';
@@ -41,6 +42,9 @@ function formatTripRow(t) {
 }
 
 export default function BrokerAccountsFTL() {
+  const { companyName, companySubtitle } = useSettings();
+  const activeCompanyName = companyName || 'GUL-E-PAKISTAN';
+  const activeCompanySub = companySubtitle || 'Goods Transport (Regd.) — Container Transport FTL';
   const navigate = useNavigate();
   const [brokers, setBrokers] = useState(() => getTenantItem(BROKERS_KEY, []));
   const [trips, setTrips] = useState(() => getTenantItem(TRIPS_KEY, []));
@@ -352,8 +356,8 @@ export default function BrokerAccountsFTL() {
         <div class="invoice">
           <div class="header">
             <div>
-              <div class="company-name">GUL-E-PAKISTAN</div>
-              <div class="company-sub">Goods Transport (Regd.) — Container Transport FTL</div>
+              <div class="company-name">${activeCompanyName}</div>
+              <div class="company-sub">${activeCompanySub}</div>
             </div>
             <div class="invoice-title">
               <h2>Broker Account Statement</h2>
@@ -380,7 +384,7 @@ export default function BrokerAccountsFTL() {
             <tbody>${rows || '<tr><td colspan="7" style="text-align:center;padding:20px">No entries found</td></tr>'}</tbody>
           </table>
           <div class="footer">
-            <div class="company">Gul-e-Pakistan — Safe & Timely Delivery Guaranteed</div>
+            <div class="company">${activeCompanyName} — Safe & Timely Delivery Guaranteed</div>
             <div>Page 1 | Generated on ${new Date().toLocaleString('en-PK')}</div>
           </div>
         </div>
@@ -449,8 +453,8 @@ export default function BrokerAccountsFTL() {
       <div class="invoice">
         <div class="header">
           <div>
-            <div class="company-name">GUL-E-PAKISTAN</div>
-            <div class="company-sub">Goods Transport (Regd.) — Container Transport FTL</div>
+            <div class="company-name">${activeCompanyName}</div>
+            <div class="company-sub">${activeCompanySub}</div>
           </div>
           <div class="invoice-title">
             <h2>Broker Account Statement</h2>
@@ -477,7 +481,7 @@ export default function BrokerAccountsFTL() {
           <tbody>${rows || '<tr><td colspan="7" style="text-align:center;padding:20px">No entries found</td></tr>'}</tbody>
         </table>
         <div class="footer">
-          <div class="company">Gul-e-Pakistan — Safe & Timely Delivery Guaranteed</div>
+          <div class="company">${activeCompanyName} — Safe & Timely Delivery Guaranteed</div>
           <div>Page 1 | Generated on ${new Date().toLocaleString('en-PK')}</div>
         </div>
       </div>`;

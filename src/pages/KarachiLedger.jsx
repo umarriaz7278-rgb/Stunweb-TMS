@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { DollarSign, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import { applyTenantFilter, withTenantId } from '../utils/tenantStorage';
+import { useSettings } from '../context/SettingsContext';
 
 export default function KarachiLedger() {
+  const { companyName } = useSettings();
+  const activeCompanyName = companyName || 'GUL-E-PAKISTAN GOODS';
   const [ledgers, setLedgers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -101,7 +104,7 @@ export default function KarachiLedger() {
               const html = `
                 <div style="font-family: Arial, Helvetica, sans-serif; padding: 16px;">
                   <div style="text-align:center; margin-bottom:12px;">
-                    <h1 style="margin:0; font-size:20px;">GUL-E-PAKISTAN GOODS</h1>
+                    <h1 style="margin:0; font-size:20px;">${activeCompanyName}</h1>
                     <div style="font-weight:700; margin-top:6px;">Karachi Office Income & Expense</div>
                     <div style="color:#666; margin-top:4px;">Generated: ${new Date().toLocaleDateString()}</div>
                   </div>
@@ -138,7 +141,7 @@ export default function KarachiLedger() {
                         </tr>`).join('')}
                     </tbody>
                   </table>
-                  <div style="text-align:center; color:#999; font-size:12px; margin-top:24px;">This is an auto-generated report from GUL-E-PAKISTAN System</div>
+                  <div style="text-align:center; color:#999; font-size:12px; margin-top:24px;">This is an auto-generated report from ${activeCompanyName} System</div>
                 </div>
               `;
               const container = document.createElement('div');

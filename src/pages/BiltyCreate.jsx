@@ -4,7 +4,8 @@ import { useSettings } from '../context/SettingsContext';
 import { withTenantId, getTenantItem, applyTenantFilter } from '../utils/tenantStorage';
 
 export default function BiltyCreate() {
-  const { biltyHeaderUrl, primaryBranchName } = useSettings();
+  const { biltyHeaderUrl, primaryBranchName, companyName } = useSettings();
+  const activeCompanyName = companyName || 'GUL-E-PAKISTAN';
   const [branches, setBranches] = useState([]);
   
   // Function to get Pakistan timezone date (UTC+5)
@@ -518,7 +519,7 @@ export default function BiltyCreate() {
     const c = b.printCharges || { rentAmount: 0, loading: 0, localFare: 0, ttExpense: 0, total: 0 };
     const date = new Date(b.bilty_date || b.created_at || Date.now()).toLocaleDateString('en-PK');
     const text = [
-      `*GUL-E-PAKISTAN*`,
+      `*${activeCompanyName}*`,
       `Plot #12, Phase II, Port Qasim, Karachi`,
       ``,
       `*Bilty # ${b.bilty_number}*`,

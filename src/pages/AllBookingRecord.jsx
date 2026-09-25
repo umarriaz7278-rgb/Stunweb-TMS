@@ -23,7 +23,8 @@ const STATUS_COLORS = {
 };
 
 export default function AllBookingRecord() {
-  const { primaryBranchName, biltyHeaderUrl } = useSettings();
+  const { primaryBranchName, biltyHeaderUrl, companyName } = useSettings();
+  const activeCompanyName = companyName || 'GUL-E-PAKISTAN';
   const [bilties, setBilties] = useState([]);
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -202,7 +203,7 @@ export default function AllBookingRecord() {
     const destName = b.branches?.name || '';
     const totalFreight = (parseFloat(b.local_freight) || 0) + (parseFloat(b.labor_charges) || 0) + (parseFloat(b.tt_expense) || 0) + (parseFloat(b.custom_amount) || 0);
     const text = [
-      `*GUL-E-PAKISTAN*`,
+      `*${activeCompanyName}*`,
       `Plot no 174/A, Gate no 6, Street no 4, New Truck Stand, Hawksbay Road, Karachi`,
       ``,
       `*Bilty # ${b.bilty_number}*`,

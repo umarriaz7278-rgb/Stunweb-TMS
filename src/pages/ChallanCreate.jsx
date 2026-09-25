@@ -5,7 +5,8 @@ import { Truck } from 'lucide-react';
 import { applyTenantFilter, withTenantId, getScopedKey, getCurrentTenantId, getTenantItem } from '../utils/tenantStorage';
 
 export default function ChallanCreate() {
-  const { challanHeaderUrl, primaryBranchName } = useSettings();
+  const { challanHeaderUrl, primaryBranchName, companyName } = useSettings();
+  const activeCompanyName = companyName || 'GUL-E-PAKISTAN';
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -657,7 +658,7 @@ export default function ChallanCreate() {
     ).join('\n');
 
     const text = [
-      `*GUL-E-PAKISTAN*`,
+      `*${activeCompanyName}*`,
       `Challan Dispatch`,
       ``,
       `*Challan #:* ${c.challan_number}`,

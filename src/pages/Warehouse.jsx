@@ -5,7 +5,8 @@ import { applyTenantFilter } from '../utils/tenantStorage';
 import { useSettings } from '../context/SettingsContext';
 
 export default function Warehouse() {
-  const { biltyHeaderUrl } = useSettings();
+  const { biltyHeaderUrl, companyName } = useSettings();
+  const activeCompanyName = companyName || 'GUL-E-PAKISTAN';
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -237,7 +238,7 @@ export default function Warehouse() {
 
   const handleWhatsApp = (item) => {
     const text = [
-      `*GUL-E-PAKISTAN*`,
+      `*${activeCompanyName}*`,
       `Plot no 174/A, Gate no 6, Street no 4, New Truck Stand, Hawksbay Road, Karachi`,
       ``,
       `*Bilty # ${item.bilty_number}*`,

@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { FileText, Search, RefreshCw, Printer, Download, Trash2 } from 'lucide-react';
 import { applyTenantFilter, getTenantItem, setTenantItem } from '../utils/tenantStorage';
+import { useSettings } from '../context/SettingsContext';
 
 export default function AllBookingReceipts() {
+  const { companyName } = useSettings();
+  const activeCompanyName = companyName || 'Gul-e-Pakistan';
   const [receipts, setReceipts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -134,7 +137,7 @@ export default function AllBookingReceipts() {
         </div>
         ${refItems ? `<div class='ref-row'>${refItems}</div>` : ''}
         <div class='disclaimer'><strong>Note:</strong> The Company will not be responsible for damages caused by theft, robbery, vehicle hijacking, road accidents, fires, rains, floods and other natural disasters. The party should insure its goods and assets.</div>
-        <div class='footer'>Thank you for choosing Gul-e-Pakistan &mdash; Safe & Timely Delivery Guaranteed</div>
+        <div class='footer'>Thank you for choosing ${activeCompanyName} &mdash; Safe & Timely Delivery Guaranteed</div>
       </div>`;
 
     return { copyHTML, totalFreight };

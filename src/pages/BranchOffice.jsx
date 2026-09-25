@@ -7,7 +7,9 @@ import { getScopedKey, applyTenantFilter, withTenantId, getTenantItem, setTenant
 
 export default function BranchOffice({ branchName }) {
   const navigate = useNavigate();
-  const { primaryBranchName } = useSettings();
+  const { primaryBranchName, companyName } = useSettings();
+  const activeCompanyName = companyName || 'Gul-e-Pakistan';
+  const activeBranchName = branchName || primaryBranchName || 'Islamabad';
   // --------- shared states ---------
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -344,7 +346,7 @@ export default function BranchOffice({ branchName }) {
       .footer { margin-top: 8px; font-size: 10px; line-height: 1.3; }
       @media print { body { width: 80mm; } }
     </style></head><body>
-      <div class="header"><h1>Gul-e-Pakistan Goods Islamabad</h1></div>
+      <div class="header"><h1>${activeCompanyName} Goods ${activeBranchName}</h1></div>
       <hr />
       <div class="info"><div><strong>Bilty #:</strong> ${biltyNumber}</div>
       <div><strong>Customer CNIC:</strong> ${delivery.customer_cnic || '-'}</div>
@@ -360,7 +362,7 @@ export default function BranchOffice({ branchName }) {
         <tr class="total"><td>Total</td><td style="text-align:right;">Rs. ${totalAmount.toLocaleString()}</td></tr>
       </table>
       <hr />
-      <div class="footer">Thank you for choosing Gul-e-Pakistan. Please keep this receipt for reference.</div>
+      <div class="footer">Thank you for choosing ${activeCompanyName}. Please keep this receipt for reference.</div>
     </body></html>`;
   };
 

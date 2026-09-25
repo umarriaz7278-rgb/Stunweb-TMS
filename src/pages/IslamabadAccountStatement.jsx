@@ -4,8 +4,9 @@ import { useSettings } from '../context/SettingsContext';
 import { getScopedKey, getCurrentTenantId } from '../utils/tenantStorage';
 
 export default function IslamabadAccountStatement({ branchName: propBranchName }) {
-  const { primaryBranchName } = useSettings();
+  const { primaryBranchName, companyName } = useSettings();
   const branchName = propBranchName || primaryBranchName || 'Islamabad';
+  const activeCompanyName = companyName || 'GUL-E-PAKISTAN GOODS';
   const bClean = (branchName || 'islamabad').trim().toLowerCase();
   const prim = (primaryBranchName || 'islamabad').trim().toLowerCase();
   const isPrimary = bClean === 'islamabad' || bClean === prim;
@@ -367,8 +368,8 @@ export default function IslamabadAccountStatement({ branchName: propBranchName }
   const buildAccountsListPrintHtml = () => {
     const header = `
       <div style="padding: 18px 20px; background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%); color: #ffffff; border-radius: 14px 14px 0 0; text-align: center; margin-bottom: 18px; box-shadow: 0 6px 20px rgba(15, 23, 42, 0.14);">
-        <div style="font-size:30px; font-weight:900; letter-spacing:2px; margin-bottom: 6px;">GUL-E-PAKISTAN GOODS</div>
-        <div style="font-size:13px; opacity:0.92;">Islamabad Branch Account Statement</div>
+        <div style="font-size:30px; font-weight:900; letter-spacing:2px; margin-bottom: 6px;">${activeCompanyName}</div>
+        <div style="font-size:13px; opacity:0.92;">${branchName} Branch Account Statement</div>
       </div>`;
 
     const rowsHtml = accounts.map((account, index) => {
@@ -433,8 +434,8 @@ export default function IslamabadAccountStatement({ branchName: propBranchName }
   const buildPrintHtml = () => {
     const header = `
       <div style="padding: 18px 20px; background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%); color: #ffffff; border-radius: 14px 14px 0 0; text-align: center; margin-bottom: 18px; box-shadow: 0 6px 20px rgba(15, 23, 42, 0.14);">
-        <div style="font-size:30px; font-weight:900; letter-spacing:2px; margin-bottom: 6px;">GUL-E-PAKISTAN GOODS</div>
-        <div style="font-size:13px; opacity:0.92;">Islamabad Branch Account Statement</div>
+        <div style="font-size:30px; font-weight:900; letter-spacing:2px; margin-bottom: 6px;">${activeCompanyName}</div>
+        <div style="font-size:13px; opacity:0.92;">${branchName} Branch Account Statement</div>
       </div>`;
 
     const info = `
