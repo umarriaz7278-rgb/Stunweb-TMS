@@ -93,7 +93,7 @@ export default function AllBookingRecord() {
           <div class="route-item"><span>From: </span><strong>Karachi</strong></div>
           <div class="route-item"><span>To: </span><strong>${destName}</strong></div>
           <div class="route-item"><span>Date: </span><strong>${biltyDate}</strong></div>
-          <div class="route-item" style="background:#000 !important;padding:2px 8px;border-radius:3px;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;"><span style="color:#fff !important;">Bilty #: </span><strong style="color:#fff !important;font-size:12px;">${b.bilty_number}</strong></div>
+          <div class="route-item" style="background:#000 !important;padding:4px 10px;border-radius:3px;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;"><span style="color:#fff !important;">Bilty #: </span><strong style="color:#fff !important;font-size:14px;">${b.bilty_number}</strong></div>
           ${b.lcl_number ? `<div class="route-item"><span>LCL #: </span><strong>${b.lcl_number}</strong></div>` : ''}
           ${b.container_number ? `<div class="route-item"><span>Container #: </span><strong>${b.container_number}</strong></div>` : ''}
         </div>
@@ -109,7 +109,7 @@ export default function AllBookingRecord() {
               <div class="card-title">Goods Details</div>
               <table><thead><tr><th>#</th><th>Qty</th><th>Description</th><th>Weight (KG)</th></tr></thead>
               <tbody><tr><td><strong>1</strong></td><td><strong>${b.total_quantity || b.quantity || 0}</strong></td><td><strong>${b.description || ''}</strong></td><td><strong>${b.weight_kg || 0}</strong></td></tr></tbody></table>
-              <p style="color:red !important; font-weight:800; margin-top:3px; font-size:10px; min-height:14px; padding:2px 0;">Note: ${b.note || ''}</p>
+              <p style="color:red !important; font-weight:800; margin-top:6px; font-size:12px; min-height:18px; padding:4px 0;">Note: ${b.note || ''}</p>
             </div>
           </div>
           <div class="right-col">
@@ -120,7 +120,7 @@ export default function AllBookingRecord() {
               <div class="charge-item"><span>Local Fare</span><span>Rs. ${localFreight.toLocaleString()}</span></div>
               <div class="charge-item"><span>TT Expense</span><span>Rs. ${ttExpense.toLocaleString()}</span></div>
               <div class="charge-total"><span>Total Amount</span><span>Rs. ${totalAmount.toLocaleString()}</span></div>
-              <div class="sig-area"><div class="sig-label">Booking Clerk</div><div style="font-size:11px;font-weight:800;margin-top:2px;">${b.booking_clerk || ''}</div></div>
+              <div class="sig-area"><div class="sig-label">Booking Clerk</div><div style="font-size:12px;font-weight:800;margin-top:4px;">${b.booking_clerk || ''}</div></div>
             </div>
           </div>
         </div>
@@ -130,35 +130,35 @@ export default function AllBookingRecord() {
 
   const biltyStyles = `
     * { margin: 0; padding: 0; box-sizing: border-box; font-weight: 900 !important; color: #000 !important; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; background: #fff; }
-    .bilty-copy { width: 100%; padding: 2mm 3mm; background: #fff; page-break-inside: avoid; }
-    .header-img { margin-bottom: 2px; width: 100%; border-bottom: 2px solid #000; padding-bottom: 2px; }
-    .header-img img { width: 100%; height: auto; display: block; }
-    .route-bar { display: flex; justify-content: space-between; align-items: center; background: #f5f5f5; border: 1px solid #999; border-radius: 3px; padding: 3px 8px; margin: 2px 0 4px 0; flex-wrap: wrap; gap: 4px; }
-    .route-item { font-size: 11px; font-weight: 700; }
-    .route-item strong { font-size: 11px; }
-    .main-layout { display: grid; grid-template-columns: 1fr 210px; gap: 6px; margin-bottom: 3px; align-items: start; }
-    .left-col { display: flex; flex-direction: column; gap: 4px; }
-    .card { border: 1px solid #999; border-radius: 3px; padding: 4px 6px; background: #fff; }
-    .card-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 3px; padding-bottom: 2px; border-bottom: 1px solid #ccc; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13.5px; background: #fff; line-height: 1.35; }
+    .bilty-copy { width: 100%; padding: 3mm 4mm 2mm 4mm; background: #fff; page-break-inside: avoid; }
+    .header-img { margin-bottom: 3px; width: 100%; border-bottom: 2px solid #000; padding-bottom: 3px; }
+    .header-img img { width: 100%; max-height: 85px; object-fit: contain; display: block; }
+    .route-bar { display: flex; justify-content: space-between; align-items: center; background: #f5f5f5; border: 1.5px solid #666; border-radius: 4px; padding: 5px 12px; margin: 3px 0 5px 0; flex-wrap: wrap; gap: 6px; }
+    .route-item { font-size: 13.5px; font-weight: 800; }
+    .route-item strong { font-size: 14px; }
+    .main-layout { display: grid; grid-template-columns: 1fr 260px; gap: 8px; margin-bottom: 5px; align-items: stretch; }
+    .left-col { display: flex; flex-direction: column; gap: 6px; }
+    .card { border: 1.5px solid #777; border-radius: 4px; padding: 6px 10px; background: #fff; }
+    .card-title { font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; padding-bottom: 3px; border-bottom: 1.5px solid #999; }
     .sr-grid { display: grid; grid-template-columns: 1fr 1fr; }
-    .sr-col { padding: 0 6px; } .sr-col:first-child { padding-left: 0; }
-    .sr-right { border-left: 1px solid #999; }
-    .sr-label { font-size: 10px; text-transform: uppercase; font-weight: 700; margin-bottom: 2px; }
-    .sr-name { font-size: 11px; font-weight: 700; } .sr-phone { font-size: 10px; margin-top: 1px; }
+    .sr-col { padding: 0 8px; } .sr-col:first-child { padding-left: 0; }
+    .sr-right { border-left: 1.5px solid #777; }
+    .sr-label { font-size: 12px; text-transform: uppercase; font-weight: 800; margin-bottom: 3px; letter-spacing: 0.5px; }
+    .sr-name { font-size: 13.5px; font-weight: 800; } .sr-phone { font-size: 12px; margin-top: 2px; font-weight: 800; }
     table { width: 100%; border-collapse: collapse; }
-    th { background: #000; color: #fff !important; padding: 3px 5px; font-size: 10px; text-align: left; font-weight: 700; text-transform: uppercase; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    td { padding: 3px 5px; font-size: 11px; border-bottom: 1px solid #ccc; font-weight: 700; }
-    .charge-item { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px solid #ccc; font-size: 11px; }
-    .charge-total { display: flex; justify-content: space-between; padding: 4px 0 0; margin-top: 2px; border-top: 2px solid #000; font-size: 12px; font-weight: 800; }
-    .sig-area { margin-top: 3px; text-align: center; padding-top: 2px; border-top: 1px solid #999; }
-    .sig-label { font-size: 9px; } .sig-line { width: 100px; margin: 10px auto 0; border-bottom: 1px solid #000; }
-    .disclaimer { padding: 2px 6px; border: 1px solid #999; background: #f5f5f5; border-radius: 3px; font-size: 8px; line-height: 1.2; text-align: center; font-weight: 700; margin-top: 2px; }
-    .copy-label { text-align: center; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; margin: 2px 0; font-weight: 800; }
-    .divider-line { height: 0; border-bottom: 1.5px dashed #999; margin: 2px 8px; }
+    th { background: #000; color: #fff !important; padding: 5px 8px; font-size: 12px; text-align: left; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    td { padding: 5px 8px; font-size: 13.5px; border-bottom: 1px solid #999; font-weight: 800; }
+    .charge-item { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid #ccc; font-size: 13px; font-weight: 800; }
+    .charge-total { display: flex; justify-content: space-between; padding: 6px 0 2px; margin-top: 4px; border-top: 2px solid #000; font-size: 15px; font-weight: 900; }
+    .sig-area { margin-top: 6px; text-align: center; padding-top: 4px; border-top: 1px solid #777; }
+    .sig-label { font-size: 11px; } .sig-line { width: 120px; margin: 12px auto 0; border-bottom: 1px solid #000; }
+    .disclaimer { padding: 4px 8px; border: 1px solid #999; background: #f5f5f5; border-radius: 3px; font-size: 9.5px; line-height: 1.3; text-align: center; font-weight: 800; margin-top: 4px; }
+    .copy-label { text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin: 2px 0 3px; font-weight: 900; }
+    .divider-line { height: 0; border-bottom: 2px dashed #555; margin: 3mm 8px; }
     @media print {
       body { margin: 0; padding: 0; }
-      @page { size: A4 portrait; margin: 2mm 5mm; }
+      @page { size: A4 portrait; margin: 3mm 6mm; }
     }
   `;
 
@@ -168,7 +168,7 @@ export default function AllBookingRecord() {
     const biltyHTMLOffice = biltyHTML.replace(/<div class="disclaimer">[\s\S]*?<\/div>/, '');
     const printWindow = window.open('', '_blank', 'width=900,height=700');
     printWindow.document.write(`<!DOCTYPE html><html><head><meta charset='utf-8'/><meta name='viewport' content='width=device-width, initial-scale=1'/><title>Bilty #${b.bilty_number}</title><style>
-      @page { size: A4 portrait; margin: 2mm 5mm; }
+      @page { size: A4 portrait; margin: 3mm 6mm; }
       ${biltyStyles}
     </style></head><body>
       <div class="copy-label">CUSTOMER COPY</div>${biltyHTML}
