@@ -181,7 +181,7 @@ export default function Warehouse() {
         </div>
       </div>`;
 
-    const biltyHTMLOffice = biltyHTML.replace(/<div class="disclaimer">[\s\S]*?<\/div>/, '');
+    const biltyHTMLOffice = biltyHTML;
 
     const printWindow = window.open('', '_blank', 'width=900,height=700');
     printWindow.document.write(`<!DOCTYPE html><html><head><meta charset='utf-8'/><title>Bilty #${biltyNumber}</title><style>

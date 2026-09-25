@@ -166,7 +166,7 @@ export default function AllBookingRecord() {
   const handlePrint = async (b) => {
     const headerBase64 = await getHeaderBase64();
     const biltyHTML = generateBiltyHTML(b, headerBase64);
-    const biltyHTMLOffice = biltyHTML.replace(/<div class="disclaimer">[\s\S]*?<\/div>/, '');
+    const biltyHTMLOffice = biltyHTML;
     const printWindow = window.open('', '_blank', 'width=900,height=700');
     printWindow.document.write(`<!DOCTYPE html><html><head><meta charset='utf-8'/><meta name='viewport' content='width=device-width, initial-scale=1'/><title>Bilty #${b.bilty_number}</title><style>
       @page { size: A4 portrait; margin: 3mm 6mm; }
