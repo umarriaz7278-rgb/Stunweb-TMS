@@ -93,6 +93,8 @@ export function applyTenantFilter(query) {
   const tenantId = getCurrentTenantId();
   if (tenantId && tenantId !== 'master' && tenantId !== 'guest' && isValidUUID(tenantId)) {
     return query.eq('tenant_id', tenantId);
+  } else if (tenantId === 'master') {
+    return query.is('tenant_id', null);
   }
   return query;
 }
@@ -107,7 +109,13 @@ export function withTenantId(data) {
       return data.map(item => ({ ...item, tenant_id: tenantId }));
     }
     return { ...data, tenant_id: tenantId };
+  } else if (tenantId === 'master') {
+    if (Array.isArray(data)) {
+      return data.map(item => ({ ...item, tenant_id: null }));
+    }
+    return { ...data, tenant_id: null };
   }
   return data;
 }
+
 

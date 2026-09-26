@@ -46,3 +46,14 @@ CREATE TABLE IF NOT EXISTS branch_account_entries (
   amount      NUMERIC DEFAULT 0,
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- 5. Client & System Settings (Bilty, Challan, Booking Receipt Headers & Company Details)
+CREATE TABLE IF NOT EXISTS app_settings (
+  id          BIGSERIAL PRIMARY KEY,
+  tenant_id   UUID,
+  key         TEXT NOT NULL,
+  value       TEXT,
+  updated_at  TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT app_settings_tenant_key_unique UNIQUE (tenant_id, key)
+);
+

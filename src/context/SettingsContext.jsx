@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
-import { getTenantItem, setTenantItem, getCurrentTenant, applyTenantFilter, withTenantId } from '../utils/tenantStorage';
+import { getTenantItem, setTenantItem, getCurrentTenant, applyTenantFilter, withTenantId, getCurrentTenantId } from '../utils/tenantStorage';
+import { useAuth } from './AuthContext';
 
 const SettingsContext = createContext();
 
@@ -14,11 +15,12 @@ const DEFAULT_SETTINGS = {
 };
 
 export const SettingsProvider = ({ children }) => {
-  const currentTenant = getCurrentTenant();
-  const initialCompanyName = currentTenant?.company_name || DEFAULT_SETTINGS.companyName;
+  const { currentUser } = useAuth();
+  const tenantId = currentUser?.type === 'superadmin' ? 'master' : (currentUser?.id || 'guest');
 
   const [companyName, setCompanyName] = useState(() => {
-    return getTenantItem('app_settings_company_name', initialCompanyName);
+    const tenant = getCurrentTenant();
+    return getTenantItem('app_settings_company_name', tenant?.company_name || DEFAULT_SETTINGS.companyName);
   });
 
   const [companySubtitle, setCompanySubtitle] = useState(() => {
@@ -43,63 +45,71 @@ export const SettingsProvider = ({ children }) => {
 
   const [loading, setLoading] = useState(false);
 
-  // Sync settings whenever session changes
-  useEffect(() => {
+  // Sync settings whenever session / currentUser changes
+  const reloadSettings = useCallback(async () => {
     const tenant = getCurrentTenant();
-    if (tenant?.company_name) {
-      setCompanyName(getTenantItem('app_settings_company_name', tenant.company_name));
-    } else {
-      setCompanyName(getTenantItem('app_settings_company_name', DEFAULT_SETTINGS.companyName));
-    }
+    const effectiveCompany = tenant?.company_name || (currentUser?.type === 'superadmin' ? 'Master Super Admin' : DEFAULT_SETTINGS.companyName);
+
+    // 1. Immediately update from local tenant cache
+    setCompanyName(getTenantItem('app_settings_company_name', effectiveCompany));
     setCompanySubtitle(getTenantItem('app_settings_company_subtitle', DEFAULT_SETTINGS.companySubtitle));
     setPrimaryBranchName(getTenantItem('app_settings_primary_branch_name', DEFAULT_SETTINGS.primaryBranchName));
     setBiltyHeaderUrl(getTenantItem('app_settings_bilty_header_url', DEFAULT_SETTINGS.biltyHeaderUrl));
     setChallanHeaderUrl(getTenantItem('app_settings_challan_header_url', DEFAULT_SETTINGS.challanHeaderUrl));
     setBookingReceiptHeaderUrl(getTenantItem('app_settings_booking_receipt_header_url', DEFAULT_SETTINGS.bookingReceiptHeaderUrl));
-  }, []);
 
-  // Load from Supabase on mount
-  useEffect(() => {
-    async function loadRemoteSettings() {
-      try {
-        let query = supabase.from('app_settings').select('*');
-        query = applyTenantFilter(query);
-        const { data, error } = await query;
-        if (!error && data && data.length > 0) {
-          data.forEach(item => {
-            if (item.key === 'company_name' && item.value) {
-              setCompanyName(item.value);
-              setTenantItem('app_settings_company_name', item.value);
-            }
-            if (item.key === 'company_subtitle' && item.value) {
-              setCompanySubtitle(item.value);
-              setTenantItem('app_settings_company_subtitle', item.value);
-            }
-            if (item.key === 'primary_branch_name' && item.value) {
-              setPrimaryBranchName(item.value);
-              setTenantItem('app_settings_primary_branch_name', item.value);
-            }
-            if (item.key === 'bilty_header_url' && item.value) {
-              setBiltyHeaderUrl(item.value);
-              setTenantItem('app_settings_bilty_header_url', item.value);
-            }
-            if (item.key === 'challan_header_url' && item.value) {
-              setChallanHeaderUrl(item.value);
-              setTenantItem('app_settings_challan_header_url', item.value);
-            }
-            if (item.key === 'booking_receipt_header_url' && item.value) {
-              setBookingReceiptHeaderUrl(item.value);
-              setTenantItem('app_settings_booking_receipt_header_url', item.value);
-            }
-          });
-        }
-      } catch (err) {
-        console.warn('Could not fetch app_settings from Supabase, using local defaults:', err);
+    // 2. Fetch remote settings from Supabase
+    try {
+      let query = supabase.from('app_settings').select('*');
+      query = applyTenantFilter(query);
+      const { data, error } = await query;
+      if (!error && data && data.length > 0) {
+        data.forEach(item => {
+          if (item.key === 'company_name' && item.value) {
+            setCompanyName(item.value);
+            setTenantItem('app_settings_company_name', item.value);
+          }
+          if (item.key === 'company_subtitle' && item.value) {
+            setCompanySubtitle(item.value);
+            setTenantItem('app_settings_company_subtitle', item.value);
+          }
+          if (item.key === 'primary_branch_name' && item.value) {
+            setPrimaryBranchName(item.value);
+            setTenantItem('app_settings_primary_branch_name', item.value);
+          }
+          if (item.key === 'bilty_header_url' && item.value) {
+            setBiltyHeaderUrl(item.value);
+            setTenantItem('app_settings_bilty_header_url', item.value);
+          }
+          if (item.key === 'challan_header_url' && item.value) {
+            setChallanHeaderUrl(item.value);
+            setTenantItem('app_settings_challan_header_url', item.value);
+          }
+          if (item.key === 'booking_receipt_header_url' && item.value) {
+            setBookingReceiptHeaderUrl(item.value);
+            setTenantItem('app_settings_booking_receipt_header_url', item.value);
+          }
+        });
       }
+    } catch (err) {
+      console.warn('Could not fetch app_settings from Supabase, using local defaults:', err);
     }
+  }, [currentUser, tenantId]);
 
-    loadRemoteSettings();
-  }, []);
+  useEffect(() => {
+    reloadSettings();
+  }, [reloadSettings]);
+
+  // Listen to custom settings update events across tabs / components
+  useEffect(() => {
+    const handleSettingsUpdate = () => {
+      reloadSettings();
+    };
+    window.addEventListener('app_settings_updated', handleSettingsUpdate);
+    return () => {
+      window.removeEventListener('app_settings_updated', handleSettingsUpdate);
+    };
+  }, [reloadSettings]);
 
   const saveSettings = async (newSettings) => {
     setLoading(true);
@@ -152,12 +162,21 @@ export const SettingsProvider = ({ children }) => {
 
       if (upsertList.length > 0) {
         const payload = withTenantId(upsertList);
-        await supabase.from('app_settings').upsert(payload, { onConflict: 'key' });
+        try {
+          const { error: upsertErr } = await supabase.from('app_settings').upsert(payload, { onConflict: 'tenant_id,key' });
+          if (upsertErr) {
+            await supabase.from('app_settings').upsert(payload, { onConflict: 'key' });
+          }
+        } catch (dbErr) {
+          console.warn('Remote DB upsert warning:', dbErr);
+        }
       }
 
+      window.dispatchEvent(new Event('app_settings_updated'));
       return { success: true };
     } catch (err) {
       console.warn('Error saving settings to remote DB, saved locally:', err);
+      window.dispatchEvent(new Event('app_settings_updated'));
       return { success: true, localOnly: true };
     } finally {
       setLoading(false);
